@@ -4,40 +4,39 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/hooks/use-cart";
-import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBBD, splitVatInclusive } from "@/lib/format";
 import { toast } from "sonner";
 
 export function PlaceOrderModal({ open, onOpenChange }: { open: boolean; onOpenChange: (b: boolean) => void }) {
-  const { lines, total, close: closeCart, reload } = useCart();
-  const { session } = useAuth();
+  const { lines, total, close: closeCart, clearLocal } = useCart();
   const navigate = useNavigate();
   const [customer, setCustomer] = useState<{ id: string; company_name: string; delivery_address: string | null } | null>(null);
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!open || !session?.user?.id) return;
+    if (!open) return;
+    // Dev mode: always use the first customer.
     supabase
       .from("customers")
       .select("id, company_name, delivery_address")
-      .eq("contact_profile_id", session.user.id)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle()
       .then(({ data }) => setCustomer(data));
-  }, [open, session?.user?.id]);
+  }, [open]);
 
   const { subtotal, vat } = splitVatInclusive(total);
 
   const onConfirm = async () => {
-    if (!customer || !session?.user?.id || lines.length === 0) return;
+    if (!customer || lines.length === 0) return;
     setSubmitting(true);
     try {
       const { data: order, error } = await supabase
         .from("orders")
         .insert({
           customer_id: customer.id,
-          placed_by_profile_id: session.user.id,
           status: "pending_approval",
           subtotal,
           vat_amount: vat,
@@ -58,15 +57,11 @@ export function PlaceOrderModal({ open, onOpenChange }: { open: boolean; onOpenC
       const { error: itemsErr } = await supabase.from("order_items").insert(items);
       if (itemsErr) throw itemsErr;
 
-      // Clear cart
-      const ids = lines.map(l => l.id);
-      if (ids.length) await supabase.from("cart_items").delete().in("id", ids);
-      await reload();
-
+      clearLocal();
       onOpenChange(false);
       closeCart();
       toast.success(`Order ${order.order_number} placed. Our team will review it shortly.`);
-      navigate({ to: "/orders/$orderNumber", params: { orderNumber: order.order_number! } });
+      navigate({ to: "/shop/orders/$orderNumber", params: { orderNumber: order.order_number! } });
     } catch (e: any) {
       console.error(e);
       toast.error(e.message ?? "Could not place order");

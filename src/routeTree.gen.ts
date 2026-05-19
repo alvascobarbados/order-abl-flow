@@ -17,6 +17,10 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as OfficeRouteImport } from './routes/office'
 import { Route as DriverRouteImport } from './routes/driver'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ShopIndexRouteImport } from './routes/shop/index'
+import { Route as ShopAccountRouteImport } from './routes/shop/account'
+import { Route as ShopOrdersIndexRouteImport } from './routes/shop/orders/index'
+import { Route as ShopOrdersOrderNumberRouteImport } from './routes/shop/orders/$orderNumber'
 
 const WarehouseRoute = WarehouseRouteImport.update({
   id: '/warehouse',
@@ -58,6 +62,26 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopIndexRoute = ShopIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ShopRoute,
+} as any)
+const ShopAccountRoute = ShopAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => ShopRoute,
+} as any)
+const ShopOrdersIndexRoute = ShopOrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => ShopRoute,
+} as any)
+const ShopOrdersOrderNumberRoute = ShopOrdersOrderNumberRouteImport.update({
+  id: '/orders/$orderNumber',
+  path: '/orders/$orderNumber',
+  getParentRoute: () => ShopRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,9 +89,13 @@ export interface FileRoutesByFullPath {
   '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sales': typeof SalesRoute
-  '/shop': typeof ShopRoute
+  '/shop': typeof ShopRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
+  '/shop/account': typeof ShopAccountRoute
+  '/shop/': typeof ShopIndexRoute
+  '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
+  '/shop/orders/': typeof ShopOrdersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,9 +103,12 @@ export interface FileRoutesByTo {
   '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sales': typeof SalesRoute
-  '/shop': typeof ShopRoute
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
+  '/shop/account': typeof ShopAccountRoute
+  '/shop': typeof ShopIndexRoute
+  '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
+  '/shop/orders': typeof ShopOrdersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,9 +117,13 @@ export interface FileRoutesById {
   '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sales': typeof SalesRoute
-  '/shop': typeof ShopRoute
+  '/shop': typeof ShopRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
+  '/shop/account': typeof ShopAccountRoute
+  '/shop/': typeof ShopIndexRoute
+  '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
+  '/shop/orders/': typeof ShopOrdersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +136,10 @@ export interface FileRouteTypes {
     | '/shop'
     | '/sign-in'
     | '/warehouse'
+    | '/shop/account'
+    | '/shop/'
+    | '/shop/orders/$orderNumber'
+    | '/shop/orders/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -108,9 +147,12 @@ export interface FileRouteTypes {
     | '/office'
     | '/reset-password'
     | '/sales'
-    | '/shop'
     | '/sign-in'
     | '/warehouse'
+    | '/shop/account'
+    | '/shop'
+    | '/shop/orders/$orderNumber'
+    | '/shop/orders'
   id:
     | '__root__'
     | '/'
@@ -121,6 +163,10 @@ export interface FileRouteTypes {
     | '/shop'
     | '/sign-in'
     | '/warehouse'
+    | '/shop/account'
+    | '/shop/'
+    | '/shop/orders/$orderNumber'
+    | '/shop/orders/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -129,7 +175,7 @@ export interface RootRouteChildren {
   OfficeRoute: typeof OfficeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SalesRoute: typeof SalesRoute
-  ShopRoute: typeof ShopRoute
+  ShopRoute: typeof ShopRouteWithChildren
   SignInRoute: typeof SignInRoute
   WarehouseRoute: typeof WarehouseRoute
 }
@@ -192,8 +238,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shop/': {
+      id: '/shop/'
+      path: '/'
+      fullPath: '/shop/'
+      preLoaderRoute: typeof ShopIndexRouteImport
+      parentRoute: typeof ShopRoute
+    }
+    '/shop/account': {
+      id: '/shop/account'
+      path: '/account'
+      fullPath: '/shop/account'
+      preLoaderRoute: typeof ShopAccountRouteImport
+      parentRoute: typeof ShopRoute
+    }
+    '/shop/orders/': {
+      id: '/shop/orders/'
+      path: '/orders'
+      fullPath: '/shop/orders/'
+      preLoaderRoute: typeof ShopOrdersIndexRouteImport
+      parentRoute: typeof ShopRoute
+    }
+    '/shop/orders/$orderNumber': {
+      id: '/shop/orders/$orderNumber'
+      path: '/orders/$orderNumber'
+      fullPath: '/shop/orders/$orderNumber'
+      preLoaderRoute: typeof ShopOrdersOrderNumberRouteImport
+      parentRoute: typeof ShopRoute
+    }
   }
 }
+
+interface ShopRouteChildren {
+  ShopAccountRoute: typeof ShopAccountRoute
+  ShopIndexRoute: typeof ShopIndexRoute
+  ShopOrdersOrderNumberRoute: typeof ShopOrdersOrderNumberRoute
+  ShopOrdersIndexRoute: typeof ShopOrdersIndexRoute
+}
+
+const ShopRouteChildren: ShopRouteChildren = {
+  ShopAccountRoute: ShopAccountRoute,
+  ShopIndexRoute: ShopIndexRoute,
+  ShopOrdersOrderNumberRoute: ShopOrdersOrderNumberRoute,
+  ShopOrdersIndexRoute: ShopOrdersIndexRoute,
+}
+
+const ShopRouteWithChildren = ShopRoute._addFileChildren(ShopRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -201,7 +291,7 @@ const rootRouteChildren: RootRouteChildren = {
   OfficeRoute: OfficeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SalesRoute: SalesRoute,
-  ShopRoute: ShopRoute,
+  ShopRoute: ShopRouteWithChildren,
   SignInRoute: SignInRoute,
   WarehouseRoute: WarehouseRoute,
 }
