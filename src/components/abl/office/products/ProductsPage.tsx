@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Plus, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { TabbedShell } from "@/components/abl/office/TabbedShell";
+
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ProductsCatalogTab } from "./ProductsCatalogTab";
@@ -78,25 +78,41 @@ export function ProductsPage() {
         </div>
       </div>
 
-      <TabbedShell
-        eyebrow=""
-        title=""
-        activeKey={tab}
-        onTabChange={(k) => setTab(k as TabKey)}
-        tabs={[
-          { key: "catalog", label: "Catalog", count: counts.active + counts.inactive },
-          { key: "stock", label: "Stock levels" },
-          { key: "categories", label: "Categories", count: categories.length },
-          { key: "low_stock", label: "Low stock alerts", count: counts.alerts },
-          { key: "archived", label: "Archived", count: counts.archived, muted: true },
-        ]}
-      >
-        {tab === "catalog" && <ProductsCatalogTab products={products} categories={categories} onOpen={setDrawerId} onAction={handleAction} />}
-        {tab === "stock" && <ProductsStockTab products={products} onOpen={setDrawerId} />}
-        {tab === "categories" && <ProductsCategoriesTab categories={categories} products={products} onChanged={reload} />}
-        {tab === "low_stock" && <ProductsLowStockTab products={products} onOpen={setDrawerId} />}
-        {tab === "archived" && <ProductsArchivedTab products={products} onChanged={reload} />}
-      </TabbedShell>
+      <div className="sticky top-0 z-20 -mx-6 mb-5 border-b border-border bg-background/95 px-6 py-3 backdrop-blur">
+        <div className="flex flex-wrap gap-1.5">
+          {([
+            { key: "catalog" as const, label: "Catalog", count: counts.active + counts.inactive },
+            { key: "stock" as const, label: "Stock levels", count: undefined },
+            { key: "categories" as const, label: "Categories", count: categories.length },
+            { key: "low_stock" as const, label: "Low stock alerts", count: counts.alerts },
+            { key: "archived" as const, label: "Archived", count: counts.archived, muted: true },
+          ]).map((t) => {
+            const active = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold transition ${
+                  active ? "bg-[#0B1A2E] text-white"
+                    : t.muted ? "border border-border bg-card text-muted-foreground/70 hover:text-ink"
+                    : "border border-border bg-card text-[#64748B] hover:text-ink"
+                }`}
+              >
+                <span>{t.label}</span>
+                {t.count !== undefined && (
+                  <span className={`font-mono text-[10.5px] ${active ? "text-white/70" : "text-muted-foreground"}`}>({t.count})</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {tab === "catalog" && <ProductsCatalogTab products={products} categories={categories} onOpen={setDrawerId} onAction={handleAction} />}
+      {tab === "stock" && <ProductsStockTab products={products} onOpen={setDrawerId} />}
+      {tab === "categories" && <ProductsCategoriesTab categories={categories} products={products} onChanged={reload} />}
+      {tab === "low_stock" && <ProductsLowStockTab products={products} onOpen={setDrawerId} />}
+      {tab === "archived" && <ProductsArchivedTab products={products} onChanged={reload} />
 
       {drawerId && (
         <ProductDetailDrawer
