@@ -3,8 +3,8 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBBD } from "@/lib/format";
 import { toast } from "sonner";
-import { Search, Download, Plus, X as XIcon, Printer } from "lucide-react";
-import { openInvoicePdf } from "@/lib/invoices/generate";
+import { Search, Download, Plus, X as XIcon, Printer, RefreshCw } from "lucide-react";
+import { openInvoicePdf, printInvoicesBulk, backfillMissingInvoicePdfs } from "@/lib/invoices/generate";
 import { OrderStatusBadge, type OrderStatus } from "@/components/abl/OrderStatusBadge";
 import {
   TABS, type TabKey, statusToTab, isToday, timeAgo, formatTimeOnly,
@@ -214,6 +214,7 @@ export function OrdersPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <BackfillButton onDone={reload} />
           <button onClick={exportCurrent} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-[12.5px] font-semibold text-ink hover:bg-secondary">
             <Download className="h-3.5 w-3.5" /> Export
           </button>
@@ -351,7 +352,7 @@ function OrdersTable({
   const showEta = tab === "out_for_delivery";
   const showDeliveredAt = tab === "delivered_today";
   const showCancelled = tab === "cancelled";
-  const showInvoice = tab === "all";
+  const showInvoice = tab === "all" || tab === "packed";
 
   const allChecked = rows.length > 0 && rows.every((r) => selected.has(r.id));
   const toggleAll = () => {
@@ -384,7 +385,8 @@ function OrdersTable({
                 {showEta         && <th className="px-2 py-2.5">ETA</th>}
                 {showDeliveredAt && <th className="px-2 py-2.5">Delivered</th>}
                 {showCancelled   && <><th className="px-2 py-2.5">Reason</th></>}
-                {showInvoice     && <><th className="px-2 py-2.5">Invoice</th><th className="px-2 py-2.5">Due</th></>}
+                {showInvoice && tab === "all" && <><th className="px-2 py-2.5">Invoice</th><th className="px-2 py-2.5">Due</th></>}
+                {showInvoice && tab === "packed" && <th className="px-2 py-2.5">Invoice</th>}
                 <th className="w-10 px-2 py-2.5"></th>
               </tr>
             </thead>
@@ -454,11 +456,14 @@ function OrderTableRow({
       {flags.showEta && <td className="px-2 py-2">{order.eta ? formatTimeOnly(order.eta) : "—"}</td>}
       {flags.showDeliveredAt && <td className="px-2 py-2">{formatTimeOnly(order.delivered_at)}</td>}
       {flags.showCancelled && <td className="px-2 py-2 text-muted-foreground">{order.cancellation_reason ?? order.rejection_reason ?? "—"}</td>}
-      {flags.showInvoice && (
+      {flags.showInvoice && tab === "all" && (
         <>
           <td className="px-2 py-2 font-mono text-[11px]">{order.invoice_number ?? "—"}</td>
           <td className="px-2 py-2" style={{ color: overdue ? "#B91C1C" : undefined }}>{order.due_date ?? "—"}</td>
         </>
+      )}
+      {flags.showInvoice && tab === "packed" && (
+        <td className="px-2 py-2 font-mono text-[11px]">{order.invoice_number ?? <span className="text-muted-foreground">—</span>}</td>
       )}
       <td className="px-2 py-2 text-right" onClick={(e) => e.stopPropagation()}>
         <QuickActions order={order} onAction={onAction} />
