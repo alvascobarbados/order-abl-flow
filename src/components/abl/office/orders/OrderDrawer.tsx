@@ -199,12 +199,14 @@ function DetailsTab({ order, customer, items, notes, setNotes, onSaveNotes }: {
                       </div>
                     </td>
                     <td className="px-2 py-2">
-                      <div className="font-semibold text-ink">{it.product?.name ?? "—"}</div>
-                      <div className="font-mono text-[10.5px] text-muted-foreground">{it.product?.sku} · pack {it.product?.pack_size}</div>
+                      <div className="text-[14px] font-semibold text-ink">{it.product?.name ?? "—"}</div>
+                      <div className="mt-0.5 text-[11.5px] text-muted-foreground">
+                        <span className="font-mono">{it.product?.sku}</span> · pack {it.product?.pack_size}
+                      </div>
                     </td>
-                    <td className="px-2 py-2 text-right">{it.quantity}</td>
-                    <td className="px-2 py-2 text-right">{formatBBD(Number(it.unit_price_at_order))}</td>
-                    <td className="px-2 py-2 text-right font-semibold">{formatBBD(Number(it.line_total))}</td>
+                    <td className="px-2 py-2 text-right tabular-nums">{it.quantity}</td>
+                    <td className="px-2 py-2 text-right tabular-nums">{formatBBD(Number(it.unit_price_at_order))}</td>
+                    <td className="px-2 py-2 text-right font-semibold tabular-nums">{formatBBD(Number(it.line_total))}</td>
                   </tr>
                 );
               })}
