@@ -6,7 +6,7 @@ import { OrderStatusBadge, type OrderStatus } from "@/components/abl/OrderStatus
 import { formatBBD, formatDate } from "@/lib/format";
 import { ChevronRight, FileText } from "lucide-react";
 
-export const Route = createFileRoute("/_app/orders/")({ component: OrdersListPage });
+export const Route = createFileRoute("/shop/orders/")({ component: OrdersListPage });
 
 interface OrderRow {
   id: string;
@@ -22,14 +22,19 @@ function OrdersListPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("orders")
-      .select("id, order_number, status, total, placed_at, invoice_number")
-      .order("placed_at", { ascending: false })
-      .then(({ data }) => {
-        setOrders((data ?? []) as OrderRow[]);
-        setLoading(false);
-      });
+    (async () => {
+      // Dev mode: scope to first customer.
+      const { data: customer } = await supabase
+        .from("customers").select("id").order("created_at", { ascending: true }).limit(1).maybeSingle();
+      if (!customer) { setLoading(false); return; }
+      const { data } = await supabase
+        .from("orders")
+        .select("id, order_number, status, total, placed_at, invoice_number")
+        .eq("customer_id", customer.id)
+        .order("placed_at", { ascending: false });
+      setOrders((data ?? []) as OrderRow[]);
+      setLoading(false);
+    })();
   }, []);
 
   return (
@@ -51,14 +56,14 @@ function OrdersListPage() {
           <div className="rounded-xl border border-dashed border-border bg-card p-16 text-center">
             <FileText className="mx-auto h-10 w-10 text-muted-foreground/40" />
             <p className="mt-4 text-sm text-muted-foreground">No orders yet. Browse the catalog to place your first one.</p>
-            <Link to="/" className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">Go to catalog →</Link>
+            <Link to="/shop" className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">Go to catalog →</Link>
           </div>
         ) : (
           <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
             {orders.map(o => (
               <li key={o.id}>
                 <Link
-                  to="/orders/$orderNumber"
+                  to="/shop/orders/$orderNumber"
                   params={{ orderNumber: o.order_number }}
                   className="flex items-center gap-4 px-5 py-4 transition hover:bg-secondary/40"
                 >

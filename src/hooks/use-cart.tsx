@@ -1,6 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
 
 export interface CartLine {
   id: string;
@@ -34,88 +33,67 @@ interface CartCtx {
 }
 
 const Ctx = createContext<CartCtx | undefined>(undefined);
+const KEY = "abl_cart_v1";
+
+interface StoredLine { product_id: string; quantity: number }
+
+function readStore(): StoredLine[] {
+  if (typeof window === "undefined") return [];
+  try { return JSON.parse(window.localStorage.getItem(KEY) || "[]"); } catch { return []; }
+}
+function writeStore(lines: StoredLine[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(KEY, JSON.stringify(lines));
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const { session } = useAuth();
-  const [cartId, setCartId] = useState<string | null>(null);
+  const [stored, setStored] = useState<StoredLine[]>([]);
   const [lines, setLines] = useState<CartLine[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const ensuring = useRef(false);
 
-  const ensureCart = useCallback(async (uid: string): Promise<string | null> => {
-    if (ensuring.current) return cartId;
-    ensuring.current = true;
-    try {
-      const { data: existing } = await supabase.from("carts").select("id").eq("user_id", uid).maybeSingle();
-      if (existing?.id) {
-        setCartId(existing.id);
-        return existing.id;
-      }
-      const { data: created, error } = await supabase
-        .from("carts")
-        .insert({ user_id: uid })
-        .select("id")
-        .single();
-      if (error) {
-        console.error(error);
-        return null;
-      }
-      setCartId(created.id);
-      return created.id;
-    } finally {
-      ensuring.current = false;
-    }
-  }, [cartId]);
+  useEffect(() => { setStored(readStore()); }, []);
 
-  const reload = useCallback(async () => {
-    if (!session?.user?.id) return;
-    const id = cartId ?? (await ensureCart(session.user.id));
-    if (!id) return;
+  const hydrate = useCallback(async (entries: StoredLine[]) => {
+    if (entries.length === 0) { setLines([]); return; }
+    const ids = entries.map(e => e.product_id);
     const { data } = await supabase
-      .from("cart_items")
-      .select("id, product_id, quantity, product:products(id, sku, name, case_price, pack_size, image_url, stock_status, category)")
-      .eq("cart_id", id);
-    setLines((data ?? []) as unknown as CartLine[]);
-  }, [session?.user?.id, cartId, ensureCart]);
+      .from("products")
+      .select("id, sku, name, case_price, pack_size, image_url, stock_status, category")
+      .in("id", ids);
+    const byId = new Map((data ?? []).map(p => [p.id as string, p]));
+    setLines(entries
+      .filter(e => byId.has(e.product_id))
+      .map(e => ({
+        id: e.product_id,
+        product_id: e.product_id,
+        quantity: e.quantity,
+        product: byId.get(e.product_id)! as unknown as CartLine["product"],
+      })));
+  }, []);
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      ensureCart(session.user.id).then(() => reload());
-    } else {
-      setCartId(null);
-      setLines([]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id]);
+  useEffect(() => { hydrate(stored); }, [stored, hydrate]);
+
+  const persist = (next: StoredLine[]) => { writeStore(next); setStored(next); };
 
   const add = async (productId: string, qty = 1) => {
-    if (!session?.user?.id) return;
-    const id = cartId ?? (await ensureCart(session.user.id));
-    if (!id) return;
-    const existing = lines.find(l => l.product_id === productId);
-    if (existing) {
-      await supabase.from("cart_items").update({ quantity: existing.quantity + qty }).eq("id", existing.id);
-    } else {
-      await supabase.from("cart_items").insert({ cart_id: id, product_id: productId, quantity: qty });
-    }
-    await reload();
+    const existing = stored.find(s => s.product_id === productId);
+    const next = existing
+      ? stored.map(s => s.product_id === productId ? { ...s, quantity: s.quantity + qty } : s)
+      : [...stored, { product_id: productId, quantity: qty }];
+    persist(next);
   };
 
   const setQty = async (lineId: string, qty: number) => {
-    if (qty <= 0) {
-      await remove(lineId);
-      return;
-    }
-    await supabase.from("cart_items").update({ quantity: qty }).eq("id", lineId);
-    await reload();
+    if (qty <= 0) { persist(stored.filter(s => s.product_id !== lineId)); return; }
+    persist(stored.map(s => s.product_id === lineId ? { ...s, quantity: qty } : s));
   };
 
   const remove = async (lineId: string) => {
-    await supabase.from("cart_items").delete().eq("id", lineId);
-    setLines(prev => prev.filter(l => l.id !== lineId));
+    persist(stored.filter(s => s.product_id !== lineId));
   };
 
-  const clearLocal = () => setLines([]);
+  const clearLocal = () => persist([]);
+  const reload = async () => hydrate(stored);
 
   const value = useMemo<CartCtx>(() => {
     const count = lines.reduce((s, l) => s + l.quantity, 0);

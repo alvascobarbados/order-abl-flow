@@ -8,9 +8,9 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/login")({ component: LoginPage });
+export const Route = createFileRoute("/sign-in")({ component: SignInPage });
 
-function LoginPage() {
+function SignInPage() {
   const { session, profile, loading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -20,9 +20,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (loading) return;
-    if (session && profile) {
-      navigate({ to: profile.role === "customer" ? "/" : "/coming-soon" });
-    }
+    if (session && profile) navigate({ to: "/" });
   }, [loading, session, profile, navigate]);
 
   const onSignIn = async (e: React.FormEvent) => {
@@ -98,8 +96,8 @@ function LoginPage() {
           </form>
 
           <div className="mt-8 rounded-lg border border-border bg-secondary/50 p-4 text-xs text-muted-foreground">
-            <strong className="font-semibold text-ink">New to ABL?</strong> New accounts are created by ABL staff. Please contact your sales rep or email{" "}
-            <a href="mailto:orders@alvascodistribution.com" className="text-primary underline">orders@alvascodistribution.com</a>.
+            <strong className="font-semibold text-ink">Dev note:</strong> Auth is currently bypassed app-wide. Visit{" "}
+            <a href="/" className="font-semibold text-primary hover:underline">the role picker</a> to navigate the app without signing in.
           </div>
         </div>
       </div>

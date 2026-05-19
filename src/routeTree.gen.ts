@@ -9,124 +9,207 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WarehouseRouteImport } from './routes/warehouse'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as ShopRouteImport } from './routes/shop'
+import { Route as SalesRouteImport } from './routes/sales'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ComingSoonRouteImport } from './routes/coming-soon'
-import { Route as AppRouteImport } from './routes/_app'
-import { Route as AppIndexRouteImport } from './routes/_app/index'
-import { Route as AppAccountRouteImport } from './routes/_app/account'
-import { Route as AppOrdersIndexRouteImport } from './routes/_app/orders/index'
-import { Route as AppOrdersOrderNumberRouteImport } from './routes/_app/orders/$orderNumber'
+import { Route as OfficeRouteImport } from './routes/office'
+import { Route as DriverRouteImport } from './routes/driver'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as ShopIndexRouteImport } from './routes/shop/index'
+import { Route as ShopAccountRouteImport } from './routes/shop/account'
+import { Route as ShopOrdersIndexRouteImport } from './routes/shop/orders/index'
+import { Route as ShopOrdersOrderNumberRouteImport } from './routes/shop/orders/$orderNumber'
 
+const WarehouseRoute = WarehouseRouteImport.update({
+  id: '/warehouse',
+  path: '/warehouse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopRoute = ShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SalesRoute = SalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const OfficeRoute = OfficeRouteImport.update({
+  id: '/office',
+  path: '/office',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ComingSoonRoute = ComingSoonRouteImport.update({
-  id: '/coming-soon',
-  path: '/coming-soon',
+const DriverRoute = DriverRouteImport.update({
+  id: '/driver',
+  path: '/driver',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppIndexRoute = AppIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppAccountRoute = AppAccountRouteImport.update({
+const ShopIndexRoute = ShopIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ShopRoute,
+} as any)
+const ShopAccountRoute = ShopAccountRouteImport.update({
   id: '/account',
   path: '/account',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => ShopRoute,
 } as any)
-const AppOrdersIndexRoute = AppOrdersIndexRouteImport.update({
+const ShopOrdersIndexRoute = ShopOrdersIndexRouteImport.update({
   id: '/orders/',
   path: '/orders/',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => ShopRoute,
 } as any)
-const AppOrdersOrderNumberRoute = AppOrdersOrderNumberRouteImport.update({
+const ShopOrdersOrderNumberRoute = ShopOrdersOrderNumberRouteImport.update({
   id: '/orders/$orderNumber',
   path: '/orders/$orderNumber',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => ShopRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AppIndexRoute
-  '/coming-soon': typeof ComingSoonRoute
-  '/login': typeof LoginRoute
+  '/': typeof IndexRoute
+  '/driver': typeof DriverRoute
+  '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/account': typeof AppAccountRoute
-  '/orders/$orderNumber': typeof AppOrdersOrderNumberRoute
-  '/orders/': typeof AppOrdersIndexRoute
+  '/sales': typeof SalesRoute
+  '/shop': typeof ShopRouteWithChildren
+  '/sign-in': typeof SignInRoute
+  '/warehouse': typeof WarehouseRoute
+  '/shop/account': typeof ShopAccountRoute
+  '/shop/': typeof ShopIndexRoute
+  '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
+  '/shop/orders/': typeof ShopOrdersIndexRoute
 }
 export interface FileRoutesByTo {
-  '/coming-soon': typeof ComingSoonRoute
-  '/login': typeof LoginRoute
+  '/': typeof IndexRoute
+  '/driver': typeof DriverRoute
+  '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/account': typeof AppAccountRoute
-  '/': typeof AppIndexRoute
-  '/orders/$orderNumber': typeof AppOrdersOrderNumberRoute
-  '/orders': typeof AppOrdersIndexRoute
+  '/sales': typeof SalesRoute
+  '/sign-in': typeof SignInRoute
+  '/warehouse': typeof WarehouseRoute
+  '/shop/account': typeof ShopAccountRoute
+  '/shop': typeof ShopIndexRoute
+  '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
+  '/shop/orders': typeof ShopOrdersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_app': typeof AppRouteWithChildren
-  '/coming-soon': typeof ComingSoonRoute
-  '/login': typeof LoginRoute
+  '/': typeof IndexRoute
+  '/driver': typeof DriverRoute
+  '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_app/account': typeof AppAccountRoute
-  '/_app/': typeof AppIndexRoute
-  '/_app/orders/$orderNumber': typeof AppOrdersOrderNumberRoute
-  '/_app/orders/': typeof AppOrdersIndexRoute
+  '/sales': typeof SalesRoute
+  '/shop': typeof ShopRouteWithChildren
+  '/sign-in': typeof SignInRoute
+  '/warehouse': typeof WarehouseRoute
+  '/shop/account': typeof ShopAccountRoute
+  '/shop/': typeof ShopIndexRoute
+  '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
+  '/shop/orders/': typeof ShopOrdersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/coming-soon'
-    | '/login'
+    | '/driver'
+    | '/office'
     | '/reset-password'
-    | '/account'
-    | '/orders/$orderNumber'
-    | '/orders/'
+    | '/sales'
+    | '/shop'
+    | '/sign-in'
+    | '/warehouse'
+    | '/shop/account'
+    | '/shop/'
+    | '/shop/orders/$orderNumber'
+    | '/shop/orders/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/coming-soon'
-    | '/login'
-    | '/reset-password'
-    | '/account'
     | '/'
-    | '/orders/$orderNumber'
-    | '/orders'
+    | '/driver'
+    | '/office'
+    | '/reset-password'
+    | '/sales'
+    | '/sign-in'
+    | '/warehouse'
+    | '/shop/account'
+    | '/shop'
+    | '/shop/orders/$orderNumber'
+    | '/shop/orders'
   id:
     | '__root__'
-    | '/_app'
-    | '/coming-soon'
-    | '/login'
+    | '/'
+    | '/driver'
+    | '/office'
     | '/reset-password'
-    | '/_app/account'
-    | '/_app/'
-    | '/_app/orders/$orderNumber'
-    | '/_app/orders/'
+    | '/sales'
+    | '/shop'
+    | '/sign-in'
+    | '/warehouse'
+    | '/shop/account'
+    | '/shop/'
+    | '/shop/orders/$orderNumber'
+    | '/shop/orders/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AppRoute: typeof AppRouteWithChildren
-  ComingSoonRoute: typeof ComingSoonRoute
-  LoginRoute: typeof LoginRoute
+  IndexRoute: typeof IndexRoute
+  DriverRoute: typeof DriverRoute
+  OfficeRoute: typeof OfficeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SalesRoute: typeof SalesRoute
+  ShopRoute: typeof ShopRouteWithChildren
+  SignInRoute: typeof SignInRoute
+  WarehouseRoute: typeof WarehouseRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/warehouse': {
+      id: '/warehouse'
+      path: '/warehouse'
+      fullPath: '/warehouse'
+      preLoaderRoute: typeof WarehouseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop': {
+      id: '/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof ShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sales': {
+      id: '/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof SalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -134,79 +217,83 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/office': {
+      id: '/office'
+      path: '/office'
+      fullPath: '/office'
+      preLoaderRoute: typeof OfficeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/coming-soon': {
-      id: '/coming-soon'
-      path: '/coming-soon'
-      fullPath: '/coming-soon'
-      preLoaderRoute: typeof ComingSoonRouteImport
+    '/driver': {
+      id: '/driver'
+      path: '/driver'
+      fullPath: '/driver'
+      preLoaderRoute: typeof DriverRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app/': {
-      id: '/_app/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_app/account': {
-      id: '/_app/account'
+    '/shop/': {
+      id: '/shop/'
+      path: '/'
+      fullPath: '/shop/'
+      preLoaderRoute: typeof ShopIndexRouteImport
+      parentRoute: typeof ShopRoute
+    }
+    '/shop/account': {
+      id: '/shop/account'
       path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AppAccountRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/shop/account'
+      preLoaderRoute: typeof ShopAccountRouteImport
+      parentRoute: typeof ShopRoute
     }
-    '/_app/orders/': {
-      id: '/_app/orders/'
+    '/shop/orders/': {
+      id: '/shop/orders/'
       path: '/orders'
-      fullPath: '/orders/'
-      preLoaderRoute: typeof AppOrdersIndexRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/shop/orders/'
+      preLoaderRoute: typeof ShopOrdersIndexRouteImport
+      parentRoute: typeof ShopRoute
     }
-    '/_app/orders/$orderNumber': {
-      id: '/_app/orders/$orderNumber'
+    '/shop/orders/$orderNumber': {
+      id: '/shop/orders/$orderNumber'
       path: '/orders/$orderNumber'
-      fullPath: '/orders/$orderNumber'
-      preLoaderRoute: typeof AppOrdersOrderNumberRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/shop/orders/$orderNumber'
+      preLoaderRoute: typeof ShopOrdersOrderNumberRouteImport
+      parentRoute: typeof ShopRoute
     }
   }
 }
 
-interface AppRouteChildren {
-  AppAccountRoute: typeof AppAccountRoute
-  AppIndexRoute: typeof AppIndexRoute
-  AppOrdersOrderNumberRoute: typeof AppOrdersOrderNumberRoute
-  AppOrdersIndexRoute: typeof AppOrdersIndexRoute
+interface ShopRouteChildren {
+  ShopAccountRoute: typeof ShopAccountRoute
+  ShopIndexRoute: typeof ShopIndexRoute
+  ShopOrdersOrderNumberRoute: typeof ShopOrdersOrderNumberRoute
+  ShopOrdersIndexRoute: typeof ShopOrdersIndexRoute
 }
 
-const AppRouteChildren: AppRouteChildren = {
-  AppAccountRoute: AppAccountRoute,
-  AppIndexRoute: AppIndexRoute,
-  AppOrdersOrderNumberRoute: AppOrdersOrderNumberRoute,
-  AppOrdersIndexRoute: AppOrdersIndexRoute,
+const ShopRouteChildren: ShopRouteChildren = {
+  ShopAccountRoute: ShopAccountRoute,
+  ShopIndexRoute: ShopIndexRoute,
+  ShopOrdersOrderNumberRoute: ShopOrdersOrderNumberRoute,
+  ShopOrdersIndexRoute: ShopOrdersIndexRoute,
 }
 
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+const ShopRouteWithChildren = ShopRoute._addFileChildren(ShopRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  AppRoute: AppRouteWithChildren,
-  ComingSoonRoute: ComingSoonRoute,
-  LoginRoute: LoginRoute,
+  IndexRoute: IndexRoute,
+  DriverRoute: DriverRoute,
+  OfficeRoute: OfficeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SalesRoute: SalesRoute,
+  ShopRoute: ShopRouteWithChildren,
+  SignInRoute: SignInRoute,
+  WarehouseRoute: WarehouseRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

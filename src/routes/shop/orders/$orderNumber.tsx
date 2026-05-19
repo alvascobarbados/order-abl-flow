@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/abl/AppHeader";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Check, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/orders/$orderNumber")({ component: OrderDetailPage });
+export const Route = createFileRoute("/shop/orders/$orderNumber")({ component: OrderDetailPage });
 
 const STAGES: { key: OrderStatus; label: string }[] = [
   { key: "pending_approval", label: "Placed" },
@@ -74,7 +74,7 @@ function OrderDetailPage() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <button onClick={() => navigate({ to: "/orders" })} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-ink">
+        <button onClick={() => navigate({ to: "/shop/orders" })} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-ink">
           <ArrowLeft className="h-4 w-4" /> Back to orders
         </button>
 

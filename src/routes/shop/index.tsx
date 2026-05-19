@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
-export const Route = createFileRoute("/_app/")({ component: CatalogPage });
+export const Route = createFileRoute("/shop/")({ component: CatalogPage });
 
 const CATEGORIES = ["All", "Containers", "Cutlery", "Bowls", "Clamshells", "Cups & Lids", "Bags", "Napkins", "Cleaning"] as const;
 type Sort = "popular" | "name" | "price_asc" | "price_desc";
