@@ -357,28 +357,43 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_scan_at: string | null
           line_total: number
           order_id: string
+          picked_at: string | null
+          picked_quantity: number
           product_id: string
           quantity: number
+          shortfall_note: string | null
+          shortfall_quantity: number
           unit_price_at_order: number
         }
         Insert: {
           created_at?: string
           id?: string
+          last_scan_at?: string | null
           line_total: number
           order_id: string
+          picked_at?: string | null
+          picked_quantity?: number
           product_id: string
           quantity: number
+          shortfall_note?: string | null
+          shortfall_quantity?: number
           unit_price_at_order: number
         }
         Update: {
           created_at?: string
           id?: string
+          last_scan_at?: string | null
           line_total?: number
           order_id?: string
+          picked_at?: string | null
+          picked_quantity?: number
           product_id?: string
           quantity?: number
+          shortfall_note?: string | null
+          shortfall_quantity?: number
           unit_price_at_order?: number
         }
         Relationships: [
@@ -412,6 +427,7 @@ export type Database = {
           assigned_picker_name: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
+          carton_count: number | null
           created_at: string
           customer_id: string
           delivered_at: string | null
@@ -427,9 +443,14 @@ export type Database = {
           invoice_number: string | null
           invoiced_at: string | null
           order_number: string | null
+          pack_notes: string | null
+          pack_photo_url: string | null
           packed_at: string | null
+          packed_by_profile_id: string | null
           paid_at: string | null
           picked_at: string | null
+          picked_by_profile_id: string | null
+          picking_paused_at: string | null
           picking_started_at: string | null
           placed_at: string
           placed_by_profile_id: string | null
@@ -450,6 +471,7 @@ export type Database = {
           assigned_picker_name?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          carton_count?: number | null
           created_at?: string
           customer_id: string
           delivered_at?: string | null
@@ -465,9 +487,14 @@ export type Database = {
           invoice_number?: string | null
           invoiced_at?: string | null
           order_number?: string | null
+          pack_notes?: string | null
+          pack_photo_url?: string | null
           packed_at?: string | null
+          packed_by_profile_id?: string | null
           paid_at?: string | null
           picked_at?: string | null
+          picked_by_profile_id?: string | null
+          picking_paused_at?: string | null
           picking_started_at?: string | null
           placed_at?: string
           placed_by_profile_id?: string | null
@@ -488,6 +515,7 @@ export type Database = {
           assigned_picker_name?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          carton_count?: number | null
           created_at?: string
           customer_id?: string
           delivered_at?: string | null
@@ -503,9 +531,14 @@ export type Database = {
           invoice_number?: string | null
           invoiced_at?: string | null
           order_number?: string | null
+          pack_notes?: string | null
+          pack_photo_url?: string | null
           packed_at?: string | null
+          packed_by_profile_id?: string | null
           paid_at?: string | null
           picked_at?: string | null
+          picked_by_profile_id?: string | null
+          picking_paused_at?: string | null
           picking_started_at?: string | null
           placed_at?: string
           placed_by_profile_id?: string | null
@@ -659,6 +692,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      picking_events: {
+        Row: {
+          event_type: string
+          id: string
+          meta: Json | null
+          occurred_at: string
+          order_id: string
+          order_item_id: string | null
+          picker_profile_id: string | null
+          quantity: number | null
+        }
+        Insert: {
+          event_type: string
+          id?: string
+          meta?: Json | null
+          occurred_at?: string
+          order_id: string
+          order_item_id?: string | null
+          picker_profile_id?: string | null
+          quantity?: number | null
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          meta?: Json | null
+          occurred_at?: string
+          order_id?: string
+          order_item_id?: string | null
+          picker_profile_id?: string | null
+          quantity?: number | null
+        }
+        Relationships: []
       }
       products: {
         Row: {
@@ -1006,6 +1072,7 @@ export type Database = {
         | "customer_return"
         | "internal_use"
         | "other"
+        | "shortfall"
       stock_status: "in_stock" | "low_stock" | "out_of_stock"
       stock_status_override: "auto" | "in_stock" | "low_stock" | "out_of_stock"
     }
@@ -1166,6 +1233,7 @@ export const Constants = {
         "customer_return",
         "internal_use",
         "other",
+        "shortfall",
       ],
       stock_status: ["in_stock", "low_stock", "out_of_stock"],
       stock_status_override: ["auto", "in_stock", "low_stock", "out_of_stock"],
