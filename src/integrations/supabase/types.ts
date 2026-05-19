@@ -562,6 +562,7 @@ export type Database = {
           invoice_number: string | null
           invoice_pdf_generated_at: string | null
           invoice_pdf_url: string | null
+          invoice_qr_code_data: string | null
           invoiced_at: string | null
           last_delivery_attempt_at: string | null
           order_number: string | null
@@ -616,6 +617,7 @@ export type Database = {
           invoice_number?: string | null
           invoice_pdf_generated_at?: string | null
           invoice_pdf_url?: string | null
+          invoice_qr_code_data?: string | null
           invoiced_at?: string | null
           last_delivery_attempt_at?: string | null
           order_number?: string | null
@@ -670,6 +672,7 @@ export type Database = {
           invoice_number?: string | null
           invoice_pdf_generated_at?: string | null
           invoice_pdf_url?: string | null
+          invoice_qr_code_data?: string | null
           invoiced_at?: string | null
           last_delivery_attempt_at?: string | null
           order_number?: string | null
@@ -1097,18 +1100,42 @@ export type Database = {
       system_settings: {
         Row: {
           auto_invoice_on_packed: boolean
+          bank_account: string | null
+          bank_branch: string | null
+          bank_name: string | null
+          company_address: string
+          company_email: string
+          company_name: string
+          company_phone: string
           id: number
           updated_at: string
+          vat_rate: number
         }
         Insert: {
           auto_invoice_on_packed?: boolean
+          bank_account?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          company_address?: string
+          company_email?: string
+          company_name?: string
+          company_phone?: string
           id?: number
           updated_at?: string
+          vat_rate?: number
         }
         Update: {
           auto_invoice_on_packed?: boolean
+          bank_account?: string | null
+          bank_branch?: string | null
+          bank_name?: string | null
+          company_address?: string
+          company_email?: string
+          company_name?: string
+          company_phone?: string
           id?: number
           updated_at?: string
+          vat_rate?: number
         }
         Relationships: []
       }
