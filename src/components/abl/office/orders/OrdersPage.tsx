@@ -336,9 +336,10 @@ export function OrdersPage() {
 // ---------- Table ----------
 
 function OrdersTable({
-  tab, rows, customers, selected, onSelectChange, onRowClick, onAction,
+  tab, rows, customers, itemSummary, selected, onSelectChange, onRowClick, onAction,
 }: {
   tab: TabKey; rows: OrderRow[]; customers: Record<string, CustomerLite>;
+  itemSummary: Record<string, { lines: number; cases: number }>;
   selected: Set<string>; onSelectChange: (s: Set<string>) => void;
   onRowClick: (id: string) => void; onAction: (id: string, kind: string) => void;
 }) {
