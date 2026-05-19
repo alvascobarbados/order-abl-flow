@@ -57,6 +57,13 @@ export type Database = {
             foreignKeyName: "activity_log_related_customer_id_fkey"
             columns: ["related_customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_account_summary"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "activity_log_related_customer_id_fkey"
+            columns: ["related_customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -102,6 +109,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cart_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_account_summary"
+            referencedColumns: ["customer_id"]
+          },
           {
             foreignKeyName: "cart_customer_id_fkey"
             columns: ["customer_id"]
@@ -352,6 +366,7 @@ export type Database = {
           invoice_number: string | null
           invoiced_at: string | null
           order_number: string | null
+          paid_at: string | null
           picked_at: string | null
           placed_at: string
           placed_by_profile_id: string | null
@@ -374,6 +389,7 @@ export type Database = {
           invoice_number?: string | null
           invoiced_at?: string | null
           order_number?: string | null
+          paid_at?: string | null
           picked_at?: string | null
           placed_at?: string
           placed_by_profile_id?: string | null
@@ -396,6 +412,7 @@ export type Database = {
           invoice_number?: string | null
           invoiced_at?: string | null
           order_number?: string | null
+          paid_at?: string | null
           picked_at?: string | null
           placed_at?: string
           placed_by_profile_id?: string | null
@@ -418,12 +435,128 @@ export type Database = {
             foreignKeyName: "orders_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_account_summary"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "orders_placed_by_profile_id_fkey"
             columns: ["placed_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_allocations: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          order_id: string | null
+          payment_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          payment_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          payment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_allocations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_allocations_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          cleared_at: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_number: string | null
+          received_by_profile_id: string | null
+          reference: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          cleared_at?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_number?: string | null
+          received_by_profile_id?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cleared_at?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_number?: string | null
+          received_by_profile_id?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_account_summary"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_received_by_profile_id_fkey"
+            columns: ["received_by_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -541,6 +674,13 @@ export type Database = {
             foreignKeyName: "stock_notification_requests_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_account_summary"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "stock_notification_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -555,7 +695,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      customer_account_summary: {
+        Row: {
+          available_credit: number | null
+          balance_owed: number | null
+          count_overdue_invoices: number | null
+          customer_id: string | null
+          last_payment_amount: number | null
+          last_payment_date: string | null
+          oldest_unpaid_invoice_age_days: number | null
+          total_invoiced: number | null
+          total_paid: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       current_customer_id: { Args: never; Returns: string }
@@ -567,6 +720,10 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      recompute_order_paid_status: {
+        Args: { _order_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "customer" | "office" | "warehouse" | "delivery" | "admin"
@@ -581,6 +738,14 @@ export type Database = {
         | "invoiced"
         | "paid"
         | "cancelled"
+      payment_method:
+        | "cash"
+        | "cheque"
+        | "bank_transfer"
+        | "card"
+        | "credit_note"
+        | "other"
+      payment_status: "pending" | "cleared" | "bounced" | "cancelled"
       pricing_tier: "standard" | "volume" | "key_account"
       stock_status: "in_stock" | "low_stock" | "out_of_stock"
     }
@@ -723,6 +888,15 @@ export const Constants = {
         "paid",
         "cancelled",
       ],
+      payment_method: [
+        "cash",
+        "cheque",
+        "bank_transfer",
+        "card",
+        "credit_note",
+        "other",
+      ],
+      payment_status: ["pending", "cleared", "bounced", "cancelled"],
       pricing_tier: ["standard", "volume", "key_account"],
       stock_status: ["in_stock", "low_stock", "out_of_stock"],
     },
