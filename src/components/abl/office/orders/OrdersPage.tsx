@@ -304,6 +304,8 @@ export function OrdersPage() {
       {selected.size > 0 && (
         <BulkBar
           tab={tab} count={selected.size}
+          ids={Array.from(selected)}
+          orders={filtered.filter((o) => selected.has(o.id))}
           onClear={() => setSelected(new Set())}
           onAction={(kind, reason) => bulkRun(kind, reason)}
           onExport={() => {
@@ -513,10 +515,11 @@ function PrintInvoiceButton({ orderId }: { orderId: string }) {
 
 // ---------- Bulk action bar ----------
 
-function BulkBar({ tab, count, onClear, onAction, onExport }: {
-  tab: TabKey; count: number; onClear: () => void;
+function BulkBar({ tab, count, ids, orders, onClear, onAction, onExport }: {
+  tab: TabKey; count: number; ids: string[]; orders: OrderRow[]; onClear: () => void;
   onAction: (kind: ConfirmAction["kind"], reason?: string) => void; onExport: () => void;
 }) {
+  const invoicedIds = orders.filter((o) => o.invoice_number).map((o) => o.id);
   return (
     <div className="fixed bottom-4 left-1/2 z-40 -translate-x-1/2">
       <div className="flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-white shadow-2xl">
@@ -527,7 +530,9 @@ function BulkBar({ tab, count, onClear, onAction, onExport }: {
         </>}
         {tab === "approved" && <BulkBtn label="Send to warehouse" onClick={() => onAction("send-to-warehouse")} />}
         {tab === "picking" && <BulkBtn label="Mark all packed" color="#6D28D9" onClick={() => onAction("mark-packed")} />}
-        {tab === "packed" && <BulkPrintInvoicesBtn ids={[]} />}
+        {tab === "packed" && invoicedIds.length > 0 && (
+          <BulkPrintInvoicesBtn ids={invoicedIds} count={invoicedIds.length} />
+        )}
         {tab === "delivered_today" && <BulkBtn label="Mark all invoiced" color="#BE185D" onClick={() => onAction("mark-invoiced")} />}
         <BulkBtn label="Export selected" onClick={onExport} />
         <button onClick={onClear} className="rounded-full px-2 py-0.5 text-[11px] text-white/70 hover:text-white">Cancel</button>
@@ -537,6 +542,49 @@ function BulkBar({ tab, count, onClear, onAction, onExport }: {
 }
 function BulkBtn({ label, color = "#1F3553", onClick }: { label: string; color?: string; onClick: () => void }) {
   return <button onClick={onClick} className="rounded-full px-3 py-1 text-[12px] font-semibold text-white" style={{ backgroundColor: color }}>{label}</button>;
+}
+
+function BulkPrintInvoicesBtn({ ids, count }: { ids: string[]; count: number }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      onClick={async () => { setBusy(true); try { await printInvoicesBulk(ids); } finally { setBusy(false); } }}
+      disabled={busy}
+      className="inline-flex items-center gap-1.5 rounded-full bg-[#6D28D9] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-60"
+    >
+      <Printer className="h-3 w-3" /> {busy ? "Building…" : `Print ${count} invoice${count === 1 ? "" : "s"}`}
+    </button>
+  );
+}
+
+function BackfillButton({ onDone }: { onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const run = async () => {
+    setBusy(true);
+    setProgress({ done: 0, total: 0 });
+    try {
+      const res = await backfillMissingInvoicePdfs((done, total) => setProgress({ done, total }));
+      if (res.generated === 0 && res.failed === 0) {
+        toast.info("No invoices needed regenerating");
+      } else {
+        toast.success(`Backfill complete · ${res.generated} generated${res.failed ? ` · ${res.failed} failed` : ""}`);
+      }
+      onDone();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Backfill failed");
+    } finally {
+      setBusy(false);
+      setProgress(null);
+    }
+  };
+  return (
+    <button onClick={run} disabled={busy} title="Generate any missing invoice PDFs"
+      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-[12.5px] font-semibold text-ink hover:bg-secondary disabled:opacity-60">
+      <RefreshCw className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} />
+      {busy && progress ? `Backfill ${progress.done}/${progress.total}` : "Backfill PDFs"}
+    </button>
+  );
 }
 
 // ---------- Action modal switch ----------
