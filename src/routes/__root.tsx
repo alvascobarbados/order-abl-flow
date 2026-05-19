@@ -14,6 +14,7 @@ import {
 import { AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
 import { RoleProvider } from "@/hooks/use-role";
+import { ActiveCustomerProvider } from "@/hooks/use-active-customer";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
