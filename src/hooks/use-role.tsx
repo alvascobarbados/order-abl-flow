@@ -7,7 +7,7 @@ export const ROLE_META: Record<Role, { label: string; home: string }> = {
   sales:     { label: "Sales Rep",   home: "/sales" },
   office:    { label: "Office Staff", home: "/office" },
   warehouse: { label: "Warehouse",   home: "/warehouse" },
-  driver:    { label: "Driver",      home: "/driver" },
+  driver:    { label: "Driver",      home: "/delivery" },
 };
 
 interface RoleCtx {

@@ -15,6 +15,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
 import { RoleProvider } from "@/hooks/use-role";
 import { PickerProvider } from "@/hooks/use-picker";
+import { DriverProvider } from "@/hooks/use-driver";
 import { ActiveCustomerProvider } from "@/hooks/use-active-customer";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -85,12 +86,14 @@ function RootComponent() {
       <AuthProvider>
         <RoleProvider>
           <PickerProvider>
-            <ActiveCustomerProvider>
-              <CartProvider>
-                <Outlet />
-                <Toaster richColors position="top-right" />
-              </CartProvider>
-            </ActiveCustomerProvider>
+            <DriverProvider>
+              <ActiveCustomerProvider>
+                <CartProvider>
+                  <Outlet />
+                  <Toaster richColors position="top-right" />
+                </CartProvider>
+              </ActiveCustomerProvider>
+            </DriverProvider>
           </PickerProvider>
         </RoleProvider>
       </AuthProvider>

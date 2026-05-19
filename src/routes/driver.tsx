@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderRoleView } from "@/components/abl/PlaceholderRoleView";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/driver")({
-  component: () => <PlaceholderRoleView title="Driver view — coming soon" blurb="Today's runs, delivery confirmations and proof-of-delivery capture will live here." />,
+  beforeLoad: () => { throw redirect({ to: "/delivery" }); },
 });
