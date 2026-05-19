@@ -13,6 +13,7 @@ import {
 } from "@tanstack/react-router";
 import { AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
+import { RoleProvider } from "@/hooks/use-role";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -80,10 +81,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CartProvider>
-          <Outlet />
-          <Toaster richColors position="top-right" />
-        </CartProvider>
+        <RoleProvider>
+          <CartProvider>
+            <Outlet />
+            <Toaster richColors position="top-right" />
+          </CartProvider>
+        </RoleProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

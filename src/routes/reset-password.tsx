@@ -20,7 +20,7 @@ function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password: pw });
     setSubmitting(false);
     if (error) toast.error(error.message);
-    else { toast.success("Password updated."); navigate({ to: "/" }); }
+    else { toast.success("Password updated."); navigate({ to: "/sign-in" }); }
   };
 
   return (
