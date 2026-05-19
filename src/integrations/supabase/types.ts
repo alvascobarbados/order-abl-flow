@@ -409,71 +409,116 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by_profile_id: string | null
+          assigned_picker_name: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           created_at: string
           customer_id: string
           delivered_at: string | null
+          delivered_to_name: string | null
           delivery_notes: string | null
+          dispatched_at: string | null
+          driver_name: string | null
+          driver_profile_id: string | null
+          due_date: string | null
+          eta: string | null
           id: string
           internal_notes: string | null
           invoice_number: string | null
           invoiced_at: string | null
           order_number: string | null
+          packed_at: string | null
           paid_at: string | null
           picked_at: string | null
+          picking_started_at: string | null
           placed_at: string
           placed_by_profile_id: string | null
+          placed_on_behalf: boolean
+          previous_status: Database["public"]["Enums"]["order_status"] | null
           rejection_reason: string | null
+          restored_at: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal: number
           total: number
           updated_at: string
           vat_amount: number
+          vehicle_id: string | null
         }
         Insert: {
           approved_at?: string | null
           approved_by_profile_id?: string | null
+          assigned_picker_name?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
           customer_id: string
           delivered_at?: string | null
+          delivered_to_name?: string | null
           delivery_notes?: string | null
+          dispatched_at?: string | null
+          driver_name?: string | null
+          driver_profile_id?: string | null
+          due_date?: string | null
+          eta?: string | null
           id?: string
           internal_notes?: string | null
           invoice_number?: string | null
           invoiced_at?: string | null
           order_number?: string | null
+          packed_at?: string | null
           paid_at?: string | null
           picked_at?: string | null
+          picking_started_at?: string | null
           placed_at?: string
           placed_by_profile_id?: string | null
+          placed_on_behalf?: boolean
+          previous_status?: Database["public"]["Enums"]["order_status"] | null
           rejection_reason?: string | null
+          restored_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
           total?: number
           updated_at?: string
           vat_amount?: number
+          vehicle_id?: string | null
         }
         Update: {
           approved_at?: string | null
           approved_by_profile_id?: string | null
+          assigned_picker_name?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
           customer_id?: string
           delivered_at?: string | null
+          delivered_to_name?: string | null
           delivery_notes?: string | null
+          dispatched_at?: string | null
+          driver_name?: string | null
+          driver_profile_id?: string | null
+          due_date?: string | null
+          eta?: string | null
           id?: string
           internal_notes?: string | null
           invoice_number?: string | null
           invoiced_at?: string | null
           order_number?: string | null
+          packed_at?: string | null
           paid_at?: string | null
           picked_at?: string | null
+          picking_started_at?: string | null
           placed_at?: string
           placed_by_profile_id?: string | null
+          placed_on_behalf?: boolean
+          previous_status?: Database["public"]["Enums"]["order_status"] | null
           rejection_reason?: string | null
+          restored_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
           total?: number
           updated_at?: string
           vat_amount?: number
+          vehicle_id?: string | null
         }
         Relationships: [
           {
