@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { OfficeComingSoon } from "@/components/abl/office/OfficeComingSoon";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/office/pending")({
-  component: () => <OfficeComingSoon title="Pending Approval" blurb="Dedicated full-page queue for reviewing every order awaiting approval, with bulk actions and filters." />,
+  component: () => <Navigate to="/office/orders" search={{ tab: "pending" } as any} replace />,
 });

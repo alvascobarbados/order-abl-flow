@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { OfficeComingSoon } from "@/components/abl/office/OfficeComingSoon";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/office/receiving")({
-  component: () => <OfficeComingSoon title="Receiving" blurb="Inbound purchase orders, supplier deliveries, and stock receipts." />,
+  component: () => <Navigate to="/office/purchasing" search={{ tab: "receiving" } as any} replace />,
 });
