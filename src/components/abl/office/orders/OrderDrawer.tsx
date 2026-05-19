@@ -436,7 +436,7 @@ function Row({ label, value, bold, muted }: { label: string; value: string; bold
   return (
     <div className="flex items-center justify-between py-0.5 text-[12.5px]">
       <span className={muted ? "text-muted-foreground" : "text-ink"}>{label}</span>
-      <span className={bold ? "font-bold text-ink" : ""}>{value}</span>
+      <span className={`tabular-nums ${bold ? "font-bold text-ink" : ""}`}>{value}</span>
     </div>
   );
 }
@@ -444,7 +444,7 @@ function Stat({ label, value, mono, bold, highlight }: { label: string; value: s
   return (
     <div className="rounded-lg border border-border bg-card p-3">
       <div className="text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.08em" }}>{label}</div>
-      <div className={`mt-1 text-[15px] ${bold ? "font-extrabold" : "font-semibold"} ${mono ? "" : ""}`} style={{ color: highlight ?? "#0F172A" }}>{value}</div>
+      <div className={`mt-1 text-[15px] tabular-nums ${bold ? "font-extrabold" : "font-semibold"} ${mono ? "font-mono" : ""}`} style={{ color: highlight ?? "#0F172A" }}>{value}</div>
     </div>
   );
 }
