@@ -527,6 +527,7 @@ function BulkBar({ tab, count, onClear, onAction, onExport }: {
         </>}
         {tab === "approved" && <BulkBtn label="Send to warehouse" onClick={() => onAction("send-to-warehouse")} />}
         {tab === "picking" && <BulkBtn label="Mark all packed" color="#6D28D9" onClick={() => onAction("mark-packed")} />}
+        {tab === "packed" && <BulkPrintInvoicesBtn ids={[]} />}
         {tab === "delivered_today" && <BulkBtn label="Mark all invoiced" color="#BE185D" onClick={() => onAction("mark-invoiced")} />}
         <BulkBtn label="Export selected" onClick={onExport} />
         <button onClick={onClear} className="rounded-full px-2 py-0.5 text-[11px] text-white/70 hover:text-white">Cancel</button>
