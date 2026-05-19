@@ -9,124 +9,141 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WarehouseRouteImport } from './routes/warehouse'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as SalesRouteImport } from './routes/sales'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ComingSoonRouteImport } from './routes/coming-soon'
-import { Route as AppRouteImport } from './routes/_app'
-import { Route as AppIndexRouteImport } from './routes/_app/index'
-import { Route as AppAccountRouteImport } from './routes/_app/account'
-import { Route as AppOrdersIndexRouteImport } from './routes/_app/orders/index'
-import { Route as AppOrdersOrderNumberRouteImport } from './routes/_app/orders/$orderNumber'
+import { Route as OfficeRouteImport } from './routes/office'
+import { Route as DriverRouteImport } from './routes/driver'
+import { Route as IndexRouteImport } from './routes/index'
 
+const WarehouseRoute = WarehouseRouteImport.update({
+  id: '/warehouse',
+  path: '/warehouse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SalesRoute = SalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const OfficeRoute = OfficeRouteImport.update({
+  id: '/office',
+  path: '/office',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ComingSoonRoute = ComingSoonRouteImport.update({
-  id: '/coming-soon',
-  path: '/coming-soon',
+const DriverRoute = DriverRouteImport.update({
+  id: '/driver',
+  path: '/driver',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppIndexRoute = AppIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAccountRoute = AppAccountRouteImport.update({
-  id: '/account',
-  path: '/account',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppOrdersIndexRoute = AppOrdersIndexRouteImport.update({
-  id: '/orders/',
-  path: '/orders/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppOrdersOrderNumberRoute = AppOrdersOrderNumberRouteImport.update({
-  id: '/orders/$orderNumber',
-  path: '/orders/$orderNumber',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AppIndexRoute
-  '/coming-soon': typeof ComingSoonRoute
-  '/login': typeof LoginRoute
+  '/': typeof IndexRoute
+  '/driver': typeof DriverRoute
+  '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/account': typeof AppAccountRoute
-  '/orders/$orderNumber': typeof AppOrdersOrderNumberRoute
-  '/orders/': typeof AppOrdersIndexRoute
+  '/sales': typeof SalesRoute
+  '/sign-in': typeof SignInRoute
+  '/warehouse': typeof WarehouseRoute
 }
 export interface FileRoutesByTo {
-  '/coming-soon': typeof ComingSoonRoute
-  '/login': typeof LoginRoute
+  '/': typeof IndexRoute
+  '/driver': typeof DriverRoute
+  '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/account': typeof AppAccountRoute
-  '/': typeof AppIndexRoute
-  '/orders/$orderNumber': typeof AppOrdersOrderNumberRoute
-  '/orders': typeof AppOrdersIndexRoute
+  '/sales': typeof SalesRoute
+  '/sign-in': typeof SignInRoute
+  '/warehouse': typeof WarehouseRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_app': typeof AppRouteWithChildren
-  '/coming-soon': typeof ComingSoonRoute
-  '/login': typeof LoginRoute
+  '/': typeof IndexRoute
+  '/driver': typeof DriverRoute
+  '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_app/account': typeof AppAccountRoute
-  '/_app/': typeof AppIndexRoute
-  '/_app/orders/$orderNumber': typeof AppOrdersOrderNumberRoute
-  '/_app/orders/': typeof AppOrdersIndexRoute
+  '/sales': typeof SalesRoute
+  '/sign-in': typeof SignInRoute
+  '/warehouse': typeof WarehouseRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/coming-soon'
-    | '/login'
+    | '/driver'
+    | '/office'
     | '/reset-password'
-    | '/account'
-    | '/orders/$orderNumber'
-    | '/orders/'
+    | '/sales'
+    | '/sign-in'
+    | '/warehouse'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/coming-soon'
-    | '/login'
-    | '/reset-password'
-    | '/account'
     | '/'
-    | '/orders/$orderNumber'
-    | '/orders'
+    | '/driver'
+    | '/office'
+    | '/reset-password'
+    | '/sales'
+    | '/sign-in'
+    | '/warehouse'
   id:
     | '__root__'
-    | '/_app'
-    | '/coming-soon'
-    | '/login'
+    | '/'
+    | '/driver'
+    | '/office'
     | '/reset-password'
-    | '/_app/account'
-    | '/_app/'
-    | '/_app/orders/$orderNumber'
-    | '/_app/orders/'
+    | '/sales'
+    | '/sign-in'
+    | '/warehouse'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AppRoute: typeof AppRouteWithChildren
-  ComingSoonRoute: typeof ComingSoonRoute
-  LoginRoute: typeof LoginRoute
+  IndexRoute: typeof IndexRoute
+  DriverRoute: typeof DriverRoute
+  OfficeRoute: typeof OfficeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SalesRoute: typeof SalesRoute
+  SignInRoute: typeof SignInRoute
+  WarehouseRoute: typeof WarehouseRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/warehouse': {
+      id: '/warehouse'
+      path: '/warehouse'
+      fullPath: '/warehouse'
+      preLoaderRoute: typeof WarehouseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sales': {
+      id: '/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof SalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -134,80 +151,49 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/office': {
+      id: '/office'
+      path: '/office'
+      fullPath: '/office'
+      preLoaderRoute: typeof OfficeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/coming-soon': {
-      id: '/coming-soon'
-      path: '/coming-soon'
-      fullPath: '/coming-soon'
-      preLoaderRoute: typeof ComingSoonRouteImport
+    '/driver': {
+      id: '/driver'
+      path: '/driver'
+      fullPath: '/driver'
+      preLoaderRoute: typeof DriverRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app/': {
-      id: '/_app/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/account': {
-      id: '/_app/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AppAccountRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/orders/': {
-      id: '/_app/orders/'
-      path: '/orders'
-      fullPath: '/orders/'
-      preLoaderRoute: typeof AppOrdersIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/orders/$orderNumber': {
-      id: '/_app/orders/$orderNumber'
-      path: '/orders/$orderNumber'
-      fullPath: '/orders/$orderNumber'
-      preLoaderRoute: typeof AppOrdersOrderNumberRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
 
-interface AppRouteChildren {
-  AppAccountRoute: typeof AppAccountRoute
-  AppIndexRoute: typeof AppIndexRoute
-  AppOrdersOrderNumberRoute: typeof AppOrdersOrderNumberRoute
-  AppOrdersIndexRoute: typeof AppOrdersIndexRoute
-}
-
-const AppRouteChildren: AppRouteChildren = {
-  AppAccountRoute: AppAccountRoute,
-  AppIndexRoute: AppIndexRoute,
-  AppOrdersOrderNumberRoute: AppOrdersOrderNumberRoute,
-  AppOrdersIndexRoute: AppOrdersIndexRoute,
-}
-
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
-  AppRoute: AppRouteWithChildren,
-  ComingSoonRoute: ComingSoonRoute,
-  LoginRoute: LoginRoute,
+  IndexRoute: IndexRoute,
+  DriverRoute: DriverRoute,
+  OfficeRoute: OfficeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SalesRoute: SalesRoute,
+  SignInRoute: SignInRoute,
+  WarehouseRoute: WarehouseRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
