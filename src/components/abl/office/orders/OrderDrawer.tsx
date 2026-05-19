@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBBD, formatDate } from "@/lib/format";
 import { OrderStatusBadge, type OrderStatus } from "@/components/abl/OrderStatusBadge";
 import { PIPELINE, pipelineIndex, timeAgo } from "@/lib/orders";
 import { RecordPaymentModal } from "@/components/abl/payments/RecordPaymentModal";
+import { openInvoicePdf } from "@/lib/invoices/generate";
 import { toast } from "sonner";
 import type { OrderRow, CustomerLite } from "./types";
 
@@ -79,6 +81,16 @@ export function OrderDrawer({
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {order.invoice_number && (
+                  <button
+                    type="button"
+                    onClick={() => openInvoicePdf(order.id, { print: true })}
+                    title="Print invoice"
+                    className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-[#F1F5F9]"
+                  >
+                    <Printer className="h-3.5 w-3.5" /> Print
+                  </button>
+                )}
                 {actionButtons}
                 <button onClick={onClose} className="rounded-md border border-border px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-secondary">× Close</button>
               </div>
