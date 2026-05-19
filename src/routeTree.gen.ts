@@ -38,6 +38,7 @@ import { Route as ShopOrdersIndexRouteImport } from './routes/shop/orders/index'
 import { Route as ShopOrdersOrderNumberRouteImport } from './routes/shop/orders/$orderNumber'
 import { Route as OfficeProductsNewRouteImport } from './routes/office.products.new'
 import { Route as OfficeCustomersNewRouteImport } from './routes/office.customers.new'
+import { Route as OfficeProductsIdEditRouteImport } from './routes/office.products.$id.edit'
 import { Route as OfficeCustomersIdEditRouteImport } from './routes/office.customers.$id.edit'
 
 const WarehouseRoute = WarehouseRouteImport.update({
@@ -185,6 +186,11 @@ const OfficeCustomersNewRoute = OfficeCustomersNewRouteImport.update({
   path: '/new',
   getParentRoute: () => OfficeCustomersRoute,
 } as any)
+const OfficeProductsIdEditRoute = OfficeProductsIdEditRouteImport.update({
+  id: '/$id/edit',
+  path: '/$id/edit',
+  getParentRoute: () => OfficeProductsRoute,
+} as any)
 const OfficeCustomersIdEditRoute = OfficeCustomersIdEditRouteImport.update({
   id: '/$id/edit',
   path: '/$id/edit',
@@ -222,6 +228,7 @@ export interface FileRoutesByFullPath {
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders/': typeof ShopOrdersIndexRoute
   '/office/customers/$id/edit': typeof OfficeCustomersIdEditRoute
+  '/office/products/$id/edit': typeof OfficeProductsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -252,6 +259,7 @@ export interface FileRoutesByTo {
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders': typeof ShopOrdersIndexRoute
   '/office/customers/$id/edit': typeof OfficeCustomersIdEditRoute
+  '/office/products/$id/edit': typeof OfficeProductsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -285,6 +293,7 @@ export interface FileRoutesById {
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders/': typeof ShopOrdersIndexRoute
   '/office/customers/$id/edit': typeof OfficeCustomersIdEditRoute
+  '/office/products/$id/edit': typeof OfficeProductsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -319,6 +328,7 @@ export interface FileRouteTypes {
     | '/shop/orders/$orderNumber'
     | '/shop/orders/'
     | '/office/customers/$id/edit'
+    | '/office/products/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -349,6 +359,7 @@ export interface FileRouteTypes {
     | '/shop/orders/$orderNumber'
     | '/shop/orders'
     | '/office/customers/$id/edit'
+    | '/office/products/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/shop/orders/$orderNumber'
     | '/shop/orders/'
     | '/office/customers/$id/edit'
+    | '/office/products/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -599,6 +611,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OfficeCustomersNewRouteImport
       parentRoute: typeof OfficeCustomersRoute
     }
+    '/office/products/$id/edit': {
+      id: '/office/products/$id/edit'
+      path: '/$id/edit'
+      fullPath: '/office/products/$id/edit'
+      preLoaderRoute: typeof OfficeProductsIdEditRouteImport
+      parentRoute: typeof OfficeProductsRoute
+    }
     '/office/customers/$id/edit': {
       id: '/office/customers/$id/edit'
       path: '/$id/edit'
@@ -625,10 +644,12 @@ const OfficeCustomersRouteWithChildren = OfficeCustomersRoute._addFileChildren(
 
 interface OfficeProductsRouteChildren {
   OfficeProductsNewRoute: typeof OfficeProductsNewRoute
+  OfficeProductsIdEditRoute: typeof OfficeProductsIdEditRoute
 }
 
 const OfficeProductsRouteChildren: OfficeProductsRouteChildren = {
   OfficeProductsNewRoute: OfficeProductsNewRoute,
+  OfficeProductsIdEditRoute: OfficeProductsIdEditRoute,
 }
 
 const OfficeProductsRouteWithChildren = OfficeProductsRoute._addFileChildren(

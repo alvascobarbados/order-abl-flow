@@ -81,6 +81,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "activity_log_related_product_id_fkey"
+            columns: ["related_product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
         ]
       }
       cart: {
@@ -130,6 +137,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cart_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
         ]
       }
       cart_items: {
@@ -172,6 +186,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
         ]
       }
       carts: {
@@ -192,6 +213,30 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
         }
         Relationships: []
       }
@@ -349,6 +394,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
             referencedColumns: ["id"]
           },
         ]
@@ -565,52 +617,103 @@ export type Database = {
       }
       products: {
         Row: {
+          archived_at: string | null
+          archived_by_profile_id: string | null
+          barcode: string | null
+          bin_location: string | null
           case_price: number
           category: string
+          cost_price: number | null
           created_at: string
           description: string | null
           id: string
           image_url: string | null
           is_active: boolean
+          lead_time_days: number | null
           name: string
+          on_hand: number
           pack_size: number
           pack_unit: string
+          primary_image_url: string | null
+          reorder_point: number
+          reorder_quantity: number
+          secondary_image_urls: string[]
           sku: string
+          sort_order: number
           stock_status: Database["public"]["Enums"]["stock_status"]
+          stock_status_override: Database["public"]["Enums"]["stock_status_override"]
+          supplier_name: string | null
+          supplier_sku: string | null
+          track_inventory: boolean
           unit_price: number
           updated_at: string
+          vat_inclusive: boolean
         }
         Insert: {
+          archived_at?: string | null
+          archived_by_profile_id?: string | null
+          barcode?: string | null
+          bin_location?: string | null
           case_price: number
           category: string
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          lead_time_days?: number | null
           name: string
+          on_hand?: number
           pack_size: number
           pack_unit?: string
+          primary_image_url?: string | null
+          reorder_point?: number
+          reorder_quantity?: number
+          secondary_image_urls?: string[]
           sku: string
+          sort_order?: number
           stock_status?: Database["public"]["Enums"]["stock_status"]
+          stock_status_override?: Database["public"]["Enums"]["stock_status_override"]
+          supplier_name?: string | null
+          supplier_sku?: string | null
+          track_inventory?: boolean
           unit_price: number
           updated_at?: string
+          vat_inclusive?: boolean
         }
         Update: {
+          archived_at?: string | null
+          archived_by_profile_id?: string | null
+          barcode?: string | null
+          bin_location?: string | null
           case_price?: number
           category?: string
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          lead_time_days?: number | null
           name?: string
+          on_hand?: number
           pack_size?: number
           pack_unit?: string
+          primary_image_url?: string | null
+          reorder_point?: number
+          reorder_quantity?: number
+          secondary_image_urls?: string[]
           sku?: string
+          sort_order?: number
           stock_status?: Database["public"]["Enums"]["stock_status"]
+          stock_status_override?: Database["public"]["Enums"]["stock_status_override"]
+          supplier_name?: string | null
+          supplier_sku?: string | null
+          track_inventory?: boolean
           unit_price?: number
           updated_at?: string
+          vat_inclusive?: boolean
         }
         Relationships: []
       }
@@ -641,6 +744,42 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          balance_after: number
+          created_at: string
+          id: string
+          movement_type: Database["public"]["Enums"]["stock_movement_type"]
+          product_id: string
+          quantity: number
+          reason: string | null
+          recorded_by_profile_id: string | null
+          reference: string | null
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string
+          id?: string
+          movement_type: Database["public"]["Enums"]["stock_movement_type"]
+          product_id: string
+          quantity: number
+          reason?: string | null
+          recorded_by_profile_id?: string | null
+          reference?: string | null
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          id?: string
+          movement_type?: Database["public"]["Enums"]["stock_movement_type"]
+          product_id?: string
+          quantity?: number
+          reason?: string | null
+          recorded_by_profile_id?: string | null
+          reference?: string | null
         }
         Relationships: []
       }
@@ -691,6 +830,13 @@ export type Database = {
             referencedRelation: "products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "stock_notification_requests_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_with_stock_info"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -709,8 +855,59 @@ export type Database = {
         }
         Relationships: []
       }
+      products_with_stock_info: {
+        Row: {
+          archived_at: string | null
+          archived_by_profile_id: string | null
+          avg_weekly_velocity: number | null
+          barcode: string | null
+          bin_location: string | null
+          case_price: number | null
+          category: string | null
+          cost_price: number | null
+          created_at: string | null
+          days_of_stock: number | null
+          description: string | null
+          id: string | null
+          image_url: string | null
+          is_active: boolean | null
+          lead_time_days: number | null
+          name: string | null
+          on_hand: number | null
+          pack_size: number | null
+          pack_unit: string | null
+          primary_image_url: string | null
+          reorder_point: number | null
+          reorder_quantity: number | null
+          secondary_image_urls: string[] | null
+          sku: string | null
+          sort_order: number | null
+          stock_status: Database["public"]["Enums"]["stock_status"] | null
+          stock_status_override:
+            | Database["public"]["Enums"]["stock_status_override"]
+            | null
+          supplier_name: string | null
+          supplier_sku: string | null
+          track_inventory: boolean | null
+          unit_price: number | null
+          updated_at: string | null
+          vat_inclusive: boolean | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      apply_stock_movement: {
+        Args: {
+          _movement_type: Database["public"]["Enums"]["stock_movement_type"]
+          _product_id: string
+          _quantity: number
+          _reason?: string
+          _recorded_by?: string
+          _reference?: string
+        }
+        Returns: string
+      }
       current_customer_id: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -723,6 +920,15 @@ export type Database = {
       recompute_order_paid_status: {
         Args: { _order_id: string }
         Returns: undefined
+      }
+      resolve_stock_status: {
+        Args: {
+          _on_hand: number
+          _override: Database["public"]["Enums"]["stock_status_override"]
+          _reorder_point: number
+          _track: boolean
+        }
+        Returns: Database["public"]["Enums"]["stock_status"]
       }
     }
     Enums: {
@@ -747,7 +953,16 @@ export type Database = {
         | "other"
       payment_status: "pending" | "cleared" | "bounced" | "cancelled"
       pricing_tier: "standard" | "volume" | "key_account"
+      stock_movement_type:
+        | "received"
+        | "sold"
+        | "damaged"
+        | "count_correction"
+        | "customer_return"
+        | "internal_use"
+        | "other"
       stock_status: "in_stock" | "low_stock" | "out_of_stock"
+      stock_status_override: "auto" | "in_stock" | "low_stock" | "out_of_stock"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -898,7 +1113,17 @@ export const Constants = {
       ],
       payment_status: ["pending", "cleared", "bounced", "cancelled"],
       pricing_tier: ["standard", "volume", "key_account"],
+      stock_movement_type: [
+        "received",
+        "sold",
+        "damaged",
+        "count_correction",
+        "customer_return",
+        "internal_use",
+        "other",
+      ],
       stock_status: ["in_stock", "low_stock", "out_of_stock"],
+      stock_status_override: ["auto", "in_stock", "low_stock", "out_of_stock"],
     },
   },
 } as const
