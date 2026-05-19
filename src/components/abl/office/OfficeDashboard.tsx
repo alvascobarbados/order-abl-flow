@@ -351,6 +351,28 @@ function KpiCard({
   );
 }
 
+function PrintPendingInvoicesBtn({ orders }: { orders: OrderRow[] }) {
+  const ids = useMemo(
+    () =>
+      orders
+        .filter((o: any) => o.status === "packed" && o.invoice_number && !o.assigned_driver_id)
+        .map((o) => o.id),
+    [orders],
+  );
+  const [busy, setBusy] = useState(false);
+  if (ids.length === 0) return null;
+  return (
+    <button
+      onClick={async () => { setBusy(true); try { await printInvoicesBulk(ids); } finally { setBusy(false); } }}
+      disabled={busy}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-[13px] font-semibold text-ink hover:bg-secondary disabled:opacity-60"
+    >
+      <Printer className="h-3.5 w-3.5" />
+      {busy ? "Building…" : `Print ${ids.length} pending invoice${ids.length === 1 ? "" : "s"}`}
+    </button>
+  );
+}
+
 function PipelineCol({
   n, label, color, last, onClick,
 }: { n: number; label: string; color: string; last?: boolean; onClick?: () => void }) {
