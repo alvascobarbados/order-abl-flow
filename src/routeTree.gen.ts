@@ -17,8 +17,11 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as OfficeRouteImport } from './routes/office'
 import { Route as DriverRouteImport } from './routes/driver'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WarehouseIndexRouteImport } from './routes/warehouse.index'
 import { Route as ShopIndexRouteImport } from './routes/shop/index'
 import { Route as OfficeIndexRouteImport } from './routes/office.index'
+import { Route as WarehouseMeRouteImport } from './routes/warehouse.me'
+import { Route as WarehouseDoneRouteImport } from './routes/warehouse.done'
 import { Route as ShopCheckoutRouteImport } from './routes/shop/checkout'
 import { Route as ShopAccountRouteImport } from './routes/shop/account'
 import { Route as OfficeTvRouteImport } from './routes/office.tv'
@@ -35,6 +38,8 @@ import { Route as OfficeInvoicesRouteImport } from './routes/office.invoices'
 import { Route as OfficeGpRouteImport } from './routes/office.gp'
 import { Route as OfficeCustomersRouteImport } from './routes/office.customers'
 import { Route as ShopOrdersIndexRouteImport } from './routes/shop/orders/index'
+import { Route as WarehousePickOrderIdRouteImport } from './routes/warehouse.pick.$orderId'
+import { Route as WarehousePackOrderIdRouteImport } from './routes/warehouse.pack.$orderId'
 import { Route as ShopOrdersOrderNumberRouteImport } from './routes/shop/orders/$orderNumber'
 import { Route as OfficeProductsNewRouteImport } from './routes/office.products.new'
 import { Route as OfficeCustomersNewRouteImport } from './routes/office.customers.new'
@@ -81,6 +86,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WarehouseIndexRoute = WarehouseIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WarehouseRoute,
+} as any)
 const ShopIndexRoute = ShopIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -90,6 +100,16 @@ const OfficeIndexRoute = OfficeIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => OfficeRoute,
+} as any)
+const WarehouseMeRoute = WarehouseMeRouteImport.update({
+  id: '/me',
+  path: '/me',
+  getParentRoute: () => WarehouseRoute,
+} as any)
+const WarehouseDoneRoute = WarehouseDoneRouteImport.update({
+  id: '/done',
+  path: '/done',
+  getParentRoute: () => WarehouseRoute,
 } as any)
 const ShopCheckoutRoute = ShopCheckoutRouteImport.update({
   id: '/checkout',
@@ -171,6 +191,16 @@ const ShopOrdersIndexRoute = ShopOrdersIndexRouteImport.update({
   path: '/orders/',
   getParentRoute: () => ShopRoute,
 } as any)
+const WarehousePickOrderIdRoute = WarehousePickOrderIdRouteImport.update({
+  id: '/pick/$orderId',
+  path: '/pick/$orderId',
+  getParentRoute: () => WarehouseRoute,
+} as any)
+const WarehousePackOrderIdRoute = WarehousePackOrderIdRouteImport.update({
+  id: '/pack/$orderId',
+  path: '/pack/$orderId',
+  getParentRoute: () => WarehouseRoute,
+} as any)
 const ShopOrdersOrderNumberRoute = ShopOrdersOrderNumberRouteImport.update({
   id: '/orders/$orderNumber',
   path: '/orders/$orderNumber',
@@ -205,7 +235,7 @@ export interface FileRoutesByFullPath {
   '/sales': typeof SalesRoute
   '/shop': typeof ShopRouteWithChildren
   '/sign-in': typeof SignInRoute
-  '/warehouse': typeof WarehouseRoute
+  '/warehouse': typeof WarehouseRouteWithChildren
   '/office/customers': typeof OfficeCustomersRouteWithChildren
   '/office/gp': typeof OfficeGpRoute
   '/office/invoices': typeof OfficeInvoicesRoute
@@ -221,11 +251,16 @@ export interface FileRoutesByFullPath {
   '/office/tv': typeof OfficeTvRoute
   '/shop/account': typeof ShopAccountRoute
   '/shop/checkout': typeof ShopCheckoutRoute
+  '/warehouse/done': typeof WarehouseDoneRoute
+  '/warehouse/me': typeof WarehouseMeRoute
   '/office/': typeof OfficeIndexRoute
   '/shop/': typeof ShopIndexRoute
+  '/warehouse/': typeof WarehouseIndexRoute
   '/office/customers/new': typeof OfficeCustomersNewRoute
   '/office/products/new': typeof OfficeProductsNewRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
+  '/warehouse/pack/$orderId': typeof WarehousePackOrderIdRoute
+  '/warehouse/pick/$orderId': typeof WarehousePickOrderIdRoute
   '/shop/orders/': typeof ShopOrdersIndexRoute
   '/office/customers/$id/edit': typeof OfficeCustomersIdEditRoute
   '/office/products/$id/edit': typeof OfficeProductsIdEditRoute
@@ -236,7 +271,6 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sales': typeof SalesRoute
   '/sign-in': typeof SignInRoute
-  '/warehouse': typeof WarehouseRoute
   '/office/customers': typeof OfficeCustomersRouteWithChildren
   '/office/gp': typeof OfficeGpRoute
   '/office/invoices': typeof OfficeInvoicesRoute
@@ -252,11 +286,16 @@ export interface FileRoutesByTo {
   '/office/tv': typeof OfficeTvRoute
   '/shop/account': typeof ShopAccountRoute
   '/shop/checkout': typeof ShopCheckoutRoute
+  '/warehouse/done': typeof WarehouseDoneRoute
+  '/warehouse/me': typeof WarehouseMeRoute
   '/office': typeof OfficeIndexRoute
   '/shop': typeof ShopIndexRoute
+  '/warehouse': typeof WarehouseIndexRoute
   '/office/customers/new': typeof OfficeCustomersNewRoute
   '/office/products/new': typeof OfficeProductsNewRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
+  '/warehouse/pack/$orderId': typeof WarehousePackOrderIdRoute
+  '/warehouse/pick/$orderId': typeof WarehousePickOrderIdRoute
   '/shop/orders': typeof ShopOrdersIndexRoute
   '/office/customers/$id/edit': typeof OfficeCustomersIdEditRoute
   '/office/products/$id/edit': typeof OfficeProductsIdEditRoute
@@ -270,7 +309,7 @@ export interface FileRoutesById {
   '/sales': typeof SalesRoute
   '/shop': typeof ShopRouteWithChildren
   '/sign-in': typeof SignInRoute
-  '/warehouse': typeof WarehouseRoute
+  '/warehouse': typeof WarehouseRouteWithChildren
   '/office/customers': typeof OfficeCustomersRouteWithChildren
   '/office/gp': typeof OfficeGpRoute
   '/office/invoices': typeof OfficeInvoicesRoute
@@ -286,11 +325,16 @@ export interface FileRoutesById {
   '/office/tv': typeof OfficeTvRoute
   '/shop/account': typeof ShopAccountRoute
   '/shop/checkout': typeof ShopCheckoutRoute
+  '/warehouse/done': typeof WarehouseDoneRoute
+  '/warehouse/me': typeof WarehouseMeRoute
   '/office/': typeof OfficeIndexRoute
   '/shop/': typeof ShopIndexRoute
+  '/warehouse/': typeof WarehouseIndexRoute
   '/office/customers/new': typeof OfficeCustomersNewRoute
   '/office/products/new': typeof OfficeProductsNewRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
+  '/warehouse/pack/$orderId': typeof WarehousePackOrderIdRoute
+  '/warehouse/pick/$orderId': typeof WarehousePickOrderIdRoute
   '/shop/orders/': typeof ShopOrdersIndexRoute
   '/office/customers/$id/edit': typeof OfficeCustomersIdEditRoute
   '/office/products/$id/edit': typeof OfficeProductsIdEditRoute
@@ -321,11 +365,16 @@ export interface FileRouteTypes {
     | '/office/tv'
     | '/shop/account'
     | '/shop/checkout'
+    | '/warehouse/done'
+    | '/warehouse/me'
     | '/office/'
     | '/shop/'
+    | '/warehouse/'
     | '/office/customers/new'
     | '/office/products/new'
     | '/shop/orders/$orderNumber'
+    | '/warehouse/pack/$orderId'
+    | '/warehouse/pick/$orderId'
     | '/shop/orders/'
     | '/office/customers/$id/edit'
     | '/office/products/$id/edit'
@@ -336,7 +385,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sales'
     | '/sign-in'
-    | '/warehouse'
     | '/office/customers'
     | '/office/gp'
     | '/office/invoices'
@@ -352,11 +400,16 @@ export interface FileRouteTypes {
     | '/office/tv'
     | '/shop/account'
     | '/shop/checkout'
+    | '/warehouse/done'
+    | '/warehouse/me'
     | '/office'
     | '/shop'
+    | '/warehouse'
     | '/office/customers/new'
     | '/office/products/new'
     | '/shop/orders/$orderNumber'
+    | '/warehouse/pack/$orderId'
+    | '/warehouse/pick/$orderId'
     | '/shop/orders'
     | '/office/customers/$id/edit'
     | '/office/products/$id/edit'
@@ -385,11 +438,16 @@ export interface FileRouteTypes {
     | '/office/tv'
     | '/shop/account'
     | '/shop/checkout'
+    | '/warehouse/done'
+    | '/warehouse/me'
     | '/office/'
     | '/shop/'
+    | '/warehouse/'
     | '/office/customers/new'
     | '/office/products/new'
     | '/shop/orders/$orderNumber'
+    | '/warehouse/pack/$orderId'
+    | '/warehouse/pick/$orderId'
     | '/shop/orders/'
     | '/office/customers/$id/edit'
     | '/office/products/$id/edit'
@@ -403,7 +461,7 @@ export interface RootRouteChildren {
   SalesRoute: typeof SalesRoute
   ShopRoute: typeof ShopRouteWithChildren
   SignInRoute: typeof SignInRoute
-  WarehouseRoute: typeof WarehouseRoute
+  WarehouseRoute: typeof WarehouseRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -464,6 +522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/warehouse/': {
+      id: '/warehouse/'
+      path: '/'
+      fullPath: '/warehouse/'
+      preLoaderRoute: typeof WarehouseIndexRouteImport
+      parentRoute: typeof WarehouseRoute
+    }
     '/shop/': {
       id: '/shop/'
       path: '/'
@@ -477,6 +542,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/office/'
       preLoaderRoute: typeof OfficeIndexRouteImport
       parentRoute: typeof OfficeRoute
+    }
+    '/warehouse/me': {
+      id: '/warehouse/me'
+      path: '/me'
+      fullPath: '/warehouse/me'
+      preLoaderRoute: typeof WarehouseMeRouteImport
+      parentRoute: typeof WarehouseRoute
+    }
+    '/warehouse/done': {
+      id: '/warehouse/done'
+      path: '/done'
+      fullPath: '/warehouse/done'
+      preLoaderRoute: typeof WarehouseDoneRouteImport
+      parentRoute: typeof WarehouseRoute
     }
     '/shop/checkout': {
       id: '/shop/checkout'
@@ -589,6 +668,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/shop/orders/'
       preLoaderRoute: typeof ShopOrdersIndexRouteImport
       parentRoute: typeof ShopRoute
+    }
+    '/warehouse/pick/$orderId': {
+      id: '/warehouse/pick/$orderId'
+      path: '/pick/$orderId'
+      fullPath: '/warehouse/pick/$orderId'
+      preLoaderRoute: typeof WarehousePickOrderIdRouteImport
+      parentRoute: typeof WarehouseRoute
+    }
+    '/warehouse/pack/$orderId': {
+      id: '/warehouse/pack/$orderId'
+      path: '/pack/$orderId'
+      fullPath: '/warehouse/pack/$orderId'
+      preLoaderRoute: typeof WarehousePackOrderIdRouteImport
+      parentRoute: typeof WarehouseRoute
     }
     '/shop/orders/$orderNumber': {
       id: '/shop/orders/$orderNumber'
@@ -711,6 +804,26 @@ const ShopRouteChildren: ShopRouteChildren = {
 
 const ShopRouteWithChildren = ShopRoute._addFileChildren(ShopRouteChildren)
 
+interface WarehouseRouteChildren {
+  WarehouseDoneRoute: typeof WarehouseDoneRoute
+  WarehouseMeRoute: typeof WarehouseMeRoute
+  WarehouseIndexRoute: typeof WarehouseIndexRoute
+  WarehousePackOrderIdRoute: typeof WarehousePackOrderIdRoute
+  WarehousePickOrderIdRoute: typeof WarehousePickOrderIdRoute
+}
+
+const WarehouseRouteChildren: WarehouseRouteChildren = {
+  WarehouseDoneRoute: WarehouseDoneRoute,
+  WarehouseMeRoute: WarehouseMeRoute,
+  WarehouseIndexRoute: WarehouseIndexRoute,
+  WarehousePackOrderIdRoute: WarehousePackOrderIdRoute,
+  WarehousePickOrderIdRoute: WarehousePickOrderIdRoute,
+}
+
+const WarehouseRouteWithChildren = WarehouseRoute._addFileChildren(
+  WarehouseRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DriverRoute: DriverRoute,
@@ -719,7 +832,7 @@ const rootRouteChildren: RootRouteChildren = {
   SalesRoute: SalesRoute,
   ShopRoute: ShopRouteWithChildren,
   SignInRoute: SignInRoute,
-  WarehouseRoute: WarehouseRoute,
+  WarehouseRoute: WarehouseRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
