@@ -7,6 +7,7 @@ import { formatBBD, formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, Check, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { openInvoicePdf } from "@/lib/invoices/generate";
 
 export const Route = createFileRoute("/shop/orders/$orderNumber")({ component: OrderDetailPage });
 
@@ -92,8 +93,14 @@ function OrderDetailPage() {
                 <XCircle className="mr-1.5 h-4 w-4" /> Cancel order
               </Button>
             )}
-            {isInvoiced && (
-              <Button className="bg-primary hover:bg-primary-dark">
+            {(order.invoice_number || isInvoiced) && (
+              <Button
+                className="bg-primary hover:bg-primary-dark"
+                onClick={async () => {
+                  try { await openInvoicePdf(order.id); }
+                  catch (e: any) { toast.error(e?.message ?? "Could not open invoice"); }
+                }}
+              >
                 <Download className="mr-1.5 h-4 w-4" /> Download PDF
               </Button>
             )}
