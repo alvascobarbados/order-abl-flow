@@ -62,7 +62,7 @@ function OrdersListPage() {
       setOrders(mapped);
       setLoading(false);
     })();
-  }, []);
+  }, [activeCustomerId]);
 
   const filtered = useMemo(() => {
     return orders.filter((o) => {
