@@ -7,6 +7,7 @@ import { OrderStatusBadge, type OrderStatus } from "@/components/abl/OrderStatus
 import { TierChip } from "./TierChip";
 import { toast } from "sonner";
 import type { CustomerRow } from "./CustomersTable";
+import { CustomerPaymentsTab } from "./CustomerPaymentsTab";
 
 type Order = {
   id: string;
@@ -27,7 +28,7 @@ export function CustomerDetailDrawer({
   const [contact, setContact] = useState<Profile | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [activity, setActivity] = useState<Activity[]>([]);
-  const [tab, setTab] = useState<"overview" | "orders" | "activity">("overview");
+  const [tab, setTab] = useState<"overview" | "orders" | "payments" | "activity">("overview");
   const [orderFilter, setOrderFilter] = useState<"all" | "active" | "completed" | "cancelled">("all");
   const [notes, setNotes] = useState("");
 
@@ -152,6 +153,7 @@ export function CustomerDetailDrawer({
             {[
               { k: "overview", label: "Overview" },
               { k: "orders", label: `Orders (${orders.length})` },
+              { k: "payments", label: "Payments" },
               { k: "activity", label: "Activity & Notes" },
             ].map((t) => (
               <button
@@ -330,6 +332,14 @@ export function CustomerDetailDrawer({
                 </table>
               </div>
             </div>
+          )}
+
+          {tab === "payments" && (
+            <CustomerPaymentsTab
+              customerId={customer.id}
+              paymentTermsDays={customer.payment_terms_days ?? 30}
+              onDataChanged={onChanged}
+            />
           )}
 
           {tab === "activity" && (
