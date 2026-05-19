@@ -280,6 +280,7 @@ export function OrdersPage() {
         tab={tab}
         rows={filtered}
         customers={customers}
+        itemSummary={itemSummary}
         selected={selected}
         onSelectChange={setSelected}
         onRowClick={(id) => setDrawerId(id)}
