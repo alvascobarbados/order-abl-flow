@@ -25,8 +25,8 @@ const MAP: Record<OrderStatus, Style> = {
   packed:           { label: "Packed",           bg: "#EDE9FE", text: "#6D28D9" },
   out_for_delivery: { label: "Out for delivery", bg: "#F3E8FF", text: "#7E22CE" },
   delivered:        { label: "Delivered",        bg: "#D1FAE5", text: "#047857" },
-  invoiced:         { label: "Invoiced",         bg: "#EDE9FE", text: "#6D28D9" },
-  paid:             { label: "Paid",             bg: "#F1F4F8", text: "#64748B" },
+  invoiced:         { label: "Invoiced",         bg: "#FCE7F3", text: "#BE185D" },
+  paid:             { label: "Paid",             bg: "#F3F4F6", text: "#6B7280" },
   cancelled:        { label: "Cancelled",        bg: "#FEE2E2", text: "#B91C1C" },
 };
 
