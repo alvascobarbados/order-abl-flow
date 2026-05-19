@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Search, ShoppingCart, User, Zap } from "lucide-react";
 import { SwitchRoleButton } from "./SwitchRoleButton";
+import { ViewingAsSwitcher } from "./ViewingAsSwitcher";
 import { useCart } from "@/hooks/use-cart";
 
 export function AppHeader({
@@ -47,6 +48,7 @@ export function AppHeader({
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            <ViewingAsSwitcher />
             <Link
               to="/shop/account"
               className="grid h-10 w-10 place-items-center rounded-lg text-[#0B1A2E] hover:bg-[#FAFBFC]"
