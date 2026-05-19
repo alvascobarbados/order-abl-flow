@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/abl/AppHeader";
 import { formatBBD } from "@/lib/format";
+import { useActiveCustomer } from "@/hooks/use-active-customer";
 
 export const Route = createFileRoute("/shop/account")({ component: AccountPage });
 
@@ -18,18 +19,18 @@ interface CustomerRow {
 }
 
 function AccountPage() {
+  const { activeCustomerId } = useActiveCustomer();
   const [customer, setCustomer] = useState<CustomerRow | null>(null);
 
   useEffect(() => {
-    // Dev mode: hardcode to first customer (Cosy Cafe).
+    if (!activeCustomerId) return;
     supabase
       .from("customers")
       .select("id, company_name, billing_address, delivery_address, phone, credit_limit, current_balance, payment_terms_days")
-      .order("created_at", { ascending: true })
-      .limit(1)
+      .eq("id", activeCustomerId)
       .maybeSingle()
       .then(({ data }) => setCustomer(data as CustomerRow | null));
-  }, []);
+  }, [activeCustomerId]);
 
   const availableCredit = customer ? Number(customer.credit_limit) - Number(customer.current_balance) : 0;
 

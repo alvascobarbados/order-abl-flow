@@ -55,6 +55,8 @@ export function OfficeDashboard() {
   const [customers, setCustomers] = useState<Record<string, Customer>>({});
   const [activity, setActivity] = useState<Activity[]>([]);
   const [tick, setTick] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [drawerOrderId, setDrawerOrderId] = useState<string | null>(null);
   const [rejectOrderId, setRejectOrderId] = useState<string | null>(null);
   const [approveOrderId, setApproveOrderId] = useState<string | null>(null);
@@ -150,10 +152,10 @@ export function OfficeDashboard() {
             OPERATIONS · DASHBOARD
           </div>
           <h1 className="mt-1 text-[24px] font-extrabold text-ink" style={{ letterSpacing: "-0.02em" }}>
-            {greeting()}, Sarah
+            {mounted ? greeting() : "Hello"}, Sarah
           </h1>
           <p className="mt-1 text-[13px] text-muted-foreground">
-            {today} · {counts.pending_approval} {counts.pending_approval === 1 ? "order needs" : "orders need"} your attention
+            {mounted ? today : ""} · {counts.pending_approval} {counts.pending_approval === 1 ? "order needs" : "orders need"} your attention
           </p>
         </div>
         <div className="flex gap-2">

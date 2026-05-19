@@ -4,11 +4,11 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useActiveCustomer } from "@/hooks/use-active-customer";
 
 export interface CartLine {
   id: string;            // cart row id
@@ -31,9 +31,9 @@ export interface CartLine {
 interface CartCtx {
   customerId: string | null;
   lines: CartLine[];
-  count: number;          // total units across lines
-  itemCount: number;      // distinct lines
-  total: number;          // BBD$, VAT-inclusive
+  count: number;
+  itemCount: number;
+  total: number;
   isOpen: boolean;
   open: () => void;
   close: () => void;
@@ -49,24 +49,12 @@ interface CartCtx {
 const Ctx = createContext<CartCtx | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [customerId, setCustomerId] = useState<string | null>(null);
+  const { activeCustomerId } = useActiveCustomer();
+  const customerId = activeCustomerId;
   const [lines, setLines] = useState<CartLine[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loadingLineIds, setLoadingLineIds] = useState<Set<string>>(new Set());
-  const customerLoaded = useRef(false);
 
-  // Resolve the active customer (dev: first customer in the table = Cosy Cafe)
-  useEffect(() => {
-    if (customerLoaded.current) return;
-    customerLoaded.current = true;
-    supabase
-      .from("customers")
-      .select("id")
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => setCustomerId(data?.id ?? null));
-  }, []);
 
   const reload = useCallback(async () => {
     if (!customerId) return;
@@ -85,8 +73,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [customerId]);
 
   useEffect(() => {
+    setLines([]);
     if (customerId) reload();
   }, [customerId, reload]);
+
 
   const markLoading = (id: string, on: boolean) => {
     setLoadingLineIds((prev) => {

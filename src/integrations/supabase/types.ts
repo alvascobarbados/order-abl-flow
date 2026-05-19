@@ -183,51 +183,105 @@ export type Database = {
       }
       customers: {
         Row: {
+          assigned_at: string
           billing_address: string | null
+          billing_city: string | null
+          billing_parish: string | null
+          billing_postal: string | null
+          business_type: string | null
           company_name: string
           contact_profile_id: string | null
           created_at: string
           credit_limit: number
           current_balance: number
+          customer_number: string | null
+          customer_source: string | null
+          deleted_at: string | null
           delivery_address: string | null
+          delivery_address_same_as_billing: boolean
+          delivery_city: string | null
+          delivery_notes: string | null
+          delivery_parish: string | null
+          delivery_postal: string | null
           id: string
           is_active: boolean
           notes: string | null
+          opening_balance: number
           payment_terms_days: number
           phone: string | null
           pricing_tier: Database["public"]["Enums"]["pricing_tier"]
+          sales_rep_name: string | null
+          tax_exempt: boolean
+          tax_id: string | null
+          trading_name: string | null
           updated_at: string
         }
         Insert: {
+          assigned_at?: string
           billing_address?: string | null
+          billing_city?: string | null
+          billing_parish?: string | null
+          billing_postal?: string | null
+          business_type?: string | null
           company_name: string
           contact_profile_id?: string | null
           created_at?: string
           credit_limit?: number
           current_balance?: number
+          customer_number?: string | null
+          customer_source?: string | null
+          deleted_at?: string | null
           delivery_address?: string | null
+          delivery_address_same_as_billing?: boolean
+          delivery_city?: string | null
+          delivery_notes?: string | null
+          delivery_parish?: string | null
+          delivery_postal?: string | null
           id?: string
           is_active?: boolean
           notes?: string | null
+          opening_balance?: number
           payment_terms_days?: number
           phone?: string | null
           pricing_tier?: Database["public"]["Enums"]["pricing_tier"]
+          sales_rep_name?: string | null
+          tax_exempt?: boolean
+          tax_id?: string | null
+          trading_name?: string | null
           updated_at?: string
         }
         Update: {
+          assigned_at?: string
           billing_address?: string | null
+          billing_city?: string | null
+          billing_parish?: string | null
+          billing_postal?: string | null
+          business_type?: string | null
           company_name?: string
           contact_profile_id?: string | null
           created_at?: string
           credit_limit?: number
           current_balance?: number
+          customer_number?: string | null
+          customer_source?: string | null
+          deleted_at?: string | null
           delivery_address?: string | null
+          delivery_address_same_as_billing?: boolean
+          delivery_city?: string | null
+          delivery_notes?: string | null
+          delivery_parish?: string | null
+          delivery_postal?: string | null
           id?: string
           is_active?: boolean
           notes?: string | null
+          opening_balance?: number
           payment_terms_days?: number
           phone?: string | null
           pricing_tier?: Database["public"]["Enums"]["pricing_tier"]
+          sales_rep_name?: string | null
+          tax_exempt?: boolean
+          tax_id?: string | null
+          trading_name?: string | null
           updated_at?: string
         }
         Relationships: [

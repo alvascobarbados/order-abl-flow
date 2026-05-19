@@ -1,83 +1,62 @@
-# ABL Distribution — Customer Storefront (Phase 1)
+## Customers page for Office view
 
-Build the customer-facing storefront on Lovable Cloud + Supabase Auth. Schema supports the full order lifecycle but only the customer-facing slice ships now.
+Build the full Customers management surface at `/office/customers` with table, detail drawer, and create/edit form. Reuse existing OfficeShell, design tokens, and drawer patterns from the pending approval queue.
 
-## Decisions locked in
-- Cart **persists** per user (DB-backed `carts` + `cart_items` table).
-- "Notify" on sold-out items = log row in `stock_notification_requests` (no email).
-- Pricing: uniform `case_price` for everyone; `pricing_tier` column stored for later.
-- Min 1 case per line, integer quantities, no order minimum.
-- Customer can **cancel** (not edit) while `status = 'pending_approval'`. Locked after approval.
-- No emails on order placement (yet).
-- Product image fallback = styled empty state (SKU + category icon, navy/grey surface).
+### 1. Database migration
 
-## Step 1 — Enable Lovable Cloud + design system
-- Enable Lovable Cloud.
-- Install Plus Jakarta Sans + JetBrains Mono via `@fontsource`.
-- Replace `src/styles.css` tokens with ABL palette (navy `#0F2540`, accent `#FF6A1A`, ink, muted, success/warning/error pairs, etc.) in `oklch`.
-- Set body font Plus Jakarta Sans; add `font-mono` for SKUs / order numbers.
+Extend `customers` table with the new columns:
+- `customer_number` (text, unique) — auto-generated `CUST-XXXX` from a new sequence starting at 1001
+- `trading_name`, `business_type`, `billing_city`, `billing_parish`, `billing_postal`
+- `delivery_address_same_as_billing` (bool, default true), `delivery_city`, `delivery_parish`, `delivery_postal`, `delivery_notes`
+- `opening_balance` (numeric, default 0), `tax_exempt` (bool), `tax_id`
+- `sales_rep_name`, `customer_source`, `assigned_at`, `deleted_at`
 
-## Step 2 — Database schema (migration)
-Tables (all RLS enabled): `profiles`, `customers`, `products`, `orders`, `order_items`, `carts`, `cart_items`, `stock_notification_requests`.
+Create:
+- Sequence `customer_number_seq` starting at 1001
+- Trigger `assign_customer_number` on INSERT
+- Trigger `log_customer_changes` on INSERT/UPDATE → writes to `activity_log`
+- Backfill `customer_number` for the 3 existing customers
+- Update `dev_anon_customers_*` RLS to allow INSERT/UPDATE/soft-delete for development; keep authenticated office/admin policies for production
 
-Enums: `app_role` (`customer|office|warehouse|delivery|admin`), `pricing_tier`, `stock_status`, `order_status`.
+### 2. Routes
 
-Sequences for `SO-2001+` and `INV-4001+`. Triggers:
-- `handle_new_user` → insert profile (role default `customer`).
-- `set_order_number` BEFORE INSERT on `orders`.
-- `set_invoice_number` BEFORE UPDATE when `status` becomes `invoiced`.
-- `updated_at` triggers.
+- `src/routes/office.customers.tsx` — replace ComingSoon with real component
+- `src/routes/office.customers.new.tsx` — create form
+- `src/routes/office.customers.$id.edit.tsx` — edit form
 
-Security-definer helper `public.has_role(uuid, app_role)` + `public.current_customer_id()` to avoid recursive RLS.
+### 3. Components (under `src/components/abl/office/customers/`)
 
-RLS policies (each commented):
-- `profiles`: self read/update; office/admin read all.
-- `customers`: customer reads own row via `current_customer_id()`; office/admin all.
-- `products`: any authenticated user reads `is_active`; only admin writes.
-- `orders` + `order_items`: customer reads/inserts where `customer_id = current_customer_id()`; cancel allowed only when `status='pending_approval'`; office+ reads all.
-- `carts` / `cart_items`: owner-only.
-- `stock_notification_requests`: owner insert/read; office reads all.
+- `CustomersTable.tsx` — top bar, filter bar, sticky-header table, row actions menu, empty state
+- `CustomerDetailDrawer.tsx` — right-side 720px Sheet with header strip + 3 tabs (Overview, Orders, Activity & Notes)
+- `CustomerForm.tsx` — shared create/edit form with 5 sections + sticky right summary card + sticky footer
+- `TierChip.tsx` — small reusable chip (Standard gray / Volume blue / Key Account orange)
+- `GeneratedPasswordModal.tsx` — shows the generated password with copy button
 
-## Step 3 — Seed data
-- 12 products across categories (7 specified + 5 invented).
-- 3 customers (Cosy Cafe, Champers Restaurant, Buzo Osteria) each with a `customer` auth user.
-- 1 `office` user to verify role routing.
-- Credentials printed in final summary.
+### 4. Customer-view "Viewing as" switcher
 
-## Step 4 — Auth + role routing
-- Sign-in page (email + password, forgot password via Supabase, no public signup — show ABL contact message).
-- `useAuth` hook: session + profile (with role).
-- Root route gate: unauthenticated → `/login`; `customer` → storefront; any other role → `/coming-soon` placeholder.
+- Extend `use-role.tsx` (or add `use-active-customer.tsx`) to store the active customer ID in localStorage
+- Add a small dropdown in `AppHeader` (only visible when role === customer) listing all active customers — switches which customer the shop pages query against
+- Update `useCart` and shop pages to read from this hook instead of the hardcoded "first customer"
 
-## Step 5 — Storefront pages
-Routes under `src/routes/`:
-- `/login`, `/reset-password`
-- `/` catalog (sticky delivery banner, header w/ ABL mark, search, cart, account menu; category chips; toolbar w/ count, in-stock toggle, sort; responsive product grid 2/3/4 cols).
-- Cart drawer (right slide-over) — items, stepper, subtotal/VAT/total, "Place order".
-- Place-order confirmation modal — read-only delivery address + delivery notes textarea.
-- `/orders` list with status badges.
-- `/orders/$orderNumber` detail with lifecycle progress tracker, items, totals, invoice section (placeholder PDF button when invoiced).
-- `/account` — editable contact name, phone, password; read-only company/addresses/terms/credit.
-- `/coming-soon` for non-customer roles.
+### 5. Business logic
 
-Product card per spec: SKU tag, stock chip, pack-size chip, BBD$ price formatting `formatBBD()`, stepper + Add button, sold-out → "Notify" + dimmed image.
+- Validation with zod: company name 2–100, valid email, 10-digit phone, credit_limit ≥ 0
+- Phone auto-format to `+1 (246) XXX-XXXX`
+- Deactivate guard: query orders with status not in (delivered, cancelled, paid) → block with modal
+- Delete = soft delete (set `deleted_at`, `is_active=false`); block if any orders exist → offer deactivate instead
+- "Create login" → insert profiles row (id = gen_random_uuid, role='customer') and link via `customers.contact_profile_id`; show generated password in modal (no email)
 
-## Step 6 — Cart + order placement logic
-- Cart hook reads/writes `carts`/`cart_items` via Supabase (RLS-scoped to user).
-- Place order = RPC `place_order(delivery_notes)` (SECURITY DEFINER) that snapshots prices, computes VAT (17.5% inclusive split), inserts order + items, clears cart, returns `order_number`.
-- Cancel order = update status to `cancelled` (RLS allows only when currently `pending_approval`).
+### 6. What this prompt does NOT do
 
-## Step 7 — QA
-- Sign in as Cosy Cafe customer → browse, add to cart, place order, view in `/orders`.
-- Sign in as office user → see `/coming-soon`.
-- Verify RLS: customer cannot read another customer's orders.
+- Bulk import / CSV
+- Real email sending
+- Real sales_reps table (free text for now)
+- Aging reports / statement PDFs
 
-## Technical notes
-- Currency helper: `BBD$ ${n.toFixed(2)}`.
-- VAT-inclusive: `vat = total - total/1.175`, `subtotal = total - vat`.
-- All Supabase calls from browser client respecting RLS; no admin client needed for this phase.
-- Order number / invoice number generated server-side via triggers (never client-set).
-- Sticky banner + header use navy `--primary`; CTAs use orange `--accent`.
+### Technical notes
 
-## Out of scope (explicitly NOT built)
-Office/warehouse/delivery views, payments, shipping calc, public catalog, PDF generation, emails, tier discount math.
+- All money via `formatBBD()` helper; dates via existing date formatter
+- Reuse `OrderStatusBadge` in Orders tab and recent orders mini-table
+- Soft-delete filter: all table queries exclude `deleted_at IS NOT NULL`
+- Auto-save notes on textarea blur (single UPDATE)
+- Activity log diff: serialize changed fields into description like `"Credit limit BBD$ 1,000 → BBD$ 2,500"`

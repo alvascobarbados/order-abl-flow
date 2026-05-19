@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/abl/AppHeader";
 import { OrderStatusBadge, type OrderStatus } from "@/components/abl/OrderStatusBadge";
 import { formatBBD, formatDate } from "@/lib/format";
+import { useActiveCustomer } from "@/hooks/use-active-customer";
 
 export const Route = createFileRoute("/shop/orders/")({ component: OrdersListPage });
 
@@ -30,28 +31,21 @@ const FILTERS: { key: Filter; label: string }[] = [
 const COMPLETED: OrderStatus[] = ["delivered", "invoiced", "paid"];
 
 function OrdersListPage() {
+  const { activeCustomerId } = useActiveCustomer();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("all");
 
   useEffect(() => {
+    if (!activeCustomerId) return;
+    setLoading(true);
     (async () => {
-      const { data: customer } = await supabase
-        .from("customers")
-        .select("id")
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (!customer) {
-        setLoading(false);
-        return;
-      }
       const { data } = await supabase
         .from("orders")
         .select(
           "id, order_number, status, total, placed_at, invoice_number, items:order_items(quantity)",
         )
-        .eq("customer_id", customer.id)
+        .eq("customer_id", activeCustomerId)
         .order("placed_at", { ascending: false });
       const mapped: OrderRow[] = (data ?? []).map((o: any) => ({
         id: o.id,
@@ -68,7 +62,7 @@ function OrdersListPage() {
       setOrders(mapped);
       setLoading(false);
     })();
-  }, []);
+  }, [activeCustomerId]);
 
   const filtered = useMemo(() => {
     return orders.filter((o) => {
