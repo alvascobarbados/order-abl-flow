@@ -1,23 +1,23 @@
 import { ShoppingCart } from "lucide-react";
+import { useCart } from "@/hooks/use-cart";
 
-export function FloatingActions({ cartCount = 3 }: { cartCount?: number }) {
+export function FloatingActions() {
+  const { count, toggle } = useCart();
   return (
-    <div className="fixed bottom-5 right-4 z-50 flex flex-col gap-3">
-      {/* Cart */}
+    <div className="fixed bottom-5 right-4 z-30 flex flex-col gap-3">
       <button
         type="button"
-        onClick={() => console.log("floating cart")}
+        onClick={toggle}
         aria-label="Open cart"
         className="relative grid h-[52px] w-[52px] place-items-center rounded-full border border-[#E5E9EF] bg-white text-[#0F2540] shadow-[0_6px_20px_-6px_rgba(15,37,64,0.25)] transition hover:-translate-y-0.5"
       >
         <ShoppingCart className="h-5 w-5" strokeWidth={1.75} />
-        {cartCount > 0 && (
+        {count > 0 && (
           <span className="absolute -right-1 -top-1 grid h-[20px] min-w-[20px] place-items-center rounded-full bg-[#FF6A1A] px-1 text-[11px] font-bold text-white ring-2 ring-white">
-            {cartCount}
+            {count > 99 ? "99+" : count}
           </span>
         )}
       </button>
-      {/* WhatsApp */}
       <a
         href="https://wa.me/12460000000"
         target="_blank"

@@ -1,25 +1,55 @@
 export type OrderStatus =
-  | "draft" | "pending_approval" | "approved" | "picking" | "packed"
-  | "out_for_delivery" | "delivered" | "invoiced" | "paid" | "cancelled";
+  | "draft"
+  | "pending_approval"
+  | "approved"
+  | "picking"
+  | "packed"
+  | "out_for_delivery"
+  | "delivered"
+  | "invoiced"
+  | "paid"
+  | "cancelled";
 
-const MAP: Record<OrderStatus, { label: string; cls: string }> = {
-  draft:            { label: "Draft",            cls: "bg-muted text-muted-foreground" },
-  pending_approval: { label: "Pending approval", cls: "bg-warning-soft text-[color:var(--warning)]" },
-  approved:         { label: "Approved",         cls: "bg-blue-50 text-blue-700" },
-  picking:          { label: "Picking",          cls: "bg-blue-50 text-blue-700" },
-  packed:           { label: "Packed",           cls: "bg-blue-50 text-blue-700" },
-  out_for_delivery: { label: "Out for delivery", cls: "bg-blue-50 text-blue-700" },
-  delivered:        { label: "Delivered",        cls: "bg-success-soft text-[color:var(--success)]" },
-  invoiced:         { label: "Invoiced",         cls: "bg-purple-50 text-purple-700" },
-  paid:             { label: "Paid",             cls: "bg-muted text-muted-foreground" },
-  cancelled:        { label: "Cancelled",        cls: "bg-error-soft text-[color:var(--error)]" },
+interface Style {
+  label: string;
+  bg: string;
+  text: string;
+  pulse?: boolean;
+}
+
+const MAP: Record<OrderStatus, Style> = {
+  draft:            { label: "Draft",            bg: "#F1F4F8", text: "#64748B" },
+  pending_approval: { label: "Pending approval", bg: "#FEF3C7", text: "#B45309", pulse: true },
+  approved:         { label: "Approved",         bg: "#DBEAFE", text: "#1E40AF" },
+  picking:          { label: "Picking",          bg: "#E0E7FF", text: "#3730A3" },
+  packed:           { label: "Packed",           bg: "#EDE9FE", text: "#6D28D9" },
+  out_for_delivery: { label: "Out for delivery", bg: "#F3E8FF", text: "#7E22CE" },
+  delivered:        { label: "Delivered",        bg: "#D1FAE5", text: "#047857" },
+  invoiced:         { label: "Invoiced",         bg: "#EDE9FE", text: "#6D28D9" },
+  paid:             { label: "Paid",             bg: "#F1F4F8", text: "#64748B" },
+  cancelled:        { label: "Cancelled",        bg: "#FEE2E2", text: "#B91C1C" },
 };
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  const c = MAP[status];
+  const s = MAP[status];
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${c.cls}`}>
-      {c.label}
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+      style={{ backgroundColor: s.bg, color: s.text }}
+    >
+      {s.pulse && (
+        <span className="relative grid h-1.5 w-1.5 place-items-center">
+          <span
+            className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60"
+            style={{ backgroundColor: s.text }}
+          />
+          <span
+            className="relative inline-flex h-1.5 w-1.5 rounded-full"
+            style={{ backgroundColor: s.text }}
+          />
+        </span>
+      )}
+      {s.label}
     </span>
   );
 }

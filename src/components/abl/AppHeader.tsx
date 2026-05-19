@@ -1,16 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { Search, ShoppingCart, User, Zap } from "lucide-react";
 import { SwitchRoleButton } from "./SwitchRoleButton";
+import { useCart } from "@/hooks/use-cart";
 
 export function AppHeader({
   search,
   onSearchChange,
-  cartCount = 3,
 }: {
   search?: string;
   onSearchChange?: (v: string) => void;
-  cartCount?: number;
 }) {
+  const { count, toggle } = useCart();
+
   return (
     <>
       {/* Sticky top banner */}
@@ -21,10 +22,8 @@ export function AppHeader({
         </div>
       </div>
 
-      {/* Header bar */}
       <header className="sticky top-[33px] z-40 border-b border-[#E5E9EF] bg-white">
         <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-4 px-6 py-[14px]">
-          {/* Logo */}
           <Link to="/shop" className="flex shrink-0 items-baseline gap-2">
             <span className="text-[22px] font-bold leading-none text-[#0B1A2E]">ABL</span>
             <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-[#64748B]">
@@ -32,9 +31,8 @@ export function AppHeader({
             </span>
           </Link>
 
-          {/* Search */}
           <div className="mx-auto w-full max-w-[520px]">
-            <div className="group relative">
+            <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]" />
               <input
                 value={search ?? ""}
@@ -48,7 +46,6 @@ export function AppHeader({
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex shrink-0 items-center gap-2">
             <Link
               to="/shop/account"
@@ -59,14 +56,14 @@ export function AppHeader({
             </Link>
             <button
               type="button"
-              onClick={() => console.log("cart toggle")}
+              onClick={toggle}
               className="relative grid h-10 w-10 place-items-center rounded-lg text-[#0B1A2E] hover:bg-[#FAFBFC]"
               aria-label="Cart"
             >
               <ShoppingCart className="h-5 w-5" strokeWidth={1.75} />
-              {cartCount > 0 && (
+              {count > 0 && (
                 <span className="absolute -right-0.5 -top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[#FF6A1A] px-1 text-[10px] font-bold text-white">
-                  {cartCount}
+                  {count > 99 ? "99+" : count}
                 </span>
               )}
             </button>
