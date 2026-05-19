@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { OfficeComingSoon } from "@/components/abl/office/OfficeComingSoon";
+import { InvoicesPage } from "@/components/abl/office/invoices/InvoicesPage";
 
 export const Route = createFileRoute("/office/invoices")({
-  component: () => <OfficeComingSoon title="Invoices" blurb="Generated invoices, payment tracking, and accounts receivable." />,
+  validateSearch: (s: Record<string, unknown>) => ({
+    tab: typeof s.tab === "string" ? s.tab : undefined,
+  }),
+  component: InvoicesPage,
 });

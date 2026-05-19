@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { OfficeComingSoon } from "@/components/abl/office/OfficeComingSoon";
+import { SettingsPage } from "@/components/abl/office/settings/SettingsPage";
 
 export const Route = createFileRoute("/office/settings")({
-  component: () => <OfficeComingSoon title="Settings" blurb="Company settings, VAT rate, delivery zones, and user permissions." />,
+  validateSearch: (s: Record<string, unknown>) => ({
+    tab: typeof s.tab === "string" ? s.tab : undefined,
+  }),
+  component: SettingsPage,
 });

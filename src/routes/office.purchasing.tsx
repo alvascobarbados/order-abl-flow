@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { OrdersPage } from "@/components/abl/office/orders/OrdersPage";
+import { PurchasingPage } from "@/components/abl/office/purchasing/PurchasingPage";
 
-export const Route = createFileRoute("/office/orders")({
+export const Route = createFileRoute("/office/purchasing")({
   validateSearch: (s: Record<string, unknown>) => ({
     tab: typeof s.tab === "string" ? s.tab : undefined,
-    status: typeof s.status === "string" ? s.status : undefined,
     new: typeof s.new === "string" ? s.new : undefined,
   }),
-  component: OrdersPage,
+  component: PurchasingPage,
 });

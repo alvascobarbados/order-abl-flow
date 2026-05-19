@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { OfficeComingSoon } from "@/components/abl/office/OfficeComingSoon";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/office/sales-reps")({
-  component: () => <OfficeComingSoon title="Sales Reps" blurb="Manage sales rep accounts, customer assignments, and performance." />,
+  component: () => <Navigate to="/office/settings" search={{ tab: "team" } as any} replace />,
 });
