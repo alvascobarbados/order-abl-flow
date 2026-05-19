@@ -441,7 +441,7 @@ function OrderTableRow({
         <div className="text-[11px] text-muted-foreground">{customer?.sales_rep_name ?? "Direct"}{order.placed_on_behalf && " · on behalf"}</div>
       </td>
       <td className="px-2 py-2 text-muted-foreground">{timeAgo(dateField)}</td>
-      <td className="px-2 py-2 text-muted-foreground">—</td>
+      <td className="px-2 py-2 text-muted-foreground">{summary ? `${summary.lines} lines · ${summary.cases} cases` : "—"}</td>
       <td className="px-2 py-2 text-right font-bold text-ink">{formatBBD(Number(order.total))}</td>
       <td className="px-2 py-2"><OrderStatusBadge status={order.status} /></td>
       {flags.showWaiting && (
