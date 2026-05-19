@@ -1,89 +1,182 @@
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { X, ShoppingBag, Minus, Plus, Loader2 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { formatBBD, splitVatInclusive } from "@/lib/format";
 import { ProductImageFallback } from "./ProductImageFallback";
-import { useState } from "react";
-import { PlaceOrderModal } from "./PlaceOrderModal";
 
 export function CartDrawer() {
-  const { isOpen, close, lines, total, setQty, remove } = useCart();
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const { subtotal, vat } = splitVatInclusive(total);
+  const { isOpen, close, lines, total, setQty, remove, loadingLineIds } = useCart();
+  const navigate = useNavigate();
+  const { subtotal } = splitVatInclusive(total);
 
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={(o) => (o ? null : close())}>
-        <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
-          <SheetHeader className="border-b border-border px-5 py-4">
-            <SheetTitle className="flex items-center gap-2 text-base">
-              <ShoppingBag className="h-4 w-4" /> Your cart
-              <span className="ml-auto text-xs font-normal text-muted-foreground">{lines.length} item{lines.length === 1 ? "" : "s"}</span>
-            </SheetTitle>
-          </SheetHeader>
+      {/* Backdrop */}
+      <div
+        onClick={close}
+        className={`fixed inset-0 z-[60] bg-black/50 transition-opacity ${
+          isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
+      {/* Drawer */}
+      <aside
+        role="dialog"
+        aria-label="Your cart"
+        className={`fixed inset-y-0 right-0 z-[61] flex w-full flex-col bg-white shadow-2xl transition-transform sm:w-[440px] ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 border-b border-[#E5E9EF] px-5 py-4">
+          <h2 className="text-[15px] font-bold text-[#0B1A2E]">Your cart</h2>
+          <span className="rounded-full bg-[#F1F4F8] px-2 py-0.5 text-[11px] font-semibold text-[#64748B]">
+            {lines.length} {lines.length === 1 ? "item" : "items"}
+          </span>
+          <button
+            type="button"
+            onClick={close}
+            className="ml-auto grid h-8 w-8 place-items-center rounded-md text-[#64748B] hover:bg-[#FAFBFC] hover:text-[#0B1A2E]"
+            aria-label="Close cart"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
-          <div className="flex-1 overflow-y-auto">
-            {lines.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-                <ShoppingBag className="h-10 w-10 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground">Your cart is empty.<br/>Browse the catalog to start an order.</p>
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto">
+          {lines.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
+              <ShoppingBag className="h-12 w-12 text-[#CBD5E1]" strokeWidth={1.5} />
+              <div>
+                <p className="text-[14px] font-semibold text-[#0B1A2E]">Your cart is empty</p>
+                <p className="mt-1 text-[12.5px] text-[#64748B]">
+                  Browse the catalog to start an order
+                </p>
               </div>
-            ) : (
-              <ul className="divide-y divide-border">
-                {lines.map(l => (
+              <button
+                type="button"
+                onClick={close}
+                className="mt-2 text-[12px] font-semibold text-[#64748B] underline-offset-2 hover:text-[#0B1A2E] hover:underline"
+              >
+                Close
+              </button>
+            </div>
+          ) : (
+            <ul className="divide-y divide-[#EEF1F5]">
+              {lines.map((l) => {
+                const lineTotal = Number(l.product.case_price) * l.quantity;
+                const saving = loadingLineIds.has(l.id);
+                return (
                   <li key={l.id} className="flex gap-3 px-5 py-4">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border bg-white">
+                    <div className="h-[60px] w-[60px] shrink-0 overflow-hidden rounded-md border border-[#EEF1F5] bg-white">
                       {l.product.image_url ? (
-                        <img src={l.product.image_url} alt={l.product.name} className="h-full w-full object-contain p-1" />
+                        <img
+                          src={l.product.image_url}
+                          alt={l.product.name}
+                          className="h-full w-full object-contain p-1"
+                        />
                       ) : (
-                        <ProductImageFallback sku={l.product.sku} category={l.product.category} />
+                        <ProductImageFallback
+                          sku={l.product.sku}
+                          category={l.product.category}
+                        />
                       )}
                     </div>
-                    <div className="flex flex-1 flex-col gap-1">
+
+                    <div className="flex flex-1 flex-col gap-1.5">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="text-sm font-medium leading-snug text-ink">{l.product.name}</div>
-                          <div className="font-mono text-[10px] tracking-wider text-muted-foreground">{l.product.sku}</div>
+                        <div className="min-w-0">
+                          <div className="line-clamp-2 text-[13px] font-bold leading-tight text-[#0B1A2E]">
+                            {l.product.name}
+                          </div>
+                          <div className="mt-0.5 font-mono text-[10.5px] text-[#64748B]">
+                            {l.product.sku}
+                          </div>
                         </div>
-                        <button onClick={() => remove(l.id)} className="text-muted-foreground hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
+                        <button
+                          type="button"
+                          onClick={() => remove(l.id)}
+                          className="-mt-1 -mr-1 grid h-6 w-6 place-items-center text-[#94A3B8] hover:text-[#E11D48]"
+                          aria-label="Remove"
+                        >
+                          <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                      <div className="mt-1 flex items-center justify-between">
-                        <div className="flex items-center rounded-md border border-border">
-                          <button onClick={() => setQty(l.id, l.quantity - 1)} className="grid h-7 w-7 place-items-center text-muted-foreground hover:text-ink">
+
+                      <div className="mt-auto flex items-center justify-between">
+                        <div
+                          className={`grid h-[28px] grid-cols-[24px_1fr_24px] items-center rounded-[6px] border border-[#E5E9EF] ${
+                            saving ? "opacity-60" : ""
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setQty(l.id, l.quantity - 1)}
+                            disabled={saving}
+                            className="grid h-full place-items-center text-[#64748B] hover:text-[#0B1A2E]"
+                            aria-label="Decrease"
+                          >
                             <Minus className="h-3 w-3" />
                           </button>
-                          <span className="min-w-[2ch] text-center text-xs font-semibold tabular-nums">{l.quantity}</span>
-                          <button onClick={() => setQty(l.id, l.quantity + 1)} className="grid h-7 w-7 place-items-center text-muted-foreground hover:text-ink">
+                          <div className="grid h-full place-items-center text-[12px] font-bold text-[#0B1A2E] tabular-nums">
+                            {saving ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-[#64748B]" />
+                            ) : (
+                              l.quantity
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setQty(l.id, l.quantity + 1)}
+                            disabled={saving}
+                            className="grid h-full place-items-center text-[#64748B] hover:text-[#0B1A2E]"
+                            aria-label="Increase"
+                          >
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
-                        <div className="text-sm font-semibold text-ink">{formatBBD(Number(l.product.case_price) * l.quantity)}</div>
+                        <div className="text-[13px] font-bold text-[#0B1A2E] tabular-nums">
+                          {formatBBD(lineTotal)}
+                        </div>
                       </div>
                     </div>
                   </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {lines.length > 0 && (
-            <div className="border-t border-border bg-secondary/50 p-5">
-              <dl className="space-y-1 text-sm">
-                <div className="flex justify-between text-muted-foreground"><dt>Subtotal</dt><dd>{formatBBD(subtotal)}</dd></div>
-                <div className="flex justify-between text-muted-foreground"><dt>VAT (17.5%)</dt><dd>{formatBBD(vat)}</dd></div>
-                <div className="mt-2 flex justify-between border-t border-border pt-2 text-base font-bold text-ink"><dt>Total</dt><dd>{formatBBD(total)}</dd></div>
-              </dl>
-              <Button onClick={() => setConfirmOpen(true)} className="mt-4 h-11 w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                Place order
-              </Button>
-            </div>
+                );
+              })}
+            </ul>
           )}
-        </SheetContent>
-      </Sheet>
-      <PlaceOrderModal open={confirmOpen} onOpenChange={setConfirmOpen} />
+        </div>
+
+        {/* Summary */}
+        {lines.length > 0 && (
+          <div className="border-t border-[#E5E9EF] bg-[#FAFBFC] px-5 py-4">
+            <dl className="space-y-1 text-[13px]">
+              <div className="flex justify-between text-[#64748B]">
+                <dt>Subtotal</dt>
+                <dd className="tabular-nums">{formatBBD(subtotal)}</dd>
+              </div>
+              <div className="flex justify-between text-[#64748B]">
+                <dt>VAT (17.5%)</dt>
+                <dd>Included</dd>
+              </div>
+              <div className="mt-2 flex justify-between border-t border-[#E5E9EF] pt-2 text-[18px] font-extrabold text-[#0B1A2E]">
+                <dt>Total</dt>
+                <dd className="tabular-nums">{formatBBD(total)}</dd>
+              </div>
+            </dl>
+            <button
+              type="button"
+              onClick={() => {
+                close();
+                navigate({ to: "/shop/checkout" });
+              }}
+              className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-[10px] bg-[#FF6A1A] text-[14px] font-bold text-white transition hover:bg-[#E85F12]"
+            >
+              Review order →
+            </button>
+          </div>
+        )}
+      </aside>
     </>
   );
 }

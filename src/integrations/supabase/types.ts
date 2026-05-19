@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      cart: {
+        Row: {
+          added_at: string
+          customer_id: string
+          id: string
+          product_id: string
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          added_at?: string
+          customer_id: string
+          id?: string
+          product_id: string
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          added_at?: string
+          customer_id?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart_items: {
         Row: {
           cart_id: string
@@ -343,26 +385,36 @@ export type Database = {
       stock_notification_requests: {
         Row: {
           created_at: string
+          customer_id: string | null
           fulfilled_at: string | null
           id: string
           product_id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
+          customer_id?: string | null
           fulfilled_at?: string | null
           id?: string
           product_id: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
+          customer_id?: string | null
           fulfilled_at?: string | null
           id?: string
           product_id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stock_notification_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stock_notification_requests_product_id_fkey"
             columns: ["product_id"]

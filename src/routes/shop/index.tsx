@@ -86,7 +86,7 @@ function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-[#F6F7F9]">
-      <AppHeader search={search} onSearchChange={setSearch} cartCount={3} />
+      <AppHeader search={search} onSearchChange={setSearch} />
 
       {/* Category chips nav */}
       <nav className="border-b border-[#E5E9EF] bg-white">
@@ -179,7 +179,7 @@ function CatalogPage() {
         )}
       </main>
 
-      <FloatingActions cartCount={3} />
+      <FloatingActions />
     </div>
   );
 }

@@ -18,6 +18,7 @@ import { Route as OfficeRouteImport } from './routes/office'
 import { Route as DriverRouteImport } from './routes/driver'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShopIndexRouteImport } from './routes/shop/index'
+import { Route as ShopCheckoutRouteImport } from './routes/shop/checkout'
 import { Route as ShopAccountRouteImport } from './routes/shop/account'
 import { Route as ShopOrdersIndexRouteImport } from './routes/shop/orders/index'
 import { Route as ShopOrdersOrderNumberRouteImport } from './routes/shop/orders/$orderNumber'
@@ -67,6 +68,11 @@ const ShopIndexRoute = ShopIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ShopRoute,
 } as any)
+const ShopCheckoutRoute = ShopCheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => ShopRoute,
+} as any)
 const ShopAccountRoute = ShopAccountRouteImport.update({
   id: '/account',
   path: '/account',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
   '/shop/account': typeof ShopAccountRoute
+  '/shop/checkout': typeof ShopCheckoutRoute
   '/shop/': typeof ShopIndexRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders/': typeof ShopOrdersIndexRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
   '/shop/account': typeof ShopAccountRoute
+  '/shop/checkout': typeof ShopCheckoutRoute
   '/shop': typeof ShopIndexRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders': typeof ShopOrdersIndexRoute
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
   '/shop/account': typeof ShopAccountRoute
+  '/shop/checkout': typeof ShopCheckoutRoute
   '/shop/': typeof ShopIndexRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders/': typeof ShopOrdersIndexRoute
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/warehouse'
     | '/shop/account'
+    | '/shop/checkout'
     | '/shop/'
     | '/shop/orders/$orderNumber'
     | '/shop/orders/'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/warehouse'
     | '/shop/account'
+    | '/shop/checkout'
     | '/shop'
     | '/shop/orders/$orderNumber'
     | '/shop/orders'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/warehouse'
     | '/shop/account'
+    | '/shop/checkout'
     | '/shop/'
     | '/shop/orders/$orderNumber'
     | '/shop/orders/'
@@ -245,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopIndexRouteImport
       parentRoute: typeof ShopRoute
     }
+    '/shop/checkout': {
+      id: '/shop/checkout'
+      path: '/checkout'
+      fullPath: '/shop/checkout'
+      preLoaderRoute: typeof ShopCheckoutRouteImport
+      parentRoute: typeof ShopRoute
+    }
     '/shop/account': {
       id: '/shop/account'
       path: '/account'
@@ -271,6 +290,7 @@ declare module '@tanstack/react-router' {
 
 interface ShopRouteChildren {
   ShopAccountRoute: typeof ShopAccountRoute
+  ShopCheckoutRoute: typeof ShopCheckoutRoute
   ShopIndexRoute: typeof ShopIndexRoute
   ShopOrdersOrderNumberRoute: typeof ShopOrdersOrderNumberRoute
   ShopOrdersIndexRoute: typeof ShopOrdersIndexRoute
@@ -278,6 +298,7 @@ interface ShopRouteChildren {
 
 const ShopRouteChildren: ShopRouteChildren = {
   ShopAccountRoute: ShopAccountRoute,
+  ShopCheckoutRoute: ShopCheckoutRoute,
   ShopIndexRoute: ShopIndexRoute,
   ShopOrdersOrderNumberRoute: ShopOrdersOrderNumberRoute,
   ShopOrdersIndexRoute: ShopOrdersIndexRoute,
