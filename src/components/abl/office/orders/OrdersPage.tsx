@@ -390,6 +390,7 @@ function OrdersTable({
             <tbody>
               {rows.map((o) => <OrderTableRow key={o.id} order={o} customer={customers[o.customer_id]}
                 tab={tab}
+                summary={itemSummary[o.id]}
                 checked={selected.has(o.id)}
                 onToggle={() => {
                   const next = new Set(selected);
