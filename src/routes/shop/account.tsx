@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/abl/AppHeader";
 import { formatBBD } from "@/lib/format";
+import { useActiveCustomer } from "@/hooks/use-active-customer";
 
 export const Route = createFileRoute("/shop/account")({ component: AccountPage });
 
