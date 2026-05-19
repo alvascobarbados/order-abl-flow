@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WarehouseRouteImport } from './routes/warehouse'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as OfficeRouteImport } from './routes/office'
@@ -25,6 +26,11 @@ const WarehouseRoute = WarehouseRouteImport.update({
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopRoute = ShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SalesRoute = SalesRouteImport.update({
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sales': typeof SalesRoute
+  '/shop': typeof ShopRoute
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sales': typeof SalesRoute
+  '/shop': typeof ShopRoute
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sales': typeof SalesRoute
+  '/shop': typeof ShopRoute
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/office'
     | '/reset-password'
     | '/sales'
+    | '/shop'
     | '/sign-in'
     | '/warehouse'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/office'
     | '/reset-password'
     | '/sales'
+    | '/shop'
     | '/sign-in'
     | '/warehouse'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/office'
     | '/reset-password'
     | '/sales'
+    | '/shop'
     | '/sign-in'
     | '/warehouse'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   OfficeRoute: typeof OfficeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SalesRoute: typeof SalesRoute
+  ShopRoute: typeof ShopRoute
   SignInRoute: typeof SignInRoute
   WarehouseRoute: typeof WarehouseRoute
 }
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop': {
+      id: '/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof ShopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sales': {
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   OfficeRoute: OfficeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SalesRoute: SalesRoute,
+  ShopRoute: ShopRoute,
   SignInRoute: SignInRoute,
   WarehouseRoute: WarehouseRoute,
 }
