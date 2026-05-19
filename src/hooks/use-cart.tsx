@@ -73,8 +73,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [customerId]);
 
   useEffect(() => {
+    setLines([]);
     if (customerId) reload();
   }, [customerId, reload]);
+
 
   const markLoading = (id: string, on: boolean) => {
     setLoadingLineIds((prev) => {
