@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { OfficeComingSoon } from "@/components/abl/office/OfficeComingSoon";
+import { ProductsPage } from "@/components/abl/office/products/ProductsPage";
 
 export const Route = createFileRoute("/office/products")({
-  component: () => <OfficeComingSoon title="Products & Inventory" blurb="Product catalog management, stock levels, and inventory adjustments." />,
+  component: ProductsPage,
+  validateSearch: (s: Record<string, unknown>) => ({
+    tab: (s.tab as string | undefined) ?? undefined,
+    open: (s.open as string | undefined) ?? undefined,
+  }),
 });
