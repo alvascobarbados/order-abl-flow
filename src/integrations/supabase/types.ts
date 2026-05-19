@@ -353,6 +353,120 @@ export type Database = {
           },
         ]
       }
+      delivery_events: {
+        Row: {
+          driver_name: string | null
+          driver_profile_id: string | null
+          event_type: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          meta: Json | null
+          notes: string | null
+          occurred_at: string
+          order_id: string
+        }
+        Insert: {
+          driver_name?: string | null
+          driver_profile_id?: string | null
+          event_type: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          meta?: Json | null
+          notes?: string | null
+          occurred_at?: string
+          order_id: string
+        }
+        Update: {
+          driver_name?: string | null
+          driver_profile_id?: string | null
+          event_type?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          meta?: Json | null
+          notes?: string | null
+          occurred_at?: string
+          order_id?: string
+        }
+        Relationships: []
+      }
+      driver_shifts: {
+        Row: {
+          account_total: number
+          cards_total: number
+          cash_counted: number
+          cash_expected: number
+          cheques_count: number
+          cheques_total: number
+          created_at: string
+          deliveries_count: number
+          driver_name: string | null
+          driver_profile_id: string | null
+          ended_at: string | null
+          id: string
+          notes: string | null
+          shift_date: string
+          started_at: string
+          updated_at: string
+          variance: number | null
+          variance_resolution_notes: string | null
+          variance_resolved: boolean
+          variance_resolved_at: string | null
+          variance_resolved_by: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          account_total?: number
+          cards_total?: number
+          cash_counted?: number
+          cash_expected?: number
+          cheques_count?: number
+          cheques_total?: number
+          created_at?: string
+          deliveries_count?: number
+          driver_name?: string | null
+          driver_profile_id?: string | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          shift_date?: string
+          started_at?: string
+          updated_at?: string
+          variance?: number | null
+          variance_resolution_notes?: string | null
+          variance_resolved?: boolean
+          variance_resolved_at?: string | null
+          variance_resolved_by?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          account_total?: number
+          cards_total?: number
+          cash_counted?: number
+          cash_expected?: number
+          cheques_count?: number
+          cheques_total?: number
+          created_at?: string
+          deliveries_count?: number
+          driver_name?: string | null
+          driver_profile_id?: string | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          shift_date?: string
+          started_at?: string
+          updated_at?: string
+          variance?: number | null
+          variance_resolution_notes?: string | null
+          variance_resolved?: boolean
+          variance_resolved_at?: string | null
+          variance_resolved_by?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -432,7 +546,12 @@ export type Database = {
           customer_id: string
           delivered_at: string | null
           delivered_to_name: string | null
+          delivery_attempts: number
           delivery_notes: string | null
+          delivery_photo_url: string | null
+          delivery_status_detail:
+            | Database["public"]["Enums"]["delivery_status_detail"]
+            | null
           dispatched_at: string | null
           driver_name: string | null
           driver_profile_id: string | null
@@ -442,6 +561,7 @@ export type Database = {
           internal_notes: string | null
           invoice_number: string | null
           invoiced_at: string | null
+          last_delivery_attempt_at: string | null
           order_number: string | null
           pack_notes: string | null
           pack_photo_url: string | null
@@ -458,6 +578,8 @@ export type Database = {
           previous_status: Database["public"]["Enums"]["order_status"] | null
           rejection_reason: string | null
           restored_at: string | null
+          route_sequence: number | null
+          signature_image_url: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal: number
           total: number
@@ -476,7 +598,12 @@ export type Database = {
           customer_id: string
           delivered_at?: string | null
           delivered_to_name?: string | null
+          delivery_attempts?: number
           delivery_notes?: string | null
+          delivery_photo_url?: string | null
+          delivery_status_detail?:
+            | Database["public"]["Enums"]["delivery_status_detail"]
+            | null
           dispatched_at?: string | null
           driver_name?: string | null
           driver_profile_id?: string | null
@@ -486,6 +613,7 @@ export type Database = {
           internal_notes?: string | null
           invoice_number?: string | null
           invoiced_at?: string | null
+          last_delivery_attempt_at?: string | null
           order_number?: string | null
           pack_notes?: string | null
           pack_photo_url?: string | null
@@ -502,6 +630,8 @@ export type Database = {
           previous_status?: Database["public"]["Enums"]["order_status"] | null
           rejection_reason?: string | null
           restored_at?: string | null
+          route_sequence?: number | null
+          signature_image_url?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
           total?: number
@@ -520,7 +650,12 @@ export type Database = {
           customer_id?: string
           delivered_at?: string | null
           delivered_to_name?: string | null
+          delivery_attempts?: number
           delivery_notes?: string | null
+          delivery_photo_url?: string | null
+          delivery_status_detail?:
+            | Database["public"]["Enums"]["delivery_status_detail"]
+            | null
           dispatched_at?: string | null
           driver_name?: string | null
           driver_profile_id?: string | null
@@ -530,6 +665,7 @@ export type Database = {
           internal_notes?: string | null
           invoice_number?: string | null
           invoiced_at?: string | null
+          last_delivery_attempt_at?: string | null
           order_number?: string | null
           pack_notes?: string | null
           pack_photo_url?: string | null
@@ -546,6 +682,8 @@ export type Database = {
           previous_status?: Database["public"]["Enums"]["order_status"] | null
           rejection_reason?: string | null
           restored_at?: string | null
+          route_sequence?: number | null
+          signature_image_url?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
           total?: number
@@ -1044,6 +1182,13 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "office" | "warehouse" | "delivery" | "admin"
+      delivery_status_detail:
+        | "delivered"
+        | "left_at_door"
+        | "refused"
+        | "failed_no_one_home"
+        | "failed_wrong_address"
+        | "rescheduled"
       order_status:
         | "draft"
         | "pending_approval"
@@ -1203,6 +1348,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "office", "warehouse", "delivery", "admin"],
+      delivery_status_detail: [
+        "delivered",
+        "left_at_door",
+        "refused",
+        "failed_no_one_home",
+        "failed_wrong_address",
+        "rescheduled",
+      ],
       order_status: [
         "draft",
         "pending_approval",
