@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { OfficeComingSoon } from "@/components/abl/office/OfficeComingSoon";
+import { CustomersTable } from "@/components/abl/office/customers/CustomersTable";
 
 export const Route = createFileRoute("/office/customers")({
-  component: () => <OfficeComingSoon title="Customers" blurb="Customer accounts, contacts, credit limits, balances, and order history." />,
+  component: CustomersTable,
 });
