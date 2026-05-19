@@ -3,7 +3,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBBD } from "@/lib/format";
 import { toast } from "sonner";
-import { Check, X, Eye } from "lucide-react";
+import { Check, X, Eye, Printer } from "lucide-react";
+import { printInvoicesBulk } from "@/lib/invoices/generate";
 
 type OrderRow = {
   id: string;
@@ -159,6 +160,7 @@ export function OfficeDashboard() {
           </p>
         </div>
         <div className="flex gap-2">
+          <PrintPendingInvoicesBtn orders={orders} />
           <button
             onClick={() => navigate({ to: "/office/tv" })}
             className="rounded-lg border border-border bg-card px-3.5 py-2 text-[13px] font-semibold text-ink hover:bg-secondary"
@@ -176,7 +178,7 @@ export function OfficeDashboard() {
       </div>
 
       {/* KPI strip */}
-      <div className="mb-6 grid gap-3 grid-cols-2 min-[1100px]:grid-cols-5">
+      <div className="mb-6 grid gap-3 grid-cols-2 min-[1100px]:grid-cols-6">
         <KpiCard
           alert
           label="PENDING APPROVAL"
@@ -200,6 +202,12 @@ export function OfficeDashboard() {
           value={String(counts.in_warehouse)}
           trend={`${counts.picking} picking · ${counts.packed} packed`}
           trendClass="text-muted-foreground"
+        />
+        <KpiCard
+          label="READY FOR DISPATCH"
+          value={String(counts.packed)}
+          trend={counts.packed > 0 ? "Awaiting driver assignment" : "All clear"}
+          trendClass={counts.packed > 0 ? "text-[#6D28D9]" : "text-muted-foreground"}
         />
         <KpiCard
           label="OUT FOR DELIVERY"
@@ -340,6 +348,28 @@ function KpiCard({
       </div>
       <div className={`mt-1 text-[11px] font-semibold ${trendClass ?? ""}`}>{trend}</div>
     </div>
+  );
+}
+
+function PrintPendingInvoicesBtn({ orders }: { orders: OrderRow[] }) {
+  const ids = useMemo(
+    () =>
+      orders
+        .filter((o: any) => o.status === "packed" && o.invoice_number && !o.assigned_driver_id)
+        .map((o) => o.id),
+    [orders],
+  );
+  const [busy, setBusy] = useState(false);
+  if (ids.length === 0) return null;
+  return (
+    <button
+      onClick={async () => { setBusy(true); try { await printInvoicesBulk(ids); } finally { setBusy(false); } }}
+      disabled={busy}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-[13px] font-semibold text-ink hover:bg-secondary disabled:opacity-60"
+    >
+      <Printer className="h-3.5 w-3.5" />
+      {busy ? "Building…" : `Print ${ids.length} pending invoice${ids.length === 1 ? "" : "s"}`}
+    </button>
   );
 }
 

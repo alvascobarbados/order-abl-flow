@@ -266,16 +266,29 @@ function TimelineTab({ order, activity }: { order: OrderRow; activity: Activity[
 function PaymentsTab({ order, allocations, balance, paidSum, onRecord }: {
   order: OrderRow; allocations: Allocation[]; balance: number; paidSum: number; onRecord: () => void;
 }) {
-  if (!["invoiced","paid","delivered"].includes(order.status)) {
-    return (
-      <div className="rounded-lg border border-dashed border-border p-8 text-center text-[13px] text-muted-foreground">
-        Payments & invoicing become available once this order is delivered or invoiced.
-      </div>
-    );
-  }
+  const hasInvoice = !!order.invoice_number;
   const overdue = order.due_date && new Date(order.due_date) < new Date() && balance > 0;
   return (
     <div className="space-y-5">
+      {/* Invoice document panel */}
+      <div className="rounded-lg border border-border bg-white p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <SectionTitle>Invoice document</SectionTitle>
+          {hasInvoice && (
+            <span className="font-mono text-[11px] text-muted-foreground">{order.invoice_number}</span>
+          )}
+        </div>
+        {hasInvoice ? (
+          <InvoiceActions orderId={order.id} />
+        ) : (
+          <p className="text-[12.5px] text-muted-foreground">
+            No invoice yet. Invoices are generated automatically when an order is packed
+            (or manually via "Mark invoiced" once delivered).
+          </p>
+        )}
+      </div>
+
+      {/* Money summary */}
       <div className="grid grid-cols-3 gap-3">
         <Stat label="Invoice" value={order.invoice_number ?? "—"} mono />
         <Stat label="Invoice date" value={formatDate(order.invoiced_at)} />
@@ -286,10 +299,11 @@ function PaymentsTab({ order, allocations, balance, paidSum, onRecord }: {
         <Stat label="Paid" value={formatBBD(paidSum)} highlight="#047857" />
         <Stat label="Balance" value={formatBBD(balance)} highlight={balance > 0 ? "#B45309" : "#047857"} bold />
       </div>
+
       <div>
         <div className="mb-2 flex items-center justify-between">
           <SectionTitle>Allocations</SectionTitle>
-          {balance > 0 && (
+          {balance > 0 && hasInvoice && (
             <button onClick={onRecord} className="rounded-md bg-ink px-3 py-1.5 text-[12px] font-semibold text-white">Record payment</button>
           )}
         </div>
@@ -314,6 +328,44 @@ function PaymentsTab({ order, allocations, balance, paidSum, onRecord }: {
           </table>
         )}
       </div>
+    </div>
+  );
+}
+
+function InvoiceActions({ orderId }: { orderId: string }) {
+  const [busy, setBusy] = useState<"download" | "print" | "regen" | null>(null);
+  const run = async (kind: "download" | "print" | "regen") => {
+    setBusy(kind);
+    try {
+      if (kind === "download") {
+        const url = await (await import("@/lib/invoices/generate")).getOrGenerateInvoicePdf(orderId);
+        window.open(url, "_blank");
+      } else if (kind === "print") {
+        await (await import("@/lib/invoices/generate")).openInvoicePdf(orderId, { print: true });
+      } else {
+        await (await import("@/lib/invoices/generate")).openInvoicePdf(orderId, { regenerate: true });
+        toast.success("Invoice regenerated");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed");
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button onClick={() => run("download")} disabled={!!busy}
+        className="inline-flex items-center gap-1.5 rounded-md bg-ink px-3 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50">
+        Download PDF
+      </button>
+      <button onClick={() => run("print")} disabled={!!busy}
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-[12px] font-semibold text-ink hover:bg-secondary disabled:opacity-50">
+        <Printer className="h-3.5 w-3.5" /> Print
+      </button>
+      <button onClick={() => run("regen")} disabled={!!busy}
+        className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border bg-white px-3 py-1.5 text-[12px] font-semibold text-muted-foreground hover:text-ink disabled:opacity-50">
+        Regenerate
+      </button>
     </div>
   );
 }

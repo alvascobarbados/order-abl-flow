@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { RecordPaymentModal } from "@/components/abl/payments/RecordPaymentModal";
 
-type BadgeKind = "orange" | "amber" | "red";
+type BadgeKind = "orange" | "amber" | "red" | "purple";
 
 const SECTIONS: Array<{
   label: string;
@@ -20,13 +20,19 @@ const SECTIONS: Array<{
     exact?: boolean;
     badge?: "pending_orders" | "pending_payments" | "overdue_invoices";
     badgeColor?: BadgeKind;
+    secondaryBadge?: "ready_to_dispatch";
+    secondaryBadgeColor?: BadgeKind;
   }>;
 }> = [
   {
     label: "Operations",
     items: [
       { to: "/office", label: "Dashboard", icon: LayoutDashboard, exact: true },
-      { to: "/office/orders", label: "Orders", icon: ShoppingBag, badge: "pending_orders", badgeColor: "orange" },
+      {
+        to: "/office/orders", label: "Orders", icon: ShoppingBag,
+        badge: "pending_orders", badgeColor: "orange",
+        secondaryBadge: "ready_to_dispatch", secondaryBadgeColor: "purple",
+      },
       { to: "/office/customers", label: "Customers", icon: Users },
       { to: "/office/products", label: "Products & Inventory", icon: Boxes },
     ],
@@ -55,13 +61,14 @@ const BADGE_COLORS: Record<BadgeKind, { bg: string; text: string }> = {
   orange: { bg: "rgba(255, 106, 26, 0.18)", text: "#FFB07A" },
   amber:  { bg: "rgba(245, 158, 11, 0.18)", text: "#FCD34D" },
   red:    { bg: "rgba(239, 68, 68, 0.20)",  text: "#FCA5A5" },
+  purple: { bg: "rgba(139, 92, 246, 0.20)", text: "#C4B5FD" },
 };
 
 export function OfficeShell({ children }: { children: ReactNode }) {
   const { setRole } = useRole();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [counts, setCounts] = useState({ pending_orders: 0, pending_payments: 0, overdue_invoices: 0 });
+  const [counts, setCounts] = useState({ pending_orders: 0, pending_payments: 0, overdue_invoices: 0, ready_to_dispatch: 0 });
   const [newOpen, setNewOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const newRef = useRef<HTMLDivElement>(null);
@@ -69,11 +76,12 @@ export function OfficeShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     let alive = true;
     const fetchAll = async () => {
-      const [pendingOrdersRes, pendingPaymentsRes, invoicedRes, customersRes] = await Promise.all([
+      const [pendingOrdersRes, pendingPaymentsRes, invoicedRes, customersRes, packedRes] = await Promise.all([
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "pending_approval"),
         supabase.from("payments").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("orders").select("id, customer_id, invoiced_at").eq("status", "invoiced"),
         supabase.from("customers").select("id, payment_terms_days"),
+        supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "packed"),
       ]);
       const termsMap: Record<string, number> = {};
       (customersRes.data ?? []).forEach((c: any) => { termsMap[c.id] = c.payment_terms_days ?? 30; });
@@ -89,6 +97,7 @@ export function OfficeShell({ children }: { children: ReactNode }) {
         pending_orders: pendingOrdersRes.count ?? 0,
         pending_payments: pendingPaymentsRes.count ?? 0,
         overdue_invoices: overdue,
+        ready_to_dispatch: packedRes.count ?? 0,
       });
     };
     fetchAll();
@@ -96,7 +105,6 @@ export function OfficeShell({ children }: { children: ReactNode }) {
     return () => { alive = false; clearInterval(t); };
   }, [pathname]);
 
-  // Close +New dropdown on outside click
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (!newRef.current?.contains(e.target as Node)) setNewOpen(false);
@@ -105,7 +113,6 @@ export function OfficeShell({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  // Cmd/Ctrl+K opens dropdown
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -141,7 +148,6 @@ export function OfficeShell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {/* Profile block */}
         <div className="mx-3 mb-3 flex items-center gap-2.5 rounded-[10px] bg-white/5 p-2.5">
           <div
             className="grid h-9 w-9 place-items-center rounded-full text-[13px] font-bold text-white"
@@ -155,7 +161,6 @@ export function OfficeShell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {/* + New button */}
         <div className="relative mx-3 mb-3" ref={newRef}>
           <button
             onClick={() => setNewOpen((v) => !v)}
@@ -204,13 +209,14 @@ export function OfficeShell({ children }: { children: ReactNode }) {
                     active={isActive(item.to, item.exact)}
                     badgeValue={item.badge ? counts[item.badge] : undefined}
                     badgeColor={item.badgeColor}
+                    secondaryBadgeValue={item.secondaryBadge ? counts[item.secondaryBadge] : undefined}
+                    secondaryBadgeColor={item.secondaryBadgeColor}
                   />
                 ))}
               </ul>
             </div>
           ))}
 
-          {/* Settings — pinned at bottom of nav with divider */}
           <div className="mt-4">
             <div className="mx-3 mb-2 h-px" style={{ backgroundColor: "rgba(255,255,255,0.08)" }} />
             <ul className="space-y-0.5">
@@ -247,11 +253,23 @@ export function OfficeShell({ children }: { children: ReactNode }) {
 
 function NavRow({
   to, label, icon: Icon, active, badgeValue, badgeColor = "orange",
+  secondaryBadgeValue, secondaryBadgeColor = "purple",
 }: {
   to: string; label: string; icon: any;
-  active?: boolean; badgeValue?: number; badgeColor?: BadgeKind;
+  active?: boolean;
+  badgeValue?: number; badgeColor?: BadgeKind;
+  secondaryBadgeValue?: number; secondaryBadgeColor?: BadgeKind;
 }) {
-  const colors = BADGE_COLORS[badgeColor];
+  const primary = BADGE_COLORS[badgeColor];
+  const secondary = BADGE_COLORS[secondaryBadgeColor];
+  const Badge = ({ val, c }: { val: number; c: { bg: string; text: string } }) => (
+    <span
+      className="rounded-full font-mono font-semibold"
+      style={{ backgroundColor: c.bg, color: c.text, fontSize: "10.5px", padding: "2px 6px" }}
+    >
+      {val}
+    </span>
+  );
   return (
     <li>
       <Link
@@ -268,17 +286,10 @@ function NavRow({
         )}
         <Icon className="h-4 w-4 flex-shrink-0 opacity-80" />
         <span className="flex-1 truncate">{label}</span>
-        {badgeValue !== undefined && badgeValue > 0 && (
-          <span
-            className="rounded-full font-mono font-semibold"
-            style={{
-              backgroundColor: colors.bg, color: colors.text,
-              fontSize: "10.5px", padding: "2px 6px",
-            }}
-          >
-            {badgeValue}
-          </span>
-        )}
+        <span className="flex items-center gap-1">
+          {badgeValue !== undefined && badgeValue > 0 && <Badge val={badgeValue} c={primary} />}
+          {secondaryBadgeValue !== undefined && secondaryBadgeValue > 0 && <Badge val={secondaryBadgeValue} c={secondary} />}
+        </span>
       </Link>
     </li>
   );
