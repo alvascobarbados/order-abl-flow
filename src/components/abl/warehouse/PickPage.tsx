@@ -34,7 +34,7 @@ export function PickPage({ orderId }: { orderId: string }) {
     const [{ data: o }, { data: oi }] = await Promise.all([
       supabase.from("orders").select("id, order_number, status, placed_at, delivery_notes, customer:customers(id, company_name, delivery_address, pricing_tier)").eq("id", orderId).maybeSingle(),
       supabase.from("order_items")
-        .select("id, product_id, quantity, picked_quantity, shortfall_quantity, shortfall_note, picked_at, product:products(name, sku, bin_location, pack_size, on_hand, primary_image_url)")
+        .select("id, product_id, quantity, picked_quantity, shortfall_quantity, shortfall_note, picked_at, last_scan_at, product:products(name, sku, bin_location, pack_size, pack_unit, on_hand, primary_image_url)")
         .eq("order_id", orderId),
     ]);
     setOrder(o as any);
