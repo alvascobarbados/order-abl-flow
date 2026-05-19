@@ -18,8 +18,20 @@ import { Route as OfficeRouteImport } from './routes/office'
 import { Route as DriverRouteImport } from './routes/driver'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShopIndexRouteImport } from './routes/shop/index'
+import { Route as OfficeIndexRouteImport } from './routes/office.index'
 import { Route as ShopCheckoutRouteImport } from './routes/shop/checkout'
 import { Route as ShopAccountRouteImport } from './routes/shop/account'
+import { Route as OfficeTvRouteImport } from './routes/office.tv'
+import { Route as OfficeSettingsRouteImport } from './routes/office.settings'
+import { Route as OfficeSalesRepsRouteImport } from './routes/office.sales-reps'
+import { Route as OfficeReportsRouteImport } from './routes/office.reports'
+import { Route as OfficeReceivingRouteImport } from './routes/office.receiving'
+import { Route as OfficeProductsRouteImport } from './routes/office.products'
+import { Route as OfficePendingRouteImport } from './routes/office.pending'
+import { Route as OfficeOrdersRouteImport } from './routes/office.orders'
+import { Route as OfficeInvoicesRouteImport } from './routes/office.invoices'
+import { Route as OfficeGpRouteImport } from './routes/office.gp'
+import { Route as OfficeCustomersRouteImport } from './routes/office.customers'
 import { Route as ShopOrdersIndexRouteImport } from './routes/shop/orders/index'
 import { Route as ShopOrdersOrderNumberRouteImport } from './routes/shop/orders/$orderNumber'
 
@@ -68,6 +80,11 @@ const ShopIndexRoute = ShopIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ShopRoute,
 } as any)
+const OfficeIndexRoute = OfficeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OfficeRoute,
+} as any)
 const ShopCheckoutRoute = ShopCheckoutRouteImport.update({
   id: '/checkout',
   path: '/checkout',
@@ -77,6 +94,61 @@ const ShopAccountRoute = ShopAccountRouteImport.update({
   id: '/account',
   path: '/account',
   getParentRoute: () => ShopRoute,
+} as any)
+const OfficeTvRoute = OfficeTvRouteImport.update({
+  id: '/tv',
+  path: '/tv',
+  getParentRoute: () => OfficeRoute,
+} as any)
+const OfficeSettingsRoute = OfficeSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => OfficeRoute,
+} as any)
+const OfficeSalesRepsRoute = OfficeSalesRepsRouteImport.update({
+  id: '/sales-reps',
+  path: '/sales-reps',
+  getParentRoute: () => OfficeRoute,
+} as any)
+const OfficeReportsRoute = OfficeReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => OfficeRoute,
+} as any)
+const OfficeReceivingRoute = OfficeReceivingRouteImport.update({
+  id: '/receiving',
+  path: '/receiving',
+  getParentRoute: () => OfficeRoute,
+} as any)
+const OfficeProductsRoute = OfficeProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => OfficeRoute,
+} as any)
+const OfficePendingRoute = OfficePendingRouteImport.update({
+  id: '/pending',
+  path: '/pending',
+  getParentRoute: () => OfficeRoute,
+} as any)
+const OfficeOrdersRoute = OfficeOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => OfficeRoute,
+} as any)
+const OfficeInvoicesRoute = OfficeInvoicesRouteImport.update({
+  id: '/invoices',
+  path: '/invoices',
+  getParentRoute: () => OfficeRoute,
+} as any)
+const OfficeGpRoute = OfficeGpRouteImport.update({
+  id: '/gp',
+  path: '/gp',
+  getParentRoute: () => OfficeRoute,
+} as any)
+const OfficeCustomersRoute = OfficeCustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => OfficeRoute,
 } as any)
 const ShopOrdersIndexRoute = ShopOrdersIndexRouteImport.update({
   id: '/orders/',
@@ -92,14 +164,26 @@ const ShopOrdersOrderNumberRoute = ShopOrdersOrderNumberRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/driver': typeof DriverRoute
-  '/office': typeof OfficeRoute
+  '/office': typeof OfficeRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/sales': typeof SalesRoute
   '/shop': typeof ShopRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
+  '/office/customers': typeof OfficeCustomersRoute
+  '/office/gp': typeof OfficeGpRoute
+  '/office/invoices': typeof OfficeInvoicesRoute
+  '/office/orders': typeof OfficeOrdersRoute
+  '/office/pending': typeof OfficePendingRoute
+  '/office/products': typeof OfficeProductsRoute
+  '/office/receiving': typeof OfficeReceivingRoute
+  '/office/reports': typeof OfficeReportsRoute
+  '/office/sales-reps': typeof OfficeSalesRepsRoute
+  '/office/settings': typeof OfficeSettingsRoute
+  '/office/tv': typeof OfficeTvRoute
   '/shop/account': typeof ShopAccountRoute
   '/shop/checkout': typeof ShopCheckoutRoute
+  '/office/': typeof OfficeIndexRoute
   '/shop/': typeof ShopIndexRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders/': typeof ShopOrdersIndexRoute
@@ -107,13 +191,24 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/driver': typeof DriverRoute
-  '/office': typeof OfficeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sales': typeof SalesRoute
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
+  '/office/customers': typeof OfficeCustomersRoute
+  '/office/gp': typeof OfficeGpRoute
+  '/office/invoices': typeof OfficeInvoicesRoute
+  '/office/orders': typeof OfficeOrdersRoute
+  '/office/pending': typeof OfficePendingRoute
+  '/office/products': typeof OfficeProductsRoute
+  '/office/receiving': typeof OfficeReceivingRoute
+  '/office/reports': typeof OfficeReportsRoute
+  '/office/sales-reps': typeof OfficeSalesRepsRoute
+  '/office/settings': typeof OfficeSettingsRoute
+  '/office/tv': typeof OfficeTvRoute
   '/shop/account': typeof ShopAccountRoute
   '/shop/checkout': typeof ShopCheckoutRoute
+  '/office': typeof OfficeIndexRoute
   '/shop': typeof ShopIndexRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders': typeof ShopOrdersIndexRoute
@@ -122,14 +217,26 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/driver': typeof DriverRoute
-  '/office': typeof OfficeRoute
+  '/office': typeof OfficeRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/sales': typeof SalesRoute
   '/shop': typeof ShopRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/warehouse': typeof WarehouseRoute
+  '/office/customers': typeof OfficeCustomersRoute
+  '/office/gp': typeof OfficeGpRoute
+  '/office/invoices': typeof OfficeInvoicesRoute
+  '/office/orders': typeof OfficeOrdersRoute
+  '/office/pending': typeof OfficePendingRoute
+  '/office/products': typeof OfficeProductsRoute
+  '/office/receiving': typeof OfficeReceivingRoute
+  '/office/reports': typeof OfficeReportsRoute
+  '/office/sales-reps': typeof OfficeSalesRepsRoute
+  '/office/settings': typeof OfficeSettingsRoute
+  '/office/tv': typeof OfficeTvRoute
   '/shop/account': typeof ShopAccountRoute
   '/shop/checkout': typeof ShopCheckoutRoute
+  '/office/': typeof OfficeIndexRoute
   '/shop/': typeof ShopIndexRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders/': typeof ShopOrdersIndexRoute
@@ -145,8 +252,20 @@ export interface FileRouteTypes {
     | '/shop'
     | '/sign-in'
     | '/warehouse'
+    | '/office/customers'
+    | '/office/gp'
+    | '/office/invoices'
+    | '/office/orders'
+    | '/office/pending'
+    | '/office/products'
+    | '/office/receiving'
+    | '/office/reports'
+    | '/office/sales-reps'
+    | '/office/settings'
+    | '/office/tv'
     | '/shop/account'
     | '/shop/checkout'
+    | '/office/'
     | '/shop/'
     | '/shop/orders/$orderNumber'
     | '/shop/orders/'
@@ -154,13 +273,24 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/driver'
-    | '/office'
     | '/reset-password'
     | '/sales'
     | '/sign-in'
     | '/warehouse'
+    | '/office/customers'
+    | '/office/gp'
+    | '/office/invoices'
+    | '/office/orders'
+    | '/office/pending'
+    | '/office/products'
+    | '/office/receiving'
+    | '/office/reports'
+    | '/office/sales-reps'
+    | '/office/settings'
+    | '/office/tv'
     | '/shop/account'
     | '/shop/checkout'
+    | '/office'
     | '/shop'
     | '/shop/orders/$orderNumber'
     | '/shop/orders'
@@ -174,8 +304,20 @@ export interface FileRouteTypes {
     | '/shop'
     | '/sign-in'
     | '/warehouse'
+    | '/office/customers'
+    | '/office/gp'
+    | '/office/invoices'
+    | '/office/orders'
+    | '/office/pending'
+    | '/office/products'
+    | '/office/receiving'
+    | '/office/reports'
+    | '/office/sales-reps'
+    | '/office/settings'
+    | '/office/tv'
     | '/shop/account'
     | '/shop/checkout'
+    | '/office/'
     | '/shop/'
     | '/shop/orders/$orderNumber'
     | '/shop/orders/'
@@ -184,7 +326,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DriverRoute: typeof DriverRoute
-  OfficeRoute: typeof OfficeRoute
+  OfficeRoute: typeof OfficeRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SalesRoute: typeof SalesRoute
   ShopRoute: typeof ShopRouteWithChildren
@@ -257,6 +399,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopIndexRouteImport
       parentRoute: typeof ShopRoute
     }
+    '/office/': {
+      id: '/office/'
+      path: '/'
+      fullPath: '/office/'
+      preLoaderRoute: typeof OfficeIndexRouteImport
+      parentRoute: typeof OfficeRoute
+    }
     '/shop/checkout': {
       id: '/shop/checkout'
       path: '/checkout'
@@ -270,6 +419,83 @@ declare module '@tanstack/react-router' {
       fullPath: '/shop/account'
       preLoaderRoute: typeof ShopAccountRouteImport
       parentRoute: typeof ShopRoute
+    }
+    '/office/tv': {
+      id: '/office/tv'
+      path: '/tv'
+      fullPath: '/office/tv'
+      preLoaderRoute: typeof OfficeTvRouteImport
+      parentRoute: typeof OfficeRoute
+    }
+    '/office/settings': {
+      id: '/office/settings'
+      path: '/settings'
+      fullPath: '/office/settings'
+      preLoaderRoute: typeof OfficeSettingsRouteImport
+      parentRoute: typeof OfficeRoute
+    }
+    '/office/sales-reps': {
+      id: '/office/sales-reps'
+      path: '/sales-reps'
+      fullPath: '/office/sales-reps'
+      preLoaderRoute: typeof OfficeSalesRepsRouteImport
+      parentRoute: typeof OfficeRoute
+    }
+    '/office/reports': {
+      id: '/office/reports'
+      path: '/reports'
+      fullPath: '/office/reports'
+      preLoaderRoute: typeof OfficeReportsRouteImport
+      parentRoute: typeof OfficeRoute
+    }
+    '/office/receiving': {
+      id: '/office/receiving'
+      path: '/receiving'
+      fullPath: '/office/receiving'
+      preLoaderRoute: typeof OfficeReceivingRouteImport
+      parentRoute: typeof OfficeRoute
+    }
+    '/office/products': {
+      id: '/office/products'
+      path: '/products'
+      fullPath: '/office/products'
+      preLoaderRoute: typeof OfficeProductsRouteImport
+      parentRoute: typeof OfficeRoute
+    }
+    '/office/pending': {
+      id: '/office/pending'
+      path: '/pending'
+      fullPath: '/office/pending'
+      preLoaderRoute: typeof OfficePendingRouteImport
+      parentRoute: typeof OfficeRoute
+    }
+    '/office/orders': {
+      id: '/office/orders'
+      path: '/orders'
+      fullPath: '/office/orders'
+      preLoaderRoute: typeof OfficeOrdersRouteImport
+      parentRoute: typeof OfficeRoute
+    }
+    '/office/invoices': {
+      id: '/office/invoices'
+      path: '/invoices'
+      fullPath: '/office/invoices'
+      preLoaderRoute: typeof OfficeInvoicesRouteImport
+      parentRoute: typeof OfficeRoute
+    }
+    '/office/gp': {
+      id: '/office/gp'
+      path: '/gp'
+      fullPath: '/office/gp'
+      preLoaderRoute: typeof OfficeGpRouteImport
+      parentRoute: typeof OfficeRoute
+    }
+    '/office/customers': {
+      id: '/office/customers'
+      path: '/customers'
+      fullPath: '/office/customers'
+      preLoaderRoute: typeof OfficeCustomersRouteImport
+      parentRoute: typeof OfficeRoute
     }
     '/shop/orders/': {
       id: '/shop/orders/'
@@ -287,6 +513,39 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface OfficeRouteChildren {
+  OfficeCustomersRoute: typeof OfficeCustomersRoute
+  OfficeGpRoute: typeof OfficeGpRoute
+  OfficeInvoicesRoute: typeof OfficeInvoicesRoute
+  OfficeOrdersRoute: typeof OfficeOrdersRoute
+  OfficePendingRoute: typeof OfficePendingRoute
+  OfficeProductsRoute: typeof OfficeProductsRoute
+  OfficeReceivingRoute: typeof OfficeReceivingRoute
+  OfficeReportsRoute: typeof OfficeReportsRoute
+  OfficeSalesRepsRoute: typeof OfficeSalesRepsRoute
+  OfficeSettingsRoute: typeof OfficeSettingsRoute
+  OfficeTvRoute: typeof OfficeTvRoute
+  OfficeIndexRoute: typeof OfficeIndexRoute
+}
+
+const OfficeRouteChildren: OfficeRouteChildren = {
+  OfficeCustomersRoute: OfficeCustomersRoute,
+  OfficeGpRoute: OfficeGpRoute,
+  OfficeInvoicesRoute: OfficeInvoicesRoute,
+  OfficeOrdersRoute: OfficeOrdersRoute,
+  OfficePendingRoute: OfficePendingRoute,
+  OfficeProductsRoute: OfficeProductsRoute,
+  OfficeReceivingRoute: OfficeReceivingRoute,
+  OfficeReportsRoute: OfficeReportsRoute,
+  OfficeSalesRepsRoute: OfficeSalesRepsRoute,
+  OfficeSettingsRoute: OfficeSettingsRoute,
+  OfficeTvRoute: OfficeTvRoute,
+  OfficeIndexRoute: OfficeIndexRoute,
+}
+
+const OfficeRouteWithChildren =
+  OfficeRoute._addFileChildren(OfficeRouteChildren)
 
 interface ShopRouteChildren {
   ShopAccountRoute: typeof ShopAccountRoute
@@ -309,7 +568,7 @@ const ShopRouteWithChildren = ShopRoute._addFileChildren(ShopRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DriverRoute: DriverRoute,
-  OfficeRoute: OfficeRoute,
+  OfficeRoute: OfficeRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SalesRoute: SalesRoute,
   ShopRoute: ShopRouteWithChildren,
@@ -319,3 +578,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
