@@ -238,7 +238,6 @@ export function OfficeShell({ children }: { children: ReactNode }) {
 
       <RecordPaymentModal
         open={paymentModalOpen}
-        customerId={null as any}
         onClose={() => setPaymentModalOpen(false)}
         onSuccess={() => setPaymentModalOpen(false)}
       />

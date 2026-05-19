@@ -112,14 +112,15 @@ export function OrdersPage() {
   };
 
   // --- Actions ---
-  const runAction = async () => {
-    if (!confirm) return;
-    const order = orders.find((o) => o.id === confirm.orderId);
+  const runAction = async (override?: { kind: any; orderId: string; reason?: string }) => {
+    const c = override ?? confirm;
+    if (!c) return;
+    const order = orders.find((o) => o.id === c.orderId);
     if (!order) return;
     setBusy(true);
     let patch: any = {};
     let message = "";
-    switch (confirm.kind) {
+    switch (c.kind) {
       case "approve":
         patch = { status: "approved", approved_at: new Date().toISOString() };
         message = `Order ${order.order_number} approved`;
@@ -127,8 +128,8 @@ export function OrdersPage() {
       case "reject":
         patch = {
           status: "cancelled",
-          rejection_reason: confirm.reason ?? "",
-          internal_notes: order.internal_notes ? `${order.internal_notes}\nREJECTED: ${confirm.reason}` : `REJECTED: ${confirm.reason}`,
+          rejection_reason: c.reason ?? "",
+          internal_notes: order.internal_notes ? `${order.internal_notes}\nREJECTED: ${c.reason}` : `REJECTED: ${c.reason}`,
         };
         message = `Order ${order.order_number} rejected`;
         break;
@@ -154,6 +155,7 @@ export function OrdersPage() {
     const { error } = await supabase.from("orders").update(patch).eq("id", order.id);
     setBusy(false);
     setConfirm(null);
+    setDrawerId(null);
     if (error) return toast.error(error.message);
     toast.success(message);
     reload();
@@ -242,7 +244,7 @@ export function OrdersPage() {
       {confirm?.kind === "reject" && (
         <RejectModal
           orderNumber={orders.find((o) => o.id === confirm.orderId)?.order_number ?? ""}
-          onConfirm={(reason) => { setConfirm({ ...confirm, reason }); setTimeout(runAction, 0); }}
+          onConfirm={(reason) => runAction({ ...confirm, reason })}
           onCancel={() => setConfirm(null)}
           loading={busy}
         />
