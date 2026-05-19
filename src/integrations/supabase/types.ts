@@ -560,6 +560,8 @@ export type Database = {
           id: string
           internal_notes: string | null
           invoice_number: string | null
+          invoice_pdf_generated_at: string | null
+          invoice_pdf_url: string | null
           invoiced_at: string | null
           last_delivery_attempt_at: string | null
           order_number: string | null
@@ -612,6 +614,8 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           invoice_number?: string | null
+          invoice_pdf_generated_at?: string | null
+          invoice_pdf_url?: string | null
           invoiced_at?: string | null
           last_delivery_attempt_at?: string | null
           order_number?: string | null
@@ -664,6 +668,8 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           invoice_number?: string | null
+          invoice_pdf_generated_at?: string | null
+          invoice_pdf_url?: string | null
           invoiced_at?: string | null
           last_delivery_attempt_at?: string | null
           order_number?: string | null
@@ -1087,6 +1093,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_settings: {
+        Row: {
+          auto_invoice_on_packed: boolean
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          auto_invoice_on_packed?: boolean
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_invoice_on_packed?: boolean
+          id?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

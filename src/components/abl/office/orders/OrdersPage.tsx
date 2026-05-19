@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBBD } from "@/lib/format";
 import { toast } from "sonner";
-import { Search, Download, Plus, X as XIcon } from "lucide-react";
+import { Search, Download, Plus, X as XIcon, Printer } from "lucide-react";
+import { openInvoicePdf } from "@/lib/invoices/generate";
 import { OrderStatusBadge, type OrderStatus } from "@/components/abl/OrderStatusBadge";
 import {
   TABS, type TabKey, statusToTab, isToday, timeAgo, formatTimeOnly,
@@ -470,17 +471,39 @@ function QuickActions({ order, onAction }: { order: OrderRow; onAction: (k: stri
   const Item = ({ k, label, color = "#0B1A2E" }: { k: string; label: string; color?: string }) => (
     <button onClick={() => onAction(k)} className="rounded px-2 py-1 text-[11.5px] font-semibold text-white" style={{ backgroundColor: color }}>{label}</button>
   );
+  const PrintBtn = order.invoice_number ? <PrintInvoiceButton orderId={order.id} /> : null;
+  const wrap = (node: React.ReactNode) => PrintBtn ? <div className="flex items-center justify-end gap-1.5">{PrintBtn}{node}</div> : node;
   switch (order.status) {
     case "pending_approval": return <div className="flex justify-end gap-1.5"><Item k="reject" label="Reject" color="#B91C1C" /><Item k="approve" label="Approve" color="#10B981" /></div>;
-    case "approved":         return <Item k="send-to-warehouse" label="To warehouse" />;
-    case "picking":          return <Item k="mark-packed" label="Mark packed" color="#6D28D9" />;
-    case "packed":           return <Item k="assign-driver" label="Assign driver" color="#7E22CE" />;
-    case "out_for_delivery": return <Item k="mark-delivered" label="Mark delivered" color="#10B981" />;
-    case "delivered":        return <Item k="mark-invoiced" label="Mark invoiced" color="#BE185D" />;
-    case "invoiced":         return <Item k="mark-paid" label="Mark paid" color="#10B981" />;
+    case "approved":         return wrap(<Item k="send-to-warehouse" label="To warehouse" />);
+    case "picking":          return wrap(<Item k="mark-packed" label="Mark packed" color="#6D28D9" />);
+    case "packed":           return wrap(<Item k="assign-driver" label="Assign driver" color="#7E22CE" />);
+    case "out_for_delivery": return wrap(<Item k="mark-delivered" label="Mark delivered" color="#10B981" />);
+    case "delivered":        return wrap(<Item k="mark-invoiced" label="Mark invoiced" color="#BE185D" />);
+    case "invoiced":         return wrap(<Item k="mark-paid" label="Mark paid" color="#10B981" />);
     case "cancelled":        return <Item k="restore" label="Restore" />;
-    default:                 return null;
+    default:                 return PrintBtn ?? null;
   }
+}
+
+function PrintInvoiceButton({ orderId }: { orderId: string }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      type="button"
+      title="Print invoice"
+      aria-label="Print invoice"
+      disabled={busy}
+      onClick={async (e) => {
+        e.stopPropagation();
+        setBusy(true);
+        try { await openInvoicePdf(orderId, { print: true }); } finally { setBusy(false); }
+      }}
+      className="grid h-7 w-7 place-items-center rounded border border-border bg-white text-ink hover:bg-[#F1F5F9] disabled:opacity-50"
+    >
+      <Printer className="h-3.5 w-3.5" />
+    </button>
+  );
 }
 
 // ---------- Bulk action bar ----------
