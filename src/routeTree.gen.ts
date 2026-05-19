@@ -26,14 +26,17 @@ import { Route as OfficeSettingsRouteImport } from './routes/office.settings'
 import { Route as OfficeSalesRepsRouteImport } from './routes/office.sales-reps'
 import { Route as OfficeReportsRouteImport } from './routes/office.reports'
 import { Route as OfficeReceivingRouteImport } from './routes/office.receiving'
+import { Route as OfficePurchasingRouteImport } from './routes/office.purchasing'
 import { Route as OfficeProductsRouteImport } from './routes/office.products'
 import { Route as OfficePendingRouteImport } from './routes/office.pending'
+import { Route as OfficePaymentsRouteImport } from './routes/office.payments'
 import { Route as OfficeOrdersRouteImport } from './routes/office.orders'
 import { Route as OfficeInvoicesRouteImport } from './routes/office.invoices'
 import { Route as OfficeGpRouteImport } from './routes/office.gp'
 import { Route as OfficeCustomersRouteImport } from './routes/office.customers'
 import { Route as ShopOrdersIndexRouteImport } from './routes/shop/orders/index'
 import { Route as ShopOrdersOrderNumberRouteImport } from './routes/shop/orders/$orderNumber'
+import { Route as OfficeProductsNewRouteImport } from './routes/office.products.new'
 import { Route as OfficeCustomersNewRouteImport } from './routes/office.customers.new'
 import { Route as OfficeCustomersIdEditRouteImport } from './routes/office.customers.$id.edit'
 
@@ -122,6 +125,11 @@ const OfficeReceivingRoute = OfficeReceivingRouteImport.update({
   path: '/receiving',
   getParentRoute: () => OfficeRoute,
 } as any)
+const OfficePurchasingRoute = OfficePurchasingRouteImport.update({
+  id: '/purchasing',
+  path: '/purchasing',
+  getParentRoute: () => OfficeRoute,
+} as any)
 const OfficeProductsRoute = OfficeProductsRouteImport.update({
   id: '/products',
   path: '/products',
@@ -130,6 +138,11 @@ const OfficeProductsRoute = OfficeProductsRouteImport.update({
 const OfficePendingRoute = OfficePendingRouteImport.update({
   id: '/pending',
   path: '/pending',
+  getParentRoute: () => OfficeRoute,
+} as any)
+const OfficePaymentsRoute = OfficePaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
   getParentRoute: () => OfficeRoute,
 } as any)
 const OfficeOrdersRoute = OfficeOrdersRouteImport.update({
@@ -162,6 +175,11 @@ const ShopOrdersOrderNumberRoute = ShopOrdersOrderNumberRouteImport.update({
   path: '/orders/$orderNumber',
   getParentRoute: () => ShopRoute,
 } as any)
+const OfficeProductsNewRoute = OfficeProductsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => OfficeProductsRoute,
+} as any)
 const OfficeCustomersNewRoute = OfficeCustomersNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -186,8 +204,10 @@ export interface FileRoutesByFullPath {
   '/office/gp': typeof OfficeGpRoute
   '/office/invoices': typeof OfficeInvoicesRoute
   '/office/orders': typeof OfficeOrdersRoute
+  '/office/payments': typeof OfficePaymentsRoute
   '/office/pending': typeof OfficePendingRoute
-  '/office/products': typeof OfficeProductsRoute
+  '/office/products': typeof OfficeProductsRouteWithChildren
+  '/office/purchasing': typeof OfficePurchasingRoute
   '/office/receiving': typeof OfficeReceivingRoute
   '/office/reports': typeof OfficeReportsRoute
   '/office/sales-reps': typeof OfficeSalesRepsRoute
@@ -198,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/office/': typeof OfficeIndexRoute
   '/shop/': typeof ShopIndexRoute
   '/office/customers/new': typeof OfficeCustomersNewRoute
+  '/office/products/new': typeof OfficeProductsNewRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders/': typeof ShopOrdersIndexRoute
   '/office/customers/$id/edit': typeof OfficeCustomersIdEditRoute
@@ -213,8 +234,10 @@ export interface FileRoutesByTo {
   '/office/gp': typeof OfficeGpRoute
   '/office/invoices': typeof OfficeInvoicesRoute
   '/office/orders': typeof OfficeOrdersRoute
+  '/office/payments': typeof OfficePaymentsRoute
   '/office/pending': typeof OfficePendingRoute
-  '/office/products': typeof OfficeProductsRoute
+  '/office/products': typeof OfficeProductsRouteWithChildren
+  '/office/purchasing': typeof OfficePurchasingRoute
   '/office/receiving': typeof OfficeReceivingRoute
   '/office/reports': typeof OfficeReportsRoute
   '/office/sales-reps': typeof OfficeSalesRepsRoute
@@ -225,6 +248,7 @@ export interface FileRoutesByTo {
   '/office': typeof OfficeIndexRoute
   '/shop': typeof ShopIndexRoute
   '/office/customers/new': typeof OfficeCustomersNewRoute
+  '/office/products/new': typeof OfficeProductsNewRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders': typeof ShopOrdersIndexRoute
   '/office/customers/$id/edit': typeof OfficeCustomersIdEditRoute
@@ -243,8 +267,10 @@ export interface FileRoutesById {
   '/office/gp': typeof OfficeGpRoute
   '/office/invoices': typeof OfficeInvoicesRoute
   '/office/orders': typeof OfficeOrdersRoute
+  '/office/payments': typeof OfficePaymentsRoute
   '/office/pending': typeof OfficePendingRoute
-  '/office/products': typeof OfficeProductsRoute
+  '/office/products': typeof OfficeProductsRouteWithChildren
+  '/office/purchasing': typeof OfficePurchasingRoute
   '/office/receiving': typeof OfficeReceivingRoute
   '/office/reports': typeof OfficeReportsRoute
   '/office/sales-reps': typeof OfficeSalesRepsRoute
@@ -255,6 +281,7 @@ export interface FileRoutesById {
   '/office/': typeof OfficeIndexRoute
   '/shop/': typeof ShopIndexRoute
   '/office/customers/new': typeof OfficeCustomersNewRoute
+  '/office/products/new': typeof OfficeProductsNewRoute
   '/shop/orders/$orderNumber': typeof ShopOrdersOrderNumberRoute
   '/shop/orders/': typeof ShopOrdersIndexRoute
   '/office/customers/$id/edit': typeof OfficeCustomersIdEditRoute
@@ -274,8 +301,10 @@ export interface FileRouteTypes {
     | '/office/gp'
     | '/office/invoices'
     | '/office/orders'
+    | '/office/payments'
     | '/office/pending'
     | '/office/products'
+    | '/office/purchasing'
     | '/office/receiving'
     | '/office/reports'
     | '/office/sales-reps'
@@ -286,6 +315,7 @@ export interface FileRouteTypes {
     | '/office/'
     | '/shop/'
     | '/office/customers/new'
+    | '/office/products/new'
     | '/shop/orders/$orderNumber'
     | '/shop/orders/'
     | '/office/customers/$id/edit'
@@ -301,8 +331,10 @@ export interface FileRouteTypes {
     | '/office/gp'
     | '/office/invoices'
     | '/office/orders'
+    | '/office/payments'
     | '/office/pending'
     | '/office/products'
+    | '/office/purchasing'
     | '/office/receiving'
     | '/office/reports'
     | '/office/sales-reps'
@@ -313,6 +345,7 @@ export interface FileRouteTypes {
     | '/office'
     | '/shop'
     | '/office/customers/new'
+    | '/office/products/new'
     | '/shop/orders/$orderNumber'
     | '/shop/orders'
     | '/office/customers/$id/edit'
@@ -330,8 +363,10 @@ export interface FileRouteTypes {
     | '/office/gp'
     | '/office/invoices'
     | '/office/orders'
+    | '/office/payments'
     | '/office/pending'
     | '/office/products'
+    | '/office/purchasing'
     | '/office/receiving'
     | '/office/reports'
     | '/office/sales-reps'
@@ -342,6 +377,7 @@ export interface FileRouteTypes {
     | '/office/'
     | '/shop/'
     | '/office/customers/new'
+    | '/office/products/new'
     | '/shop/orders/$orderNumber'
     | '/shop/orders/'
     | '/office/customers/$id/edit'
@@ -479,6 +515,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OfficeReceivingRouteImport
       parentRoute: typeof OfficeRoute
     }
+    '/office/purchasing': {
+      id: '/office/purchasing'
+      path: '/purchasing'
+      fullPath: '/office/purchasing'
+      preLoaderRoute: typeof OfficePurchasingRouteImport
+      parentRoute: typeof OfficeRoute
+    }
     '/office/products': {
       id: '/office/products'
       path: '/products'
@@ -491,6 +534,13 @@ declare module '@tanstack/react-router' {
       path: '/pending'
       fullPath: '/office/pending'
       preLoaderRoute: typeof OfficePendingRouteImport
+      parentRoute: typeof OfficeRoute
+    }
+    '/office/payments': {
+      id: '/office/payments'
+      path: '/payments'
+      fullPath: '/office/payments'
+      preLoaderRoute: typeof OfficePaymentsRouteImport
       parentRoute: typeof OfficeRoute
     }
     '/office/orders': {
@@ -535,6 +585,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopOrdersOrderNumberRouteImport
       parentRoute: typeof ShopRoute
     }
+    '/office/products/new': {
+      id: '/office/products/new'
+      path: '/new'
+      fullPath: '/office/products/new'
+      preLoaderRoute: typeof OfficeProductsNewRouteImport
+      parentRoute: typeof OfficeProductsRoute
+    }
     '/office/customers/new': {
       id: '/office/customers/new'
       path: '/new'
@@ -566,13 +623,27 @@ const OfficeCustomersRouteWithChildren = OfficeCustomersRoute._addFileChildren(
   OfficeCustomersRouteChildren,
 )
 
+interface OfficeProductsRouteChildren {
+  OfficeProductsNewRoute: typeof OfficeProductsNewRoute
+}
+
+const OfficeProductsRouteChildren: OfficeProductsRouteChildren = {
+  OfficeProductsNewRoute: OfficeProductsNewRoute,
+}
+
+const OfficeProductsRouteWithChildren = OfficeProductsRoute._addFileChildren(
+  OfficeProductsRouteChildren,
+)
+
 interface OfficeRouteChildren {
   OfficeCustomersRoute: typeof OfficeCustomersRouteWithChildren
   OfficeGpRoute: typeof OfficeGpRoute
   OfficeInvoicesRoute: typeof OfficeInvoicesRoute
   OfficeOrdersRoute: typeof OfficeOrdersRoute
+  OfficePaymentsRoute: typeof OfficePaymentsRoute
   OfficePendingRoute: typeof OfficePendingRoute
-  OfficeProductsRoute: typeof OfficeProductsRoute
+  OfficeProductsRoute: typeof OfficeProductsRouteWithChildren
+  OfficePurchasingRoute: typeof OfficePurchasingRoute
   OfficeReceivingRoute: typeof OfficeReceivingRoute
   OfficeReportsRoute: typeof OfficeReportsRoute
   OfficeSalesRepsRoute: typeof OfficeSalesRepsRoute
@@ -586,8 +657,10 @@ const OfficeRouteChildren: OfficeRouteChildren = {
   OfficeGpRoute: OfficeGpRoute,
   OfficeInvoicesRoute: OfficeInvoicesRoute,
   OfficeOrdersRoute: OfficeOrdersRoute,
+  OfficePaymentsRoute: OfficePaymentsRoute,
   OfficePendingRoute: OfficePendingRoute,
-  OfficeProductsRoute: OfficeProductsRoute,
+  OfficeProductsRoute: OfficeProductsRouteWithChildren,
+  OfficePurchasingRoute: OfficePurchasingRoute,
   OfficeReceivingRoute: OfficeReceivingRoute,
   OfficeReportsRoute: OfficeReportsRoute,
   OfficeSalesRepsRoute: OfficeSalesRepsRoute,
