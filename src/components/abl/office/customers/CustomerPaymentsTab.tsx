@@ -180,7 +180,7 @@ export function CustomerPaymentsTab({ customerId, paymentTermsDays, onDataChange
                             <span className="font-semibold text-[#B45309]">On account</span>
                           )}
                           {al.orderNumbers.length > 0 && (
-                            <span className="font-mono text-[11.5px] text-ink">
+                            <span className="text-[11.5px] text-ink">
                               {al.orderNumbers.slice(0, 2).join(", ")}
                               {al.orderNumbers.length > 2 && (
                                 <span className="ml-1 text-[10.5px] font-semibold text-[#FF6A1A]">+{al.orderNumbers.length - 2} more</span>
@@ -245,7 +245,7 @@ export function CustomerPaymentsTab({ customerId, paymentTermsDays, onDataChange
                       </button>
                     </div>
                     <div className="text-right">
-                      <div className="font-mono text-[13px] font-bold text-ink">{formatBBD(inv.outstanding)}</div>
+                      <div className="text-[13px] font-bold text-ink">{formatBBD(inv.outstanding)}</div>
                       <div className="text-[10.5px] text-[#64748B]">
                         of {formatBBD(inv.total)}
                         {inv.paid_so_far > 0 && ` · ${formatBBD(inv.paid_so_far)} paid`}

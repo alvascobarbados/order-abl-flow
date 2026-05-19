@@ -134,11 +134,11 @@ function OrdersListPage() {
                   className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-4 px-5 py-4 transition hover:bg-[#FAFBFC]"
                 >
                   <div>
-                    <div className="font-mono text-[13px] font-bold text-[#0B1A2E]">
+                    <div className="text-[13px] font-bold text-[#0B1A2E]">
                       {o.order_number}
                     </div>
                     {o.invoice_number && (
-                      <div className="mt-0.5 font-mono text-[10.5px] text-[#94A3B8]">
+                      <div className="mt-0.5 text-[10.5px] text-[#94A3B8]">
                         {o.invoice_number}
                       </div>
                     )}

@@ -70,7 +70,7 @@ export function OrderDrawer({
           <header className="sticky top-0 z-10 border-b border-border bg-card px-5 py-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>ORDER DETAIL</div>
+                <div className="text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>ORDER DETAIL</div>
                 <div className="mt-1 flex items-center gap-2.5">
                   <span className="font-mono text-[22px] font-extrabold text-ink">{order.order_number}</span>
                   <OrderStatusBadge status={order.status} />
@@ -181,7 +181,7 @@ function DetailsTab({ order, customer, items, notes, setNotes, onSaveNotes }: {
         <div className="overflow-hidden rounded-lg border border-border">
           <table className="w-full text-[12.5px]">
             <thead className="bg-secondary/40">
-              <tr className="text-left font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.08em" }}>
+              <tr className="text-left text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.08em" }}>
                 <th className="px-2 py-2"></th><th className="px-2 py-2">Product</th>
                 <th className="px-2 py-2 text-right">Qty</th>
                 <th className="px-2 py-2 text-right">Unit</th>
@@ -311,7 +311,7 @@ function PaymentsTab({ order, allocations, balance, paidSum, onRecord }: {
           <div className="rounded-md border border-dashed border-border p-6 text-center text-[12.5px] text-muted-foreground">No payments allocated yet.</div>
         ) : (
           <table className="w-full text-[12.5px]">
-            <thead className="bg-secondary/40 text-left font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.08em" }}>
+            <thead className="bg-secondary/40 text-left text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.08em" }}>
               <tr><th className="px-2 py-2">Payment</th><th className="px-2 py-2">Date</th><th className="px-2 py-2">Method</th><th className="px-2 py-2">Status</th><th className="px-2 py-2 text-right">Applied</th></tr>
             </thead>
             <tbody>
@@ -428,7 +428,7 @@ function renderActionButtons(order: OrderRow, onAction: (k: string) => void) {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <div className="mb-2 font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.08em" }}>{children}</div>;
+  return <div className="mb-2 text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.08em" }}>{children}</div>;
 }
 function Row({ label, value, bold, muted }: { label: string; value: string; bold?: boolean; muted?: boolean }) {
   return (
@@ -441,8 +441,8 @@ function Row({ label, value, bold, muted }: { label: string; value: string; bold
 function Stat({ label, value, mono, bold, highlight }: { label: string; value: string; mono?: boolean; bold?: boolean; highlight?: string }) {
   return (
     <div className="rounded-lg border border-border bg-card p-3">
-      <div className="font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.08em" }}>{label}</div>
-      <div className={`mt-1 text-[15px] ${bold ? "font-extrabold" : "font-semibold"} ${mono ? "font-mono" : ""}`} style={{ color: highlight ?? "#0F172A" }}>{value}</div>
+      <div className="text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.08em" }}>{label}</div>
+      <div className={`mt-1 text-[15px] ${bold ? "font-extrabold" : "font-semibold"} ${mono ? "" : ""}`} style={{ color: highlight ?? "#0F172A" }}>{value}</div>
     </div>
   );
 }

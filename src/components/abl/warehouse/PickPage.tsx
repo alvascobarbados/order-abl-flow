@@ -219,7 +219,7 @@ export function PickPage({ orderId }: { orderId: string }) {
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-[12.5px]">
                   <span className="font-mono text-muted-foreground">{it.product?.sku}</span>
                   {it.product?.bin_location && (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-[#0F2540] px-2 py-0.5 font-mono text-[10.5px] font-bold text-white">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-[#0F2540] px-2 py-0.5 text-[10.5px] font-bold text-white">
                       <MapPin className="h-3 w-3" /> {it.product.bin_location}
                     </span>
                   )}
@@ -317,7 +317,7 @@ function ProgressStrip({ totals }: { totals: { lines: number; linesDone: number;
       </div>
       <div className="mt-2 flex items-center justify-between text-[13px]">
         <div><span className="font-extrabold text-ink">{totals.linesDone} of {totals.lines} lines</span><span className="text-muted-foreground"> · {totals.gotUnits} of {totals.needUnits} units picked</span></div>
-        <div className="font-mono text-[11.5px] text-muted-foreground">{totals.pct}%</div>
+        <div className="text-[11.5px] text-muted-foreground">{totals.pct}%</div>
       </div>
     </div>
   );

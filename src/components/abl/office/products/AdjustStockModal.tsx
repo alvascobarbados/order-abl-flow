@@ -58,7 +58,7 @@ export function AdjustStockModal({ product, onClose, onDone }: {
           <div>
             <div className="text-[18px] font-extrabold text-ink">Adjust stock</div>
             <div className="mt-1 text-[12.5px] text-muted-foreground">
-              <span className="font-semibold text-ink">{product.name}</span> · on hand <span className="font-mono font-bold text-ink">{product.on_hand}</span>
+              <span className="font-semibold text-ink">{product.name}</span> · on hand <span className="font-bold text-ink">{product.on_hand}</span>
             </div>
           </div>
           <button onClick={onClose} className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-[#F1F4F8] hover:text-ink">
@@ -114,7 +114,7 @@ export function AdjustStockModal({ product, onClose, onDone }: {
             <Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Order #, PO #, etc." className="mt-1" />
           </div>
 
-          <div className="rounded-md border border-dashed border-border bg-[#F8FAFC] p-3 text-center font-mono text-[13px]">
+          <div className="rounded-md border border-dashed border-border bg-[#F8FAFC] p-3 text-center text-[13px]">
             <span className="text-muted-foreground">Current {product.on_hand}</span>
             <span className="mx-2 text-muted-foreground">→</span>
             <span className={`font-bold ${signed >= 0 ? "text-[color:var(--success)]" : "text-[#E11D48]"}`}>New {newBalance}</span>

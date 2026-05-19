@@ -144,11 +144,11 @@ export function ProductsCatalogTab({
                       <div className="mt-0.5 text-[11.5px] text-muted-foreground">{p.category}</div>
                     </td>
                     <td className="p-2 align-middle text-[12.5px] text-ink">{p.pack_size.toLocaleString()} / {p.pack_unit}</td>
-                    <td className="p-2 align-middle text-right font-mono text-[12.5px] font-semibold text-ink">{formatBBD(Number(p.case_price))}</td>
-                    <td className="p-2 align-middle text-right font-mono text-[11.5px] text-muted-foreground">{formatBBD(Number(p.unit_price))}</td>
+                    <td className="p-2 align-middle text-right text-[12.5px] font-semibold text-ink">{formatBBD(Number(p.case_price))}</td>
+                    <td className="p-2 align-middle text-right text-[11.5px] text-muted-foreground">{formatBBD(Number(p.unit_price))}</td>
                     <td className="p-2 align-middle"><StockChip status={p.stock_status} /></td>
                     <td className="p-2 align-middle text-right">
-                      <div className={`font-mono text-[13px] font-bold ${p.track_inventory ? "text-ink" : "text-muted-foreground/60"}`}>
+                      <div className={`text-[13px] font-bold ${p.track_inventory ? "text-ink" : "text-muted-foreground/60"}`}>
                         {p.track_inventory ? p.on_hand.toLocaleString() : "—"}
                       </div>
                       {p.track_inventory && p.reorder_point > 0 && (
@@ -206,7 +206,7 @@ export function ProductsCatalogTab({
 
 function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <th className={`px-2 py-2.5 text-left font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${className}`}>
+    <th className={`px-2 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${className}`}>
       {children}
     </th>
   );

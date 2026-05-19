@@ -7,7 +7,7 @@ function NewProductPage() {
   return (
     <>
       <div className="mb-5">
-        <div className="font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>OFFICE · PRODUCTS</div>
+        <div className="text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>OFFICE · PRODUCTS</div>
         <h1 className="mt-1 text-[24px] font-extrabold text-ink" style={{ letterSpacing: "-0.02em" }}>New product</h1>
       </div>
       <ProductForm />

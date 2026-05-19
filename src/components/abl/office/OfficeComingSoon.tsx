@@ -2,7 +2,7 @@ export function OfficeComingSoon({ title, blurb }: { title: string; blurb: strin
   return (
     <>
       <div className="mb-6">
-        <div className="font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>
+        <div className="text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>
           OPERATIONS · {title.toUpperCase()}
         </div>
         <div className="mt-1 flex items-center gap-3">
@@ -20,7 +20,7 @@ export function OfficeComingSoon({ title, blurb }: { title: string; blurb: strin
       </div>
 
       <div className="rounded-xl border border-dashed border-border bg-card p-16 text-center">
-        <div className="font-mono text-[11px] uppercase text-muted-foreground" style={{ letterSpacing: "0.16em" }}>
+        <div className="text-[11px] uppercase text-muted-foreground" style={{ letterSpacing: "0.16em" }}>
           Under construction
         </div>
         <p className="mt-3 text-[13px] text-muted-foreground">

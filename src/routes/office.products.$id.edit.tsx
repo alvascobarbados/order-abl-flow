@@ -22,7 +22,7 @@ function EditProductPage() {
   return (
     <>
       <div className="mb-5">
-        <div className="font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>OFFICE · PRODUCTS</div>
+        <div className="text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>OFFICE · PRODUCTS</div>
         <h1 className="mt-1 text-[24px] font-extrabold text-ink" style={{ letterSpacing: "-0.02em" }}>{product ? product.name : "Edit product"}</h1>
       </div>
       {loading ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : product ? <ProductForm initial={product} productId={id} /> : <div>Not found.</div>}

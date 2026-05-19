@@ -143,7 +143,7 @@ export function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onC
                   <div key={l.product.id} className="flex items-center gap-2 rounded-md border border-border bg-card px-2 py-1.5 text-[12px]">
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-semibold text-ink">{l.product.name}</div>
-                      <div className="font-mono text-[10px] text-muted-foreground">{formatBBD(Number(l.product.case_price))}</div>
+                      <div className="text-[10px] text-muted-foreground">{formatBBD(Number(l.product.case_price))}</div>
                     </div>
                     <input type="number" min={0} value={l.qty}
                       onChange={(e) => setCart((c) => ({ ...c, [l.product.id]: Math.max(0, parseInt(e.target.value) || 0) }))}
@@ -225,7 +225,7 @@ export function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onC
 function StepPill({ n, label, active }: { n: number; label: string; active: boolean }) {
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 ${active ? "bg-ink text-white" : "border border-border bg-card text-muted-foreground"}`}>
-      <span className="font-mono">{n}</span> {label}
+      <span className="">{n}</span> {label}
     </span>
   );
 }

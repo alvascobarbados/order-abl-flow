@@ -291,7 +291,7 @@ export function StopPage({ orderId }: { orderId: string }) {
           </div>
           <div className="text-right">
             <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Total</div>
-            <div className="font-mono text-[20px] font-extrabold text-ink">{formatBBD(Number(data.total))}</div>
+            <div className="text-[20px] font-extrabold text-ink">{formatBBD(Number(data.total))}</div>
           </div>
         </div>
         <button type="button" onClick={() => setItemsOpen((v) => !v)}
@@ -303,7 +303,7 @@ export function StopPage({ orderId }: { orderId: string }) {
             {data.items.map((it) => (
               <li key={it.id} className="flex justify-between gap-2">
                 <span className="truncate text-ink">{it.product?.name ?? "—"}</span>
-                <span className="shrink-0 font-mono text-muted-foreground">×{it.quantity}</span>
+                <span className="shrink-0 text-muted-foreground">×{it.quantity}</span>
               </li>
             ))}
           </ul>
@@ -347,13 +347,13 @@ export function StopPage({ orderId }: { orderId: string }) {
 
         <label className="mt-3 block text-[12px] font-bold uppercase tracking-wider text-muted-foreground">Amount collected</label>
         <div className="mt-1 flex items-center gap-2 rounded-xl border border-[#E5E9EF] bg-white px-3 py-2 focus-within:border-[#10B981]">
-          <span className="font-mono text-[14px] font-bold text-muted-foreground">BBD$</span>
+          <span className="text-[14px] font-bold text-muted-foreground">BBD$</span>
           <input
             value={amount}
             inputMode="decimal"
             disabled={method === "account"}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full bg-transparent font-mono text-[22px] font-extrabold text-ink outline-none disabled:text-muted-foreground"
+            className="w-full bg-transparent text-[22px] font-extrabold text-ink outline-none disabled:text-muted-foreground"
           />
         </div>
 
@@ -361,14 +361,14 @@ export function StopPage({ orderId }: { orderId: string }) {
           <div className="mt-3">
             <label className="block text-[12px] font-bold uppercase tracking-wider text-muted-foreground">Cheque number</label>
             <input value={chequeNumber} onChange={(e) => setChequeNumber(e.target.value)}
-              className="mt-1 h-12 w-full rounded-xl border border-[#E5E9EF] bg-white px-3 font-mono text-[15px] font-semibold text-ink outline-none focus:border-[#10B981]" />
+              className="mt-1 h-12 w-full rounded-xl border border-[#E5E9EF] bg-white px-3 text-[15px] font-semibold text-ink outline-none focus:border-[#10B981]" />
           </div>
         )}
         {method === "card" && (
           <div className="mt-3">
             <label className="block text-[12px] font-bold uppercase tracking-wider text-muted-foreground">Authorization code (optional)</label>
             <input value={cardAuth} onChange={(e) => setCardAuth(e.target.value)}
-              className="mt-1 h-12 w-full rounded-xl border border-[#E5E9EF] bg-white px-3 font-mono text-[15px] font-semibold text-ink outline-none focus:border-[#10B981]" />
+              className="mt-1 h-12 w-full rounded-xl border border-[#E5E9EF] bg-white px-3 text-[15px] font-semibold text-ink outline-none focus:border-[#10B981]" />
           </div>
         )}
         {method === "account" && (

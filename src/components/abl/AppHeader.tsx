@@ -27,7 +27,7 @@ export function AppHeader({
         <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-4 px-6 py-[14px]">
           <Link to="/shop" className="flex shrink-0 items-baseline gap-2">
             <span className="text-[22px] font-bold leading-none text-[#0B1A2E]">ABL</span>
-            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-[#64748B]">
+            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-[#64748B]">
               Distribution
             </span>
           </Link>

@@ -83,7 +83,7 @@ function TopBar({ title, subtitle, back }: { title: string; subtitle?: string; b
         ) : (
           <Link to="/warehouse" className="flex shrink-0 items-baseline gap-2">
             <span className="text-[22px] font-extrabold leading-none text-[#0B1A2E]">ABL</span>
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#FF6A1A]">Warehouse</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#FF6A1A]">Warehouse</span>
           </Link>
         )}
         <div className="min-w-0 flex-1 px-2 text-center">
