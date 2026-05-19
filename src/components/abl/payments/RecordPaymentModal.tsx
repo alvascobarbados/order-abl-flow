@@ -231,7 +231,7 @@ export function RecordPaymentModal({ open, onClose, onSuccess, customerId, preAl
       }
 
       toast.success(`Payment ${payment.payment_number} recorded · ${formatBBD(amountNum)} applied`);
-      onSuccess?.(payment.id, payment.payment_number);
+      onSuccess?.(payment.id, payment.payment_number ?? "");
       onClose();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to record payment");
