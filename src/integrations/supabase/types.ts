@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          actor_profile_id: string | null
+          created_at: string
+          description: string
+          event_type: string
+          id: string
+          related_customer_id: string | null
+          related_order_id: string | null
+          related_product_id: string | null
+        }
+        Insert: {
+          actor_profile_id?: string | null
+          created_at?: string
+          description: string
+          event_type: string
+          id?: string
+          related_customer_id?: string | null
+          related_order_id?: string | null
+          related_product_id?: string | null
+        }
+        Update: {
+          actor_profile_id?: string | null
+          created_at?: string
+          description?: string
+          event_type?: string
+          id?: string
+          related_customer_id?: string | null
+          related_order_id?: string | null
+          related_product_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_actor_profile_id_fkey"
+            columns: ["actor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_related_customer_id_fkey"
+            columns: ["related_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_related_order_id_fkey"
+            columns: ["related_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_related_product_id_fkey"
+            columns: ["related_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cart: {
         Row: {
           added_at: string
@@ -226,6 +288,7 @@ export type Database = {
       orders: {
         Row: {
           approved_at: string | null
+          approved_by_profile_id: string | null
           created_at: string
           customer_id: string
           delivered_at: string | null
@@ -238,6 +301,7 @@ export type Database = {
           picked_at: string | null
           placed_at: string
           placed_by_profile_id: string | null
+          rejection_reason: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal: number
           total: number
@@ -246,6 +310,7 @@ export type Database = {
         }
         Insert: {
           approved_at?: string | null
+          approved_by_profile_id?: string | null
           created_at?: string
           customer_id: string
           delivered_at?: string | null
@@ -258,6 +323,7 @@ export type Database = {
           picked_at?: string | null
           placed_at?: string
           placed_by_profile_id?: string | null
+          rejection_reason?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
           total?: number
@@ -266,6 +332,7 @@ export type Database = {
         }
         Update: {
           approved_at?: string | null
+          approved_by_profile_id?: string | null
           created_at?: string
           customer_id?: string
           delivered_at?: string | null
@@ -278,6 +345,7 @@ export type Database = {
           picked_at?: string | null
           placed_at?: string
           placed_by_profile_id?: string | null
+          rejection_reason?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number
           total?: number
@@ -285,6 +353,13 @@ export type Database = {
           vat_amount?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_approved_by_profile_id_fkey"
+            columns: ["approved_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_customer_id_fkey"
             columns: ["customer_id"]
