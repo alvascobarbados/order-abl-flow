@@ -112,7 +112,7 @@ export function ProductsPage() {
       {tab === "stock" && <ProductsStockTab products={products} onOpen={setDrawerId} />}
       {tab === "categories" && <ProductsCategoriesTab categories={categories} products={products} onChanged={reload} />}
       {tab === "low_stock" && <ProductsLowStockTab products={products} onOpen={setDrawerId} />}
-      {tab === "archived" && <ProductsArchivedTab products={products} onChanged={reload} />
+      {tab === "archived" && <ProductsArchivedTab products={products} onChanged={reload} />}
 
       {drawerId && (
         <ProductDetailDrawer
