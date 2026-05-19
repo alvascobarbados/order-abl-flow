@@ -410,9 +410,10 @@ function OrdersTable({
 }
 
 function OrderTableRow({
-  order, customer, tab, checked, onToggle, onClick, onAction, flags,
+  order, customer, tab, summary, checked, onToggle, onClick, onAction, flags,
 }: {
   order: OrderRow; customer?: CustomerLite; tab: TabKey;
+  summary?: { lines: number; cases: number };
   checked: boolean; onToggle: () => void; onClick: () => void; onAction: (k: string) => void;
   flags: { showWaiting: boolean; showPicker: boolean; showReadySince: boolean; showDriver: boolean; showEta: boolean; showDeliveredAt: boolean; showCancelled: boolean; showInvoice: boolean };
 }) {
