@@ -6,7 +6,8 @@ export type PickListItem = {
   shortfall_quantity: number;
   shortfall_note: string | null;
   picked_at: string | null;
-  product: { name: string; sku: string; bin_location: string | null; pack_size: number | null; on_hand: number | null; primary_image_url: string | null } | null;
+  last_scan_at: string | null;
+  product: { name: string; sku: string; bin_location: string | null; pack_size: number | null; pack_unit: string | null; on_hand: number | null; primary_image_url: string | null } | null;
 };
 
 export type QueueOrder = {
