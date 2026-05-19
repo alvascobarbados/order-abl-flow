@@ -1,62 +1,72 @@
-## Customers page for Office view
+## Products & Inventory — implementation plan
 
-Build the full Customers management surface at `/office/customers` with table, detail drawer, and create/edit form. Reuse existing OfficeShell, design tokens, and drawer patterns from the pending approval queue.
+A large but well-scoped build. Splitting into a database migration, a storage bucket, and a layered frontend so each piece can be reviewed independently.
 
-### 1. Database migration
+### 1. Database migration (one call, then approval)
 
-Extend `customers` table with the new columns:
-- `customer_number` (text, unique) — auto-generated `CUST-XXXX` from a new sequence starting at 1001
-- `trading_name`, `business_type`, `billing_city`, `billing_parish`, `billing_postal`
-- `delivery_address_same_as_billing` (bool, default true), `delivery_city`, `delivery_parish`, `delivery_postal`, `delivery_notes`
-- `opening_balance` (numeric, default 0), `tax_exempt` (bool), `tax_id`
-- `sales_rep_name`, `customer_source`, `assigned_at`, `deleted_at`
+**Extend `products`** with: `description`, `on_hand`, `reorder_point`, `reorder_quantity`, `lead_time_days`, `track_inventory`, `stock_status_override` (enum auto/in_stock/low_stock/out_of_stock), `bin_location`, `cost_price`, `vat_inclusive`, `barcode`, `supplier_sku`, `supplier_name`, `primary_image_url`, `secondary_image_urls` (text[]), `archived_at`, `archived_by_profile_id`, `sort_order`.
 
-Create:
-- Sequence `customer_number_seq` starting at 1001
-- Trigger `assign_customer_number` on INSERT
-- Trigger `log_customer_changes` on INSERT/UPDATE → writes to `activity_log`
-- Backfill `customer_number` for the 3 existing customers
-- Update `dev_anon_customers_*` RLS to allow INSERT/UPDATE/soft-delete for development; keep authenticated office/admin policies for production
+**New `stock_movements`** table: `id`, `product_id`, `movement_type` (enum: received, sold, damaged, count_correction, customer_return, internal_use, other), `quantity` (int, signed), `reason`, `reference`, `recorded_by_profile_id`, `balance_after`, `created_at`. RLS: office/admin/warehouse read & insert.
 
-### 2. Routes
+**New `categories`** table: `id`, `name` (unique), `icon`, `sort_order`. Seeded from current product categories.
 
-- `src/routes/office.customers.tsx` — replace ComingSoon with real component
-- `src/routes/office.customers.new.tsx` — create form
-- `src/routes/office.customers.$id.edit.tsx` — edit form
+**Triggers / functions:**
+- `resolve_stock_status(on_hand, reorder_point, override)` — returns the effective status
+- After insert on `stock_movements` → update `products.on_hand` and recompute `stock_status`
+- After `orders.status` → `delivered`: insert sold movements per line item (negative qty)
+- After `orders.status` `delivered/picking → cancelled`: reverse those movements
+- Activity log entry for each movement
 
-### 3. Components (under `src/components/abl/office/customers/`)
+**View `products_with_stock_info`**: products + computed `avg_weekly_velocity` (sold qty last 4 weeks ÷ 4) and `days_of_stock`.
 
-- `CustomersTable.tsx` — top bar, filter bar, sticky-header table, row actions menu, empty state
-- `CustomerDetailDrawer.tsx` — right-side 720px Sheet with header strip + 3 tabs (Overview, Orders, Activity & Notes)
-- `CustomerForm.tsx` — shared create/edit form with 5 sections + sticky right summary card + sticky footer
-- `TierChip.tsx` — small reusable chip (Standard gray / Volume blue / Key Account orange)
-- `GeneratedPasswordModal.tsx` — shows the generated password with copy button
+**Storage bucket** `product-images` (public read, authenticated write).
 
-### 4. Customer-view "Viewing as" switcher
+### 2. Frontend structure
 
-- Extend `use-role.tsx` (or add `use-active-customer.tsx`) to store the active customer ID in localStorage
-- Add a small dropdown in `AppHeader` (only visible when role === customer) listing all active customers — switches which customer the shop pages query against
-- Update `useCart` and shop pages to read from this hook instead of the hardcoded "first customer"
+```
+src/routes/office.products.tsx          (tabbed shell)
+src/routes/office.products.new.tsx      (create form)
+src/routes/office.products.$id.edit.tsx (edit form)
 
-### 5. Business logic
+src/components/abl/office/products/
+  ProductsCatalogTab.tsx     (filter bar + table/grid toggle)
+  ProductsStockTab.tsx       (stock-focused table)
+  ProductsCategoriesTab.tsx  (manage categories)
+  ProductsLowStockTab.tsx    (two-column alerts)
+  ProductsArchivedTab.tsx    (archived list)
+  ProductDetailDrawer.tsx    (5 inner tabs)
+  ProductForm.tsx            (shared create/edit)
+  AdjustStockModal.tsx
+  CategoryModal.tsx
+  ProductImageManager.tsx
+```
 
-- Validation with zod: company name 2–100, valid email, 10-digit phone, credit_limit ≥ 0
-- Phone auto-format to `+1 (246) XXX-XXXX`
-- Deactivate guard: query orders with status not in (delivered, cancelled, paid) → block with modal
-- Delete = soft delete (set `deleted_at`, `is_active=false`); block if any orders exist → offer deactivate instead
-- "Create login" → insert profiles row (id = gen_random_uuid, role='customer') and link via `customers.contact_profile_id`; show generated password in modal (no email)
+Helpers: `src/lib/products.ts` (queries, mutations, image upload), `src/lib/stock.ts` (movement helpers, status resolver).
 
-### 6. What this prompt does NOT do
+### 3. Build order
 
-- Bulk import / CSV
-- Real email sending
-- Real sales_reps table (free text for now)
-- Aging reports / statement PDFs
+1. Migration → wait for approval
+2. Storage bucket + RLS
+3. Catalog tab + filter bar + table view (the centerpiece)
+4. Product detail drawer (5 tabs)
+5. Create/edit form with live preview
+6. Adjust stock modal + stock movements wiring
+7. Stock levels tab
+8. Categories tab (with drag reorder)
+9. Low stock alerts tab
+10. Archived tab
+11. Grid view toggle (reuses storefront ProductCard)
+12. Wire storefront catalog/category chips to new `categories` table + `primary_image_url`
 
-### Technical notes
+### 4. Out of scope (per prompt)
 
-- All money via `formatBBD()` helper; dates via existing date formatter
-- Reuse `OrderStatusBadge` in Orders tab and recent orders mini-table
-- Soft-delete filter: all table queries exclude `deleted_at IS NOT NULL`
-- Auto-save notes on textarea blur (single UPDATE)
-- Activity log diff: serialize changed fields into description like `"Credit limit BBD$ 1,000 → BBD$ 2,500"`
+CSV import, real supplier integration, image processing/cropping, tier pricing, demand forecasting, barcode scanning, multi-location, lot/expiry.
+
+### 5. Risks / notes
+
+- Existing `products.stock_status` column stays as the resolved status (updated by trigger); `stock_status_override` is the input.
+- `cost_price` visibility handled via app-layer role check + RLS (admin only); office sees the field hidden in form/drawer.
+- Storefront `ProductCard` already supports the shape we need; we'll pass through `primary_image_url` once available.
+- Dev anon RLS policies extended to allow inserts/updates so the dev role-picker flow keeps working.
+
+Confirm and I'll start with the migration.
