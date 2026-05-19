@@ -117,15 +117,11 @@ export function OrderDrawer({
 
       {recordPaymentOpen && customer && (
         <RecordPaymentModal
-          customer={{
-            id: customer.id,
-            company_name: customer.company_name,
-            customer_number: null,
-            payment_terms_days: 30,
-          } as any}
+          open={recordPaymentOpen}
+          customerId={customer.id}
+          preAllocateOrderId={order.id}
           onClose={() => setRecordPaymentOpen(false)}
-          onSaved={() => { setRecordPaymentOpen(false); onOrderUpdated(); }}
-          prefillOrderId={order.id}
+          onSuccess={() => { setRecordPaymentOpen(false); onOrderUpdated(); }}
         />
       )}
     </>
