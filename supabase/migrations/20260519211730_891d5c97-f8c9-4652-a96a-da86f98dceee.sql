@@ -1,0 +1,1 @@
+ALTER VIEW public.customer_account_summary SET (security_invoker = true);
