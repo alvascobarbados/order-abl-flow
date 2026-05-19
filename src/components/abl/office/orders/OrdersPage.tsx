@@ -43,17 +43,27 @@ export function OrdersPage() {
   const [datePreset, setDatePreset] = useState<DatePreset>(defaultDatePresetFor(initialTab));
   const [sort, setSort] = useState<SortKey>("newest");
 
+  const [itemSummary, setItemSummary] = useState<Record<string, { lines: number; cases: number }>>({});
+
   useEffect(() => { setTab(initialTab); setDatePreset(defaultDatePresetFor(initialTab)); }, [search.tab, search.status]); // eslint-disable-line
 
   const reload = useCallback(async () => {
-    const [{ data: o }, { data: c }] = await Promise.all([
+    const [{ data: o }, { data: c }, { data: items }] = await Promise.all([
       supabase.from("orders").select(ORDER_SELECT).order("placed_at", { ascending: false }),
       supabase.from("customers").select("id, company_name, phone, delivery_address, sales_rep_name, payment_terms_days, credit_limit"),
+      supabase.from("order_items").select("order_id, quantity"),
     ]);
     setOrders((o as any) ?? []);
     const m: Record<string, CustomerLite> = {};
     (c as any[] | null)?.forEach((x) => (m[x.id] = x));
     setCustomers(m);
+    const sum: Record<string, { lines: number; cases: number }> = {};
+    (items as any[] | null)?.forEach((it) => {
+      const s = sum[it.order_id] ?? { lines: 0, cases: 0 };
+      s.lines += 1; s.cases += Number(it.quantity) || 0;
+      sum[it.order_id] = s;
+    });
+    setItemSummary(sum);
     setSelected(new Set());
   }, []);
   useEffect(() => { reload(); }, [reload]);
