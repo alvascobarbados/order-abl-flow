@@ -54,12 +54,12 @@ function StatRow({ label, bucket }: { label: string; bucket: Bucket }) {
     <div className="flex items-end justify-between rounded-2xl bg-white p-4 shadow-[0_1px_0_#E5E9EF]">
       <div>
         <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
-        <div className="mt-1 font-mono text-[26px] font-extrabold leading-none text-ink">{bucket.count}</div>
+        <div className="mt-1 text-[26px] font-extrabold leading-none text-ink">{bucket.count}</div>
         <div className="text-[11.5px] text-muted-foreground">deliveries</div>
       </div>
       <div className="text-right">
         <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Value</div>
-        <div className="mt-1 font-mono text-[18px] font-extrabold text-ink">{formatBBD(bucket.total)}</div>
+        <div className="mt-1 text-[18px] font-extrabold text-ink">{formatBBD(bucket.total)}</div>
       </div>
     </div>
   );

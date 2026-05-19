@@ -194,7 +194,7 @@ function Grid({ children }: { children: React.ReactNode }) {
 function Field({ label, full, children }: { label: string; full?: boolean; children: React.ReactNode }) {
   return (
     <label className={`block ${full ? "sm:col-span-2" : ""}`}>
-      <span className="block text-[11px] font-mono uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">{label}</span>
       <div className="mt-1">{children}</div>
     </label>
   );

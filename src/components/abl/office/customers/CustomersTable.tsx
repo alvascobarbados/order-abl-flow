@@ -176,7 +176,7 @@ export function CustomersTable() {
       {/* Top bar */}
       <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <div className="font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>
+          <div className="text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>
             OPERATIONS · CUSTOMERS
           </div>
           <h1 className="mt-1 text-[24px] font-extrabold text-ink" style={{ letterSpacing: "-0.02em" }}>
@@ -277,7 +277,7 @@ export function CustomersTable() {
                       <div className="mt-0.5 font-mono text-[11px] text-[#64748B]">{r.customer_number}</div>
                     </td>
                     <td className="px-3 py-3 text-[12px] text-[#64748B]">
-                      {r.phone ? <div className="font-mono">{r.phone}</div> : <span className="text-[#94A3B8]">—</span>}
+                      {r.phone ? <div className="">{r.phone}</div> : <span className="text-[#94A3B8]">—</span>}
                     </td>
                     <td className="px-3 py-3"><TierChip tier={r.pricing_tier} /></td>
                     <td className="px-3 py-3 text-right text-ink">{formatBBD(Number(r.credit_limit))}</td>

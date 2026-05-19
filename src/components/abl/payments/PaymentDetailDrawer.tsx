@@ -157,20 +157,20 @@ export function PaymentDetailDrawer({ paymentId, onClose, onChanged }: Props) {
                   )}
                   {allocatedToOrders.map((a) => (
                     <tr key={a.id} className="border-t border-[#E5E9EF]">
-                      <td className="px-3 py-2 font-mono text-[12px] font-semibold text-ink">
+                      <td className="px-3 py-2 text-[12px] font-semibold text-ink">
                         {a.invoice_number ?? a.order_number}
                       </td>
-                      <td className="px-3 py-2 text-right font-mono text-[#64748B]">
+                      <td className="px-3 py-2 text-right text-[#64748B]">
                         {a.order_total != null ? formatBBD(a.order_total) : "—"}
                       </td>
-                      <td className="px-3 py-2 text-right font-mono font-semibold text-ink">{formatBBD(a.amount)}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-ink">{formatBBD(a.amount)}</td>
                     </tr>
                   ))}
                   {onAccount && (
                     <tr className="border-t border-[#E5E9EF] bg-[#FFFBEB]">
                       <td className="px-3 py-2 text-[12.5px] font-semibold text-[#92400E]">On account (unallocated credit)</td>
                       <td className="px-3 py-2 text-right text-[#64748B]">—</td>
-                      <td className="px-3 py-2 text-right font-mono font-semibold text-[#92400E]">{formatBBD(onAccount.amount)}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-[#92400E]">{formatBBD(onAccount.amount)}</td>
                     </tr>
                   )}
                 </tbody>
@@ -230,7 +230,7 @@ function Meta({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
     <div>
       <div className="text-[10.5px] uppercase tracking-wider text-[#64748B]">{k}</div>
-      <div className={`mt-0.5 text-ink ${mono ? "font-mono" : ""}`}>{v}</div>
+      <div className={`mt-0.5 text-ink ${mono ? "" : ""}`}>{v}</div>
     </div>
   );
 }

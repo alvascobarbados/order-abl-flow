@@ -56,11 +56,11 @@ export function ProductsCategoriesTab({ categories, products, onChanged }: {
                   <div className="flex items-center gap-1">
                     <button onClick={() => move(c, -1)} disabled={i === 0} className="grid h-6 w-6 place-items-center rounded text-muted-foreground hover:bg-[#F1F4F8] disabled:opacity-30"><ArrowUp className="h-3 w-3" /></button>
                     <button onClick={() => move(c, 1)} disabled={i === arr.length - 1} className="grid h-6 w-6 place-items-center rounded text-muted-foreground hover:bg-[#F1F4F8] disabled:opacity-30"><ArrowDown className="h-3 w-3" /></button>
-                    <span className="ml-1 font-mono text-[10.5px] text-muted-foreground">{c.sort_order}</span>
+                    <span className="ml-1 text-[10.5px] text-muted-foreground">{c.sort_order}</span>
                   </div>
                 </td>
                 <td className="p-2 text-[13.5px] font-bold text-ink">{c.name}</td>
-                <td className="p-2 text-right font-mono text-[12.5px] text-ink">{counts[c.name] ?? 0}</td>
+                <td className="p-2 text-right text-[12.5px] text-ink">{counts[c.name] ?? 0}</td>
                 <td className="p-2">
                   <div className="flex justify-end gap-1">
                     <button onClick={() => setEditing(c)} className="grid h-7 w-7 place-items-center rounded text-muted-foreground hover:bg-[#F1F4F8] hover:text-ink"><Pencil className="h-3 w-3" /></button>
@@ -123,5 +123,5 @@ function CategoryModal({ category, existing, onClose, onSaved }: {
 }
 
 function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th className={`px-2 py-2.5 text-left font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${className}`}>{children}</th>;
+  return <th className={`px-2 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${className}`}>{children}</th>;
 }

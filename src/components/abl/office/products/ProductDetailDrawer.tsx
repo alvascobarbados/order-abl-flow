@@ -184,7 +184,7 @@ function StockTab({ product, movements, onAdjust }: { product: ProductFull; move
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className={`font-mono text-[13px] font-bold ${m.quantity >= 0 ? "text-[color:var(--success)]" : "text-[#E11D48]"}`}>
+                  <div className={`text-[13px] font-bold ${m.quantity >= 0 ? "text-[color:var(--success)]" : "text-[#E11D48]"}`}>
                     {m.quantity > 0 ? "+" : ""}{m.quantity}
                   </div>
                   <div className="text-[10.5px] text-muted-foreground">→ {m.balance_after}</div>
@@ -239,7 +239,7 @@ function Row({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
     <div className="flex justify-between gap-3 border-b border-border py-1.5 last:border-0">
       <span className="text-[12px] text-muted-foreground">{k}</span>
-      <span className={`text-right text-[12.5px] text-ink ${mono ? "font-mono font-bold" : "font-semibold"}`}>{v}</span>
+      <span className={`text-right text-[12.5px] text-ink ${mono ? "font-bold" : "font-semibold"}`}>{v}</span>
     </div>
   );
 }
@@ -248,7 +248,7 @@ function Metric({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-lg border border-border p-3 text-center">
       <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-1 font-mono text-[18px] font-extrabold text-ink">{value}</div>
+      <div className="mt-1 text-[18px] font-extrabold text-ink">{value}</div>
     </div>
   );
 }

@@ -93,4 +93,5 @@
     -webkit-font-smoothing: antialiased;
   }
   .font-mono { font-family: var(--font-mono); }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
 }

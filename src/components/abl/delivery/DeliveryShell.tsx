@@ -71,7 +71,7 @@ function TopBar({ title, subtitle, back, right }: { title?: string; subtitle?: s
         ) : (
           <Link to="/delivery" className="flex shrink-0 items-baseline gap-1.5 pl-1">
             <span className="text-[20px] font-extrabold leading-none text-[#0B1A2E]">ABL</span>
-            <span className="font-mono text-[9.5px] font-bold uppercase tracking-[0.18em] text-[#10B981]">Delivery</span>
+            <span className="text-[9.5px] font-bold uppercase tracking-[0.18em] text-[#10B981]">Delivery</span>
           </Link>
         )}
         <div className="min-w-0 flex-1 px-1 text-center">

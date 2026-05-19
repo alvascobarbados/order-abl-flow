@@ -122,7 +122,7 @@ export function LoadVanPage() {
       <div className="sticky top-[56px] z-20 -mx-4 mb-3 border-b border-[#E5E9EF] bg-white/95 px-4 py-2 backdrop-blur">
         <div className="flex items-center justify-between">
           <div className="text-[12px] font-bold text-ink">
-            {loaded.length} loaded · <span className="font-mono">{formatBBD(loadedTotal)}</span>
+            {loaded.length} loaded · <span className="">{formatBBD(loadedTotal)}</span>
           </div>
           <button onClick={() => setMode(mode === "scan" ? "list" : "scan")}
             className="inline-flex items-center gap-1 rounded-full border border-[#E5E9EF] bg-white px-2.5 py-1 text-[11px] font-bold text-muted-foreground">
@@ -270,7 +270,7 @@ function ScanMode({ onScan }: { onScan: (text: string) => Promise<{ ok: boolean;
               <div className="truncate text-[14px] font-bold text-ink">{status.order.customer?.company_name ?? "Customer"}</div>
               <div className="text-[11.5px] font-mono text-muted-foreground">{status.order.invoice_number ?? status.order.order_number}</div>
             </div>
-            <span className="font-mono text-[13px] font-bold text-ink">{formatBBD(Number(status.order.total))}</span>
+            <span className="text-[13px] font-bold text-ink">{formatBBD(Number(status.order.total))}</span>
           </div>
         )}
         {status.type === "err" && (
@@ -308,7 +308,7 @@ function ListMode({ loading, loaded, available, onLoad, onUnload }: {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <div className="truncate text-[14px] font-bold text-ink">{o.customer?.company_name}</div>
-                    <span className="font-mono text-[12px] font-bold text-ink">{formatBBD(Number(o.total))}</span>
+                    <span className="text-[12px] font-bold text-ink">{formatBBD(Number(o.total))}</span>
                   </div>
                   <div className="text-[11px] font-mono text-muted-foreground">{o.invoice_number ?? o.order_number}</div>
                 </div>
@@ -338,7 +338,7 @@ function ListMode({ loading, loaded, available, onLoad, onUnload }: {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <div className="truncate text-[14px] font-bold text-ink">{o.customer?.company_name}</div>
-                    <span className="font-mono text-[12px] font-bold text-ink">{formatBBD(Number(o.total))}</span>
+                    <span className="text-[12px] font-bold text-ink">{formatBBD(Number(o.total))}</span>
                   </div>
                   <div className="mt-0.5 flex items-center gap-1 text-[11.5px] text-muted-foreground">
                     <MapPin className="h-3 w-3" />

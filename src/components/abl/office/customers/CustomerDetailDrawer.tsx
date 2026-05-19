@@ -210,7 +210,7 @@ export function CustomerDetailDrawer({
                       </a>
                     )}
                     {customer.phone && (
-                      <a href={`tel:${customer.phone}`} className="flex items-center gap-1.5 font-mono text-[#0F2540] hover:underline">
+                      <a href={`tel:${customer.phone}`} className="flex items-center gap-1.5 text-[#0F2540] hover:underline">
                         <Phone className="h-3.5 w-3.5" /> {customer.phone}
                       </a>
                     )}
@@ -364,7 +364,7 @@ export function CustomerDetailDrawer({
                     {activity.map((a) => (
                       <li key={a.id} className="rounded-lg border border-[#E5E9EF] p-3">
                         <div className="text-[12.5px] text-ink">{a.description}</div>
-                        <div className="mt-0.5 font-mono text-[10.5px] text-[#64748B]">{new Date(a.created_at).toLocaleString("en-GB")}</div>
+                        <div className="mt-0.5 text-[10.5px] text-[#64748B]">{new Date(a.created_at).toLocaleString("en-GB")}</div>
                       </li>
                     ))}
                   </ul>

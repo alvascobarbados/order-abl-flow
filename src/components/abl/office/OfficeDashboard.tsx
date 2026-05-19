@@ -147,7 +147,7 @@ export function OfficeDashboard() {
       <div className="mb-[22px] flex items-end justify-between gap-4">
         <div>
           <div
-            className="font-mono text-[10.5px] uppercase text-muted-foreground"
+            className="text-[10.5px] uppercase text-muted-foreground"
             style={{ letterSpacing: "0.12em" }}
           >
             OPERATIONS · DASHBOARD
@@ -228,7 +228,7 @@ export function OfficeDashboard() {
         <h2 className="text-[15px] font-bold text-ink" style={{ letterSpacing: "-0.01em" }}>
           Order pipeline
         </h2>
-        <span className="font-mono text-[10.5px] text-muted-foreground">Real-time across all roles</span>
+        <span className="text-[10.5px] text-muted-foreground">Real-time across all roles</span>
       </div>
 
       {/* Pipeline card */}
@@ -291,7 +291,7 @@ export function OfficeDashboard() {
                   key={ev.id}
                   className={`flex gap-3 py-2.5 ${i < activity.length - 1 ? "border-b border-border" : ""}`}
                 >
-                  <span className="w-[56px] flex-shrink-0 font-mono text-[11px] text-muted-foreground">{timeAgo(ev.created_at)}</span>
+                  <span className="w-[56px] flex-shrink-0 text-[11px] text-muted-foreground">{timeAgo(ev.created_at)}</span>
                   <span className="text-[12.5px] leading-[1.4] text-ink">{ev.description}</span>
                 </li>
               ))}
@@ -411,7 +411,7 @@ function PendingRow({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="rounded-md bg-secondary px-2 py-0.5 font-mono text-[11px] font-semibold text-ink">
+            <span className="rounded-md bg-secondary px-2 py-0.5 text-[11px] font-semibold text-ink">
               {order.order_number}
             </span>
             <span className="text-[11px] text-muted-foreground">{timeAgo(order.placed_at)} ago</span>
@@ -528,7 +528,7 @@ function OrderDrawer({
       >
         <div className="flex items-center justify-between border-b border-border bg-card px-5 py-4">
           <div>
-            <div className="font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>
+            <div className="text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>
               Order detail
             </div>
             <div className="mt-0.5 text-[17px] font-extrabold text-ink">{order.order_number}</div>
@@ -550,15 +550,15 @@ function OrderDrawer({
             <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
               <div>
                 <div className="text-muted-foreground">Credit limit</div>
-                <div className="font-mono font-semibold text-ink">{formatBBD(Number(customer?.credit_limit ?? 0))}</div>
+                <div className="font-semibold text-ink">{formatBBD(Number(customer?.credit_limit ?? 0))}</div>
               </div>
               <div>
                 <div className="text-muted-foreground">Balance</div>
-                <div className="font-mono font-semibold text-ink">{formatBBD(Number(customer?.current_balance ?? 0))}</div>
+                <div className="font-semibold text-ink">{formatBBD(Number(customer?.current_balance ?? 0))}</div>
               </div>
               <div>
                 <div className="text-muted-foreground">Available</div>
-                <div className={`font-mono font-semibold ${available < Number(order.total) ? "text-[#B91C1C]" : "text-[#047857]"}`}>
+                <div className={`font-semibold ${available < Number(order.total) ? "text-[#B91C1C]" : "text-[#047857]"}`}>
                   {formatBBD(available)}
                 </div>
               </div>
@@ -584,9 +584,9 @@ function OrderDrawer({
                       <div className="font-semibold text-ink">{it.product?.name ?? "—"}</div>
                       <div className="font-mono text-[10.5px] text-muted-foreground">{it.product?.sku}</div>
                     </td>
-                    <td className="px-2 py-2.5 text-right font-mono">{it.quantity}</td>
-                    <td className="px-2 py-2.5 text-right font-mono">{formatBBD(Number(it.unit_price_at_order))}</td>
-                    <td className="px-4 py-2.5 text-right font-mono font-semibold">{formatBBD(Number(it.line_total))}</td>
+                    <td className="px-2 py-2.5 text-right">{it.quantity}</td>
+                    <td className="px-2 py-2.5 text-right">{formatBBD(Number(it.unit_price_at_order))}</td>
+                    <td className="px-4 py-2.5 text-right font-semibold">{formatBBD(Number(it.line_total))}</td>
                   </tr>
                 ))}
               </tbody>
@@ -639,7 +639,7 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
   return (
     <div className="flex justify-between">
       <span className={bold ? "font-semibold text-ink" : "text-muted-foreground"}>{label}</span>
-      <span className={`font-mono ${bold ? "font-bold text-ink" : "text-ink"}`}>{value}</span>
+      <span className={`${bold ? "font-bold text-ink" : "text-ink"}`}>{value}</span>
     </div>
   );
 }

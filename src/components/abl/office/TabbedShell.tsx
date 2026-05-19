@@ -21,7 +21,7 @@ export function TabbedShell({
   return (
     <>
       <div className="mb-5">
-        <div className="font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>
+        <div className="text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>
           {eyebrow}
         </div>
         <h1 className="mt-1 text-[24px] font-extrabold text-ink" style={{ letterSpacing: "-0.02em" }}>
@@ -48,7 +48,7 @@ export function TabbedShell({
               >
                 <span>{t.label}</span>
                 {t.count !== undefined && (
-                  <span className={`font-mono text-[10.5px] ${active ? "text-white/70" : "text-muted-foreground"}`}>
+                  <span className={`text-[10.5px] ${active ? "text-white/70" : "text-muted-foreground"}`}>
                     ({t.count})
                   </span>
                 )}

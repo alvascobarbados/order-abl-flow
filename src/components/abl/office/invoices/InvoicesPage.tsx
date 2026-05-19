@@ -127,9 +127,9 @@ export function InvoicesPage() {
                   <td className="px-3 py-2.5 font-semibold text-ink">{r.customer_name}</td>
                   <td className="px-3 py-2.5 text-muted-foreground">{formatDate(r.invoiced_at)}</td>
                   <td className="px-3 py-2.5 text-muted-foreground">{r.due_date ? formatDate(r.due_date) : "—"}</td>
-                  <td className="px-3 py-2.5 text-right font-mono">{formatBBD(r.total)}</td>
-                  <td className="px-3 py-2.5 text-right font-mono text-[#047857]">{formatBBD(r.paid_so_far)}</td>
-                  <td className="px-3 py-2.5 text-right font-mono font-semibold text-ink">{formatBBD(r.balance)}</td>
+                  <td className="px-3 py-2.5 text-right">{formatBBD(r.total)}</td>
+                  <td className="px-3 py-2.5 text-right text-[#047857]">{formatBBD(r.paid_so_far)}</td>
+                  <td className="px-3 py-2.5 text-right font-semibold text-ink">{formatBBD(r.balance)}</td>
                   <td className="px-3 py-2.5">
                     <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10.5px] font-semibold text-ink">
                       {r.status === "paid" || r.balance <= 0.001 ? "Paid" : r.days_overdue > 0 ? "Overdue" : "Outstanding"}
@@ -137,7 +137,7 @@ export function InvoicesPage() {
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     {r.days_overdue > 0 ? (
-                      <span className="font-mono font-bold text-[#B91C1C]">{r.days_overdue}d</span>
+                      <span className="font-bold text-[#B91C1C]">{r.days_overdue}d</span>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}

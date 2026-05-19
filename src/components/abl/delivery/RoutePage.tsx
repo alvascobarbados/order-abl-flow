@@ -110,7 +110,7 @@ export function RoutePage() {
           <span>{stops.length} stops · {done.length} done</span>
         </div>
         <div className="mt-3 text-[11px] font-bold uppercase tracking-wider text-white/60">To collect today</div>
-        <div className="mt-1 font-mono text-[36px] font-extrabold leading-none text-[#FF6A1A]">
+        <div className="mt-1 text-[36px] font-extrabold leading-none text-[#FF6A1A]">
           {formatBBD(toCollect)}
         </div>
         <div className="mt-4">
@@ -226,7 +226,7 @@ function StopCard({
           <span className="truncate">{addr.line2 || addr.line1} · {stop.items_count ?? 0} items</span>
         </div>
         <div className="mt-1.5 flex items-center justify-between">
-          <span className="font-mono text-[13.5px] font-bold text-ink">{formatBBD(Number(stop.total))}</span>
+          <span className="text-[13.5px] font-bold text-ink">{formatBBD(Number(stop.total))}</span>
           <span className="text-[11.5px] text-muted-foreground">{eta}</span>
         </div>
         {(onUp || onDown) && (

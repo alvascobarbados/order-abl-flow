@@ -84,7 +84,7 @@ export function ProductCard({ product }: { product: ProductRow }) {
           soldOut ? "opacity-50 grayscale" : ""
         }`}
       >
-        <span className="absolute left-2 top-2 z-10 rounded-[5px] border border-[#E5E9EF] bg-white/80 px-1.5 py-0.5 font-mono text-[9.5px] font-medium text-[#64748B] backdrop-blur">
+        <span className="absolute left-2 top-2 z-10 rounded-[5px] border border-[#E5E9EF] bg-white/80 px-1.5 py-0.5 text-[9.5px] font-medium text-[#64748B] backdrop-blur">
           {product.sku}
         </span>
         <span

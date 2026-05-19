@@ -38,5 +38,5 @@ export function ProductsArchivedTab({ products, onChanged }: { products: Product
 }
 
 function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th className={`px-2 py-2.5 text-left font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${className}`}>{children}</th>;
+  return <th className={`px-2 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${className}`}>{children}</th>;
 }

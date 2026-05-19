@@ -142,7 +142,7 @@ function CheckoutPage() {
                   {customer?.delivery_address ?? "Address on file"}
                 </div>
                 {customer?.phone && (
-                  <div className="mt-1 font-mono text-[12px] text-[#64748B]">{customer.phone}</div>
+                  <div className="mt-1 text-[12px] text-[#64748B]">{customer.phone}</div>
                 )}
                 <p className="mt-3 text-[11.5px] italic text-[#94A3B8]">
                   To change your delivery address, contact your sales rep.
@@ -177,7 +177,7 @@ function CheckoutPage() {
                         </div>
                         <div className="min-w-0">
                           <div className="text-[13px] font-bold text-[#0B1A2E]">{l.product.name}</div>
-                          <div className="mt-0.5 font-mono text-[10.5px] text-[#64748B]">
+                          <div className="mt-0.5 text-[10.5px] text-[#64748B]">
                             {l.product.sku}
                           </div>
                           <div className="mt-1 inline-flex items-center gap-1 rounded-[5px] bg-[#F1F4F8] px-1.5 py-0.5 text-[10.5px] font-semibold text-[#0F2540]">
@@ -216,7 +216,7 @@ function CheckoutPage() {
                   placeholder="Gate code, preferred delivery time, special handling instructions..."
                   className="mt-3 h-28 w-full resize-none rounded-[8px] border border-[#E5E9EF] bg-[#FAFBFC] p-3 text-[13px] text-[#0B1A2E] outline-none placeholder:text-[#94A3B8] focus:border-[#0F2540] focus:bg-white"
                 />
-                <div className="mt-1 text-right font-mono text-[10.5px] text-[#94A3B8]">
+                <div className="mt-1 text-right text-[10.5px] text-[#94A3B8]">
                   {notes.length} / 500
                 </div>
               </section>

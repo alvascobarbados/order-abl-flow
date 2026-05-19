@@ -75,7 +75,7 @@ export function QueuePage() {
 
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[20px] font-extrabold text-ink">Your queue</h2>
-        <span className="font-mono text-[10.5px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Sorted by urgency</span>
+        <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Sorted by urgency</span>
       </div>
 
       {demoScan && (

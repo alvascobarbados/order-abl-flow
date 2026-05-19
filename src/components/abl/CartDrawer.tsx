@@ -89,7 +89,7 @@ export function CartDrawer() {
                           <div className="line-clamp-2 text-[13px] font-bold leading-tight text-[#0B1A2E]">
                             {l.product.name}
                           </div>
-                          <div className="mt-0.5 font-mono text-[10.5px] text-[#64748B]">
+                          <div className="mt-0.5 text-[10.5px] text-[#64748B]">
                             {l.product.sku}
                           </div>
                         </div>

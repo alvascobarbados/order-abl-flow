@@ -141,7 +141,7 @@ export function OfficeShell({ children }: { children: ReactNode }) {
         <div className="px-5 pt-5 pb-4">
           <div className="text-[22px] font-extrabold leading-none">ABL</div>
           <div
-            className="mt-1 font-mono text-[9.5px] uppercase"
+            className="mt-1 text-[9.5px] uppercase"
             style={{ color: "#FF6A1A", letterSpacing: "0.2em" }}
           >
             OPERATIONS
@@ -194,7 +194,7 @@ export function OfficeShell({ children }: { children: ReactNode }) {
                 {i > 0 && <div className="h-px flex-1 bg-white/8" style={{ backgroundColor: "rgba(255,255,255,0.08)" }} />}
               </div>
               <div
-                className="mb-1 px-3 font-mono text-[9.5px] uppercase"
+                className="mb-1 px-3 text-[9.5px] uppercase"
                 style={{ color: "rgba(255,255,255,0.35)", letterSpacing: "0.2em" }}
               >
                 {section.label}
@@ -264,7 +264,7 @@ function NavRow({
   const secondary = BADGE_COLORS[secondaryBadgeColor];
   const Badge = ({ val, c }: { val: number; c: { bg: string; text: string } }) => (
     <span
-      className="rounded-full font-mono font-semibold"
+      className="rounded-full font-semibold"
       style={{ backgroundColor: c.bg, color: c.text, fontSize: "10.5px", padding: "2px 6px" }}
     >
       {val}

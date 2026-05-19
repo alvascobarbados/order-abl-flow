@@ -369,7 +369,7 @@ export function RecordPaymentModal({ open, onClose, onSuccess, customerId, preAl
                   <input
                     value={reference}
                     onChange={(e) => setReference(e.target.value)}
-                    className="h-10 w-full rounded-lg border border-[#E5E9EF] bg-white px-3 text-[13px] font-mono outline-none focus:border-[#0F2540]"
+                    className="h-10 w-full rounded-lg border border-[#E5E9EF] bg-white px-3 text-[13px] outline-none focus:border-[#0F2540]"
                   />
                 </div>
                 <div>
@@ -435,7 +435,7 @@ export function RecordPaymentModal({ open, onClose, onSuccess, customerId, preAl
                         const isFull = applied >= invoice.outstanding - 0.001;
                         return (
                           <li key={invoice.id} className="flex items-center justify-between text-[12.5px]">
-                            <span className="font-mono text-ink">
+                            <span className="text-ink">
                               {formatBBD(applied)} → {invoice.invoice_number ?? invoice.order_number}
                             </span>
                             <span className={`text-[11px] ${isFull ? "text-[#047857]" : "text-[#B45309]"}`}>
@@ -474,7 +474,7 @@ export function RecordPaymentModal({ open, onClose, onSuccess, customerId, preAl
                               <div className="font-mono font-semibold text-ink">{inv.invoice_number ?? inv.order_number}</div>
                               <div className="text-[10.5px] text-[#64748B]">{formatDate(inv.invoiced_at)}</div>
                             </td>
-                            <td className="px-3 py-2 text-right font-mono">{formatBBD(inv.outstanding)}</td>
+                            <td className="px-3 py-2 text-right">{formatBBD(inv.outstanding)}</td>
                             <td className="px-3 py-2 text-right">
                               <input
                                 type="number"
@@ -484,7 +484,7 @@ export function RecordPaymentModal({ open, onClose, onSuccess, customerId, preAl
                                 value={manualAlloc[inv.id] ?? ""}
                                 onChange={(e) => setManualAlloc({ ...manualAlloc, [inv.id]: e.target.value })}
                                 placeholder="0.00"
-                                className="h-8 w-[100px] rounded-md border border-[#E5E9EF] bg-white px-2 text-right font-mono text-[12px] outline-none focus:border-[#0F2540]"
+                                className="h-8 w-[100px] rounded-md border border-[#E5E9EF] bg-white px-2 text-right text-[12px] outline-none focus:border-[#0F2540]"
                               />
                             </td>
                           </tr>
@@ -499,9 +499,9 @@ export function RecordPaymentModal({ open, onClose, onSuccess, customerId, preAl
                 <div className="flex items-center justify-between rounded-lg bg-[#FAFBFC] px-3 py-2 text-[12.5px]">
                   <span className="text-[#64748B]">Total allocated</span>
                   <span className="font-semibold">
-                    <span className="font-mono">{formatBBD(totalAllocated)}</span>
+                    <span className="">{formatBBD(totalAllocated)}</span>
                     <span className="mx-1 text-[#94A3B8]">of</span>
-                    <span className="font-mono">{formatBBD(amountNum)}</span>
+                    <span className="">{formatBBD(amountNum)}</span>
                     {Math.abs(remainingUnallocated) < 0.01 && amountNum > 0
                       ? <Check className="ml-2 inline h-3.5 w-3.5 text-[#10B981]" />
                       : amountNum > 0

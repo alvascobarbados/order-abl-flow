@@ -102,7 +102,7 @@ export function EndShiftPage() {
     <DeliveryShell title="End of shift" back={{ to: "/delivery" }} subtitle={`${driverName} · ${new Date().toLocaleDateString()}`}>
       <section className="mb-4 rounded-2xl bg-white p-5 shadow-[0_1px_0_#E5E9EF]">
         <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Deliveries completed</div>
-        <div className="font-mono text-[36px] font-extrabold leading-none text-ink">{deliveriesCount}</div>
+        <div className="text-[36px] font-extrabold leading-none text-ink">{deliveriesCount}</div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Box label="Cash" value={formatBBD(totals.cash)} tint="#ECFDF5" />
@@ -113,16 +113,16 @@ export function EndShiftPage() {
 
         <div className="mt-4 rounded-xl bg-[#FFF8F2] p-3">
           <div className="text-[11px] font-bold uppercase tracking-wider text-[#9A3412]">Hand to office</div>
-          <div className="font-mono text-[24px] font-extrabold text-[#9A3412]">{formatBBD(handIn)}</div>
+          <div className="text-[24px] font-extrabold text-[#9A3412]">{formatBBD(handIn)}</div>
         </div>
       </section>
 
       <section className="mb-4 rounded-2xl bg-white p-4 shadow-[0_1px_0_#E5E9EF]">
         <label className="text-[13px] font-extrabold text-ink">Cash counted in hand</label>
         <div className="mt-2 flex items-center gap-2 rounded-xl border border-[#E5E9EF] bg-white px-3 py-2 focus-within:border-[#10B981]">
-          <span className="font-mono text-[14px] font-bold text-muted-foreground">BBD$</span>
+          <span className="text-[14px] font-bold text-muted-foreground">BBD$</span>
           <input value={cashCounted} inputMode="decimal" onChange={(e) => setCashCounted(e.target.value)}
-            className="w-full bg-transparent font-mono text-[22px] font-extrabold text-ink outline-none" placeholder="0.00" />
+            className="w-full bg-transparent text-[22px] font-extrabold text-ink outline-none" placeholder="0.00" />
         </div>
         <div className={`mt-2 flex items-center gap-2 rounded-lg px-3 py-2 text-[12.5px] font-semibold ${
           varianceUi.tone === "ok" ? "bg-[#ECFDF5] text-[#047857]"
@@ -142,7 +142,7 @@ export function EndShiftPage() {
               <li key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-[#E5E9EF] px-3 py-2 text-[12.5px]">
                 <span className="font-mono font-bold text-ink">#{c.ref ?? "—"}</span>
                 <span className="truncate text-muted-foreground">{c.payee}</span>
-                <span className="font-mono font-bold text-ink">{formatBBD(c.amount)}</span>
+                <span className="font-bold text-ink">{formatBBD(c.amount)}</span>
               </li>
             ))}
           </ul>
@@ -168,7 +168,7 @@ function Box({ label, value, tint }: { label: string; value: string; tint: strin
   return (
     <div className="rounded-xl p-3" style={{ backgroundColor: tint }}>
       <div className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-0.5 font-mono text-[14.5px] font-extrabold text-ink">{value}</div>
+      <div className="mt-0.5 text-[14.5px] font-extrabold text-ink">{value}</div>
     </div>
   );
 }

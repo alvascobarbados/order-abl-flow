@@ -557,7 +557,7 @@ function Input({
       onChange={(e) => onChange?.(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      className={`h-9 w-full rounded-lg border border-[#E5E9EF] bg-white px-2.5 text-[13px] outline-none placeholder:text-[#94A3B8] focus:border-[#0F2540] disabled:bg-[#F1F4F8] disabled:text-[#64748B] ${mono ? "font-mono" : ""}`}
+      className={`h-9 w-full rounded-lg border border-[#E5E9EF] bg-white px-2.5 text-[13px] outline-none placeholder:text-[#94A3B8] focus:border-[#0F2540] disabled:bg-[#F1F4F8] disabled:text-[#64748B] ${mono ? "" : ""}`}
     />
   );
 }
@@ -616,13 +616,13 @@ function PasswordModal({ email, password, onClose }: { email: string; password: 
         <div className="mt-4 space-y-2">
           <div className="rounded-lg border border-[#E5E9EF] bg-[#FAFBFC] p-2.5">
             <div className="text-[10.5px] uppercase tracking-wider text-[#64748B]">Email</div>
-            <div className="font-mono text-[13px] text-ink">{email}</div>
+            <div className="text-[13px] text-ink">{email}</div>
           </div>
           <div className="rounded-lg border border-[#E5E9EF] bg-[#FAFBFC] p-2.5">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-[10.5px] uppercase tracking-wider text-[#64748B]">Password</div>
-                <div className="font-mono text-[14px] font-semibold text-ink">{password}</div>
+                <div className="text-[14px] font-semibold text-ink">{password}</div>
               </div>
               <button onClick={copy} className="flex items-center gap-1 rounded-md border border-[#E5E9EF] bg-white px-2 py-1.5 text-[12px] font-semibold text-ink hover:bg-[#FAFBFC]">
                 <Copy className="h-3.5 w-3.5" /> Copy

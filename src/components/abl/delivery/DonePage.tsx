@@ -77,7 +77,7 @@ export function DonePage() {
 
       <section className="mb-4 rounded-2xl bg-white p-4 shadow-[0_1px_0_#E5E9EF]">
         <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{filter === "today" ? "Today" : filter === "week" ? "This week" : "All time"}</div>
-        <div className="mt-1 font-mono text-[28px] font-extrabold leading-none text-ink">{summary.count} deliveries</div>
+        <div className="mt-1 text-[28px] font-extrabold leading-none text-ink">{summary.count} deliveries</div>
         <div className="mt-2 text-[12.5px] text-muted-foreground">
           {formatBBD(summary.cash)} cash · {formatBBD(summary.cheque)} cheques · {formatBBD(summary.card)} cards · {formatBBD(summary.account)} on account
         </div>
@@ -104,7 +104,7 @@ export function DonePage() {
                   <div className="text-[11.5px] text-muted-foreground">{o.order_number} · {fmtTime(o.delivered_at)}{o.delivered_to_name ? ` · ${o.delivered_to_name}` : ""}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono text-[13.5px] font-bold text-ink">{formatBBD(Number(o.total))}</div>
+                  <div className="text-[13.5px] font-bold text-ink">{formatBBD(Number(o.total))}</div>
                   <div className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">{m}</div>
                 </div>
               </li>

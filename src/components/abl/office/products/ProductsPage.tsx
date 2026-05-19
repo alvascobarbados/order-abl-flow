@@ -66,7 +66,7 @@ export function ProductsPage() {
     <>
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <div className="font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>OFFICE</div>
+          <div className="text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.12em" }}>OFFICE</div>
           <h1 className="mt-1 text-[24px] font-extrabold text-ink" style={{ letterSpacing: "-0.02em" }}>Products & Inventory</h1>
           <p className="mt-1 text-[13px] text-muted-foreground">
             <span className="font-semibold text-ink">{counts.active}</span> active · <span>{counts.inactive}</span> inactive · <span className="font-semibold text-[color:var(--warning)]">{counts.low}</span> low stock · <span className="font-semibold text-[#E11D48]">{counts.oos}</span> out of stock
@@ -100,7 +100,7 @@ export function ProductsPage() {
               >
                 <span>{t.label}</span>
                 {t.count !== undefined && (
-                  <span className={`font-mono text-[10.5px] ${active ? "text-white/70" : "text-muted-foreground"}`}>({t.count})</span>
+                  <span className={`text-[10.5px] ${active ? "text-white/70" : "text-muted-foreground"}`}>({t.count})</span>
                 )}
               </button>
             );

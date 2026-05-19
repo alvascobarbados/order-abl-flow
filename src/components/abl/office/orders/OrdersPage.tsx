@@ -240,7 +240,7 @@ export function OrdersPage() {
                       : "border border-border bg-[#FAFBFC] text-[#64748B] hover:text-ink"
                 } ${t.key === "cancelled" ? "ml-auto" : ""}`}>
                 <span>{t.label}</span>
-                <span className={`font-mono text-[11px] ${active ? "text-white/70" : "text-muted-foreground/80"}`}>
+                <span className={`text-[11px] ${active ? "text-white/70" : "text-muted-foreground/80"}`}>
                   ({counts[t.key]})
                 </span>
               </button>
@@ -370,7 +370,7 @@ function OrdersTable({
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="sticky top-0 bg-secondary/60">
-              <tr className="border-b border-border text-left font-mono text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.08em" }}>
+              <tr className="border-b border-border text-left text-[10.5px] uppercase text-muted-foreground" style={{ letterSpacing: "0.08em" }}>
                 <th className="w-9 px-2 py-2.5">
                   <input type="checkbox" checked={allChecked} onChange={toggleAll} />
                 </th>
