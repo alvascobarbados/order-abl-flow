@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CheckCircle2, Package, ListChecks, ArrowRight, Sparkles } from "lucide-react";
+import { CheckCircle2, Package, ListChecks, ArrowRight, Sparkles, Truck, MapPin, Warehouse } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePicker } from "@/hooks/use-picker";
 import { WarehouseShell, UrgencyChip } from "./WarehouseShell";
 import { formatBBD } from "@/lib/format";
 import { fmtDayLabel, greeting, pickDeadline, urgencyOf, formatTimeShort, type QueueOrder } from "./util";
+
+type PackedOrder = {
+  id: string;
+  order_number: string;
+  invoice_number: string | null;
+  total: number;
+  packed_at: string | null;
+  driver_name: string | null;
+  vehicle_id: string | null;
+  packed_by_name: string | null;
+  customer: { company_name: string; delivery_address: string | null; delivery_city: string | null; delivery_parish: string | null } | null;
+  items_count: number;
+};
 
 export function QueuePage() {
   const { pickerName, demoScan } = usePicker();
