@@ -104,15 +104,23 @@ export function QueuePage() {
   return (
     <WarehouseShell title={`Today's picks · ${toPickCount} waiting`} subtitle="Tap an order to start picking">
       <section className="mb-5">
-        <h1 className="text-[28px] font-extrabold leading-tight tracking-tight text-ink">{greeting()}, {pickerName.split(" ")[0]}</h1>
+        <h1 className="text-[28px] font-extrabold leading-tight tracking-tight text-ink">{greeting}, {pickerName.split(" ")[0]}</h1>
         <p className="mt-1 text-[14px] text-muted-foreground">{fmtDayLabel()} · {toPickCount} to pick · {doneToday} done today</p>
       </section>
 
       <section className={`mb-6 grid gap-3 ${dispatchCount > 0 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-3"}`}>
-        <StatCard label="To pick" value={String(toPickCount)} />
-        <StatCard label="items in queue" value={String(itemsTotal)} prefix="cases" />
-        <StatCard label="done today" value={String(doneToday)} prefix="orders" />
-        {dispatchCount > 0 && <StatCard label="in dispatch" value={String(dispatchCount)} prefix="awaiting van" />}
+        {isPending ? (
+          <>
+            <SkeletonKpiCard /><SkeletonKpiCard /><SkeletonKpiCard />
+          </>
+        ) : (
+          <>
+            <StatCard label="To pick" value={String(toPickCount)} />
+            <StatCard label="items in queue" value={String(itemsTotal)} prefix="cases" />
+            <StatCard label="done today" value={String(doneToday)} prefix="orders" />
+            {dispatchCount > 0 && <StatCard label="in dispatch" value={String(dispatchCount)} prefix="awaiting van" />}
+          </>
+        )}
       </section>
 
       <div className="mb-3 flex items-center justify-between">
@@ -126,9 +134,9 @@ export function QueuePage() {
         </div>
       )}
 
-      {loading ? (
+      {isPending ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          {[0, 1].map((i) => <div key={i} className="h-[200px] animate-pulse rounded-2xl bg-white/60" />)}
+          {[0, 1, 2].map((i) => <SkeletonOrderCard key={i} />)}
         </div>
       ) : orders.length === 0 ? (
         <EmptyState />
