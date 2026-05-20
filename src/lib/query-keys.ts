@@ -21,6 +21,7 @@ export const qk = {
   stockMovements: (productId?: string) => productId ? ["stock-movements", productId] as const : ["stock-movements"] as const,
 
   // Dashboard
+  dashboard: () => ["dashboard"] as const,
   dashboardKpis: () => ["dashboard-kpis"] as const,
   pipelineCounts: () => ["pipeline-counts"] as const,
   pendingOrders: () => ["pending-orders"] as const,
@@ -45,14 +46,14 @@ export const qk = {
  */
 export const tableToQueryKeys: Record<string, readonly string[]> = {
   orders: [
-    "orders", "order", "dashboard-kpis", "pipeline-counts", "pending-orders",
+    "orders", "order", "dashboard", "dashboard-kpis", "pipeline-counts", "pending-orders",
     "warehouse-queue", "warehouse-dispatch", "route", "available-loads",
   ],
-  payments: ["payments", "dashboard-kpis", "customers", "customer", "activity-feed"],
-  payment_allocations: ["orders", "order", "payments", "dashboard-kpis"],
-  delivery_events: ["route", "activity-feed", "dashboard-kpis"],
-  picking_events: ["warehouse-queue", "activity-feed"],
-  activity_log: ["activity-feed"],
+  payments: ["payments", "dashboard", "dashboard-kpis", "customers", "customer", "activity-feed"],
+  payment_allocations: ["orders", "order", "payments", "dashboard", "dashboard-kpis"],
+  delivery_events: ["route", "activity-feed", "dashboard", "dashboard-kpis"],
+  picking_events: ["warehouse-queue", "activity-feed", "dashboard"],
+  activity_log: ["activity-feed", "dashboard"],
   stock_movements: ["products", "shop-products", "stock-movements"],
   customers: ["customers", "customer"],
   products: ["products", "shop-products"],
