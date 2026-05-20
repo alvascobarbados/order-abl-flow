@@ -120,7 +120,7 @@ export function RoutePage() {
       <section className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-[24px] font-extrabold leading-tight tracking-tight text-ink">
-            {greeting()}, {driverName.split(" ")[0]}
+            {greeting}, {driverName.split(" ")[0]}
           </h1>
           <p className="mt-1 text-[13px] text-muted-foreground">
             {fmtDayLabel()} · {stops.length} stops · {formatBBD(collectFromActive)} to collect
@@ -175,8 +175,8 @@ export function RoutePage() {
         </Link>
       </div>
 
-      {loading ? (
-        <div className="space-y-3">{[0,1,2].map((i) => <div key={i} className="h-[110px] animate-pulse rounded-2xl bg-white/60" />)}</div>
+      {isPending ? (
+        <div className="space-y-3">{[0,1,2].map((i) => <SkeletonStopCard key={i} />)}</div>
       ) : stops.length === 0 ? (
         <EmptyNothingLoaded />
       ) : pending.length === 0 && loaded.length === 0 ? (
