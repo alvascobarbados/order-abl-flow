@@ -90,6 +90,7 @@ function RootComponent() {
             <DriverProvider>
               <ActiveCustomerProvider>
                 <CartProvider>
+                  <RealtimeInvalidationBridge />
                   <Outlet />
                   <Toaster richColors position="top-right" />
                 </CartProvider>
