@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Check, PackageSearch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/abl/AppHeader";
 import { ProductCard, type ProductRow } from "@/components/abl/ProductCard";
 import { FloatingActions } from "@/components/abl/FloatingActions";
+import { qk } from "@/lib/query-keys";
+import { SkeletonProductCard } from "@/components/abl/skeletons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,27 +40,23 @@ const SORT_LABELS: Record<Sort, string> = {
 };
 
 function CatalogPage() {
-  const [products, setProducts] = useState<ProductRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products = [], isPending: loading } = useQuery({
+    queryKey: qk.shopProducts(),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, sku, name, description, category, pack_size, pack_unit, case_price, unit_price, image_url, stock_status")
+        .eq("is_active", true)
+        .limit(12);
+      return (data ?? []) as unknown as ProductRow[];
+    },
+    staleTime: 60_000,
+  });
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<Cat>("Containers");
   const [inStockOnly, setInStockOnly] = useState(true);
   const [sort, setSort] = useState<Sort>("popular");
 
-  useEffect(() => {
-    // Pinned to first customer (Cosy Cafe) per dev setup; no per-customer pricing in v1.
-    supabase
-      .from("products")
-      .select(
-        "id, sku, name, description, category, pack_size, pack_unit, case_price, unit_price, image_url, stock_status",
-      )
-      .eq("is_active", true)
-      .limit(12)
-      .then(({ data }) => {
-        setProducts((data ?? []) as unknown as ProductRow[]);
-        setLoading(false);
-      });
-  }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -159,9 +158,7 @@ function CatalogPage() {
       <main className="mx-auto max-w-7xl px-6 py-6">
         {loading ? (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-white" />
-            ))}
+            {Array.from({ length: 8 }).map((_, i) => <SkeletonProductCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
           <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-xl border border-dashed border-[#E5E9EF] bg-white p-12 text-center">

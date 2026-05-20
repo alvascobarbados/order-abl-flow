@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useClientGreeting } from "@/hooks/use-client-greeting";
+import { qk } from "@/lib/query-keys";
+import { SkeletonKpiCard, SkeletonActivityRow, SkeletonPendingRow } from "@/components/abl/skeletons";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBBD } from "@/lib/format";
@@ -35,6 +39,21 @@ function greeting() {
   return "Good evening";
 }
 
+async function loadDashboard() {
+  const [{ data: o }, { data: c }, { data: a }] = await Promise.all([
+    supabase.from("orders").select("*").order("placed_at", { ascending: false }),
+    supabase.from("customers").select("*"),
+    supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(10),
+  ]);
+  const customers: Record<string, Customer> = {};
+  (c as Customer[] | null)?.forEach((x) => (customers[x.id] = x));
+  return {
+    orders: (o as OrderRow[]) ?? [],
+    customers,
+    activity: (a as Activity[]) ?? [],
+  };
+}
+
 function timeAgo(iso: string) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
   if (diff < 60) return `${Math.floor(diff)}s`;
@@ -52,34 +71,22 @@ function isToday(iso: string | null) {
 
 export function OfficeDashboard() {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [customers, setCustomers] = useState<Record<string, Customer>>({});
-  const [activity, setActivity] = useState<Activity[]>([]);
-  const [tick, setTick] = useState(0);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const queryClient = useQueryClient();
+  const helloText = useClientGreeting();
   const [drawerOrderId, setDrawerOrderId] = useState<string | null>(null);
   const [rejectOrderId, setRejectOrderId] = useState<string | null>(null);
   const [approveOrderId, setApproveOrderId] = useState<string | null>(null);
 
-  const reload = async () => {
-    const [{ data: o }, { data: c }, { data: a }] = await Promise.all([
-      supabase.from("orders").select("*").order("placed_at", { ascending: false }),
-      supabase.from("customers").select("*"),
-      supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(10),
-    ]);
-    setOrders((o as OrderRow[]) ?? []);
-    const m: Record<string, Customer> = {};
-    (c as Customer[] | null)?.forEach((x) => (m[x.id] = x));
-    setCustomers(m);
-    setActivity((a as Activity[]) ?? []);
-  };
-
-  useEffect(() => { reload(); }, [tick]);
-  useEffect(() => {
-    const i = setInterval(() => setTick((t) => t + 1), 30000);
-    return () => clearInterval(i);
-  }, []);
+  const { data, isPending } = useQuery({
+    queryKey: qk.dashboard(),
+    queryFn: loadDashboard,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  });
+  const orders = data?.orders ?? [];
+  const customers = data?.customers ?? {};
+  const activity = data?.activity ?? [];
+  const reload = () => queryClient.invalidateQueries({ queryKey: qk.dashboard() });
 
   const counts = useMemo(() => {
     const c = {
@@ -153,10 +160,10 @@ export function OfficeDashboard() {
             OPERATIONS · DASHBOARD
           </div>
           <h1 className="mt-1 text-[24px] font-extrabold text-ink" style={{ letterSpacing: "-0.02em" }}>
-            {mounted ? greeting() : "Hello"}, Sarah
+            {helloText}, Sarah
           </h1>
           <p className="mt-1 text-[13px] text-muted-foreground">
-            {mounted ? today : ""} · {counts.pending_approval} {counts.pending_approval === 1 ? "order needs" : "orders need"} your attention
+            {today} · {counts.pending_approval} {counts.pending_approval === 1 ? "order needs" : "orders need"} your attention
           </p>
         </div>
         <div className="flex gap-2">
@@ -179,48 +186,54 @@ export function OfficeDashboard() {
 
       {/* KPI strip */}
       <div className="mb-6 grid gap-3 grid-cols-2 min-[1100px]:grid-cols-6">
-        <KpiCard
-          alert
-          label="PENDING APPROVAL"
-          value={String(counts.pending_approval)}
-          trend="Needs action"
-          trendClass="text-[#9A3412]"
-        />
-        <KpiCard
-          label="REVENUE TODAY"
-          value={
-            <span>
-              <span className="mr-1 text-[14px] font-semibold text-muted-foreground">BBD$</span>
-              {counts.revenue_today.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          }
-          trend="↑ 22% vs avg"
-          trendClass="text-[#047857]"
-        />
-        <KpiCard
-          label="IN WAREHOUSE"
-          value={String(counts.in_warehouse)}
-          trend={`${counts.picking} picking · ${counts.packed} packed`}
-          trendClass="text-muted-foreground"
-        />
-        <KpiCard
-          label="READY FOR DISPATCH"
-          value={String(counts.packed)}
-          trend={counts.packed > 0 ? "Awaiting driver assignment" : "All clear"}
-          trendClass={counts.packed > 0 ? "text-[#6D28D9]" : "text-muted-foreground"}
-        />
-        <KpiCard
-          label="OUT FOR DELIVERY"
-          value={String(counts.out_for_delivery)}
-          trend="Neal · Damon · Shawn"
-          trendClass="text-muted-foreground"
-        />
-        <KpiCard
-          label="DELIVERED TODAY"
-          value={String(counts.delivered_today)}
-          trend={counts.delivered_today_total > 0 ? `↑ ${formatBBD(counts.delivered_today_total)} collected` : "↑ $8,420 collected"}
-          trendClass="text-[#047857]"
-        />
+        {isPending ? (
+          Array.from({ length: 6 }).map((_, i) => <SkeletonKpiCard key={i} />)
+        ) : (
+          <>
+            <KpiCard
+              alert
+              label="PENDING APPROVAL"
+              value={String(counts.pending_approval)}
+              trend="Needs action"
+              trendClass="text-[#9A3412]"
+            />
+            <KpiCard
+              label="REVENUE TODAY"
+              value={
+                <span>
+                  <span className="mr-1 text-[14px] font-semibold text-muted-foreground">BBD$</span>
+                  {counts.revenue_today.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              }
+              trend="↑ 22% vs avg"
+              trendClass="text-[#047857]"
+            />
+            <KpiCard
+              label="IN WAREHOUSE"
+              value={String(counts.in_warehouse)}
+              trend={`${counts.picking} picking · ${counts.packed} packed`}
+              trendClass="text-muted-foreground"
+            />
+            <KpiCard
+              label="READY FOR DISPATCH"
+              value={String(counts.packed)}
+              trend={counts.packed > 0 ? "Awaiting driver assignment" : "All clear"}
+              trendClass={counts.packed > 0 ? "text-[#6D28D9]" : "text-muted-foreground"}
+            />
+            <KpiCard
+              label="OUT FOR DELIVERY"
+              value={String(counts.out_for_delivery)}
+              trend="Neal · Damon · Shawn"
+              trendClass="text-muted-foreground"
+            />
+            <KpiCard
+              label="DELIVERED TODAY"
+              value={String(counts.delivered_today)}
+              trend={counts.delivered_today_total > 0 ? `↑ ${formatBBD(counts.delivered_today_total)} collected` : "↑ $8,420 collected"}
+              trendClass="text-[#047857]"
+            />
+          </>
+        )}
       </div>
 
       {/* Pipeline header */}
@@ -253,7 +266,9 @@ export function OfficeDashboard() {
               {pendingOrders.length} {pendingOrders.length === 1 ? "order" : "orders"} waiting
             </span>
           </header>
-          {pendingOrders.length === 0 ? (
+          {isPending ? (
+            <ul className="space-y-2.5">{[0,1,2].map((i) => <SkeletonPendingRow key={i} />)}</ul>
+          ) : pendingOrders.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border py-12 text-center text-[13px] text-muted-foreground">
               All caught up. No orders awaiting approval.
             </div>
@@ -282,7 +297,9 @@ export function OfficeDashboard() {
             <h3 className="text-[15px] font-bold text-ink">Recent activity</h3>
             <span className="text-[11.5px] text-muted-foreground">Live feed</span>
           </header>
-          {activity.length === 0 ? (
+          {isPending ? (
+            <ul>{[0,1,2,3,4].map((i) => <SkeletonActivityRow key={i} />)}</ul>
+          ) : activity.length === 0 ? (
             <div className="py-8 text-center text-[13px] text-muted-foreground">No activity yet.</div>
           ) : (
             <ul>

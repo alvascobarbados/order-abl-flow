@@ -17,6 +17,7 @@ import { RoleProvider } from "@/hooks/use-role";
 import { PickerProvider } from "@/hooks/use-picker";
 import { DriverProvider } from "@/hooks/use-driver";
 import { ActiveCustomerProvider } from "@/hooks/use-active-customer";
+import { RealtimeInvalidationBridge } from "@/hooks/use-realtime-invalidation";
 import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
@@ -89,6 +90,7 @@ function RootComponent() {
             <DriverProvider>
               <ActiveCustomerProvider>
                 <CartProvider>
+                  <RealtimeInvalidationBridge />
                   <Outlet />
                   <Toaster richColors position="top-right" />
                 </CartProvider>

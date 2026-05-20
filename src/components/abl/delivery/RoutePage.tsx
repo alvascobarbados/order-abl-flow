@@ -1,56 +1,61 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Truck, MapPin, CheckCircle2, ArrowRight, Sparkles, Package, Plus, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDriver } from "@/hooks/use-driver";
+import { useClientGreeting } from "@/hooks/use-client-greeting";
 import { DeliveryShell } from "./DeliveryShell";
 import { formatBBD } from "@/lib/format";
-import { greeting, fmtDayLabel, fmtTime, estimatedArrival, fmtFullAddress, type RouteStop } from "./util";
+import { fmtDayLabel, fmtTime, estimatedArrival, fmtFullAddress, type RouteStop } from "./util";
+import { qk } from "@/lib/query-keys";
+import { SkeletonStopCard } from "@/components/abl/skeletons";
 import { toast } from "sonner";
+
+async function loadRoute(driverName: string): Promise<RouteStop[]> {
+  const start = new Date(); start.setHours(0, 0, 0, 0);
+  const startISO = start.toISOString();
+
+  const { data: o } = await supabase.from("orders")
+    .select("id, order_number, status, total, delivery_notes, internal_notes, packed_at, dispatched_at, delivered_at, delivery_status_detail, signature_image_url, delivered_to_name, route_sequence, driver_name, customer:customers(id, company_name, delivery_address, delivery_city, delivery_parish, delivery_notes, phone)")
+    .eq("driver_name", driverName)
+    .in("status", ["packed", "out_for_delivery", "delivered", "paid"])
+    .or(`status.in.(packed,out_for_delivery),delivered_at.gte.${startISO}`)
+    .order("route_sequence", { ascending: true, nullsFirst: false });
+
+  const ids = (o ?? []).map((r: any) => r.id);
+  const counts: Record<string, { lines: number; cases: number }> = {};
+  if (ids.length) {
+    const { data: items } = await supabase.from("order_items")
+      .select("order_id, quantity").in("order_id", ids);
+    (items as any[] | null)?.forEach((it) => {
+      const s = counts[it.order_id] ?? { lines: 0, cases: 0 };
+      s.lines += 1; s.cases += Number(it.quantity) || 0;
+      counts[it.order_id] = s;
+    });
+  }
+  return ((o ?? []) as any[]).map((r) => ({
+    ...r,
+    items_count: counts[r.id]?.lines ?? 0,
+    cases_count: counts[r.id]?.cases ?? 0,
+  })) as RouteStop[];
+}
 
 export function RoutePage() {
   const { driverName, vehicleId, setVehicleId } = useDriver();
   const navigate = useNavigate();
-  const [stops, setStops] = useState<RouteStop[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const greeting = useClientGreeting();
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const [starting, setStarting] = useState(false);
 
-  const reload = async () => {
-    setLoading(true);
-    const start = new Date(); start.setHours(0, 0, 0, 0);
-    const startISO = start.toISOString();
+  const { data: stops = [], isPending } = useQuery({
+    queryKey: qk.route(driverName),
+    queryFn: () => loadRoute(driverName),
+    staleTime: 15_000,
+  });
 
-    // Include `packed` (= loaded but not started). Today's deliveries: in-progress or completed today.
-    const { data: o } = await supabase.from("orders")
-      .select("id, order_number, status, total, delivery_notes, internal_notes, packed_at, dispatched_at, delivered_at, delivery_status_detail, signature_image_url, delivered_to_name, route_sequence, driver_name, customer:customers(id, company_name, delivery_address, delivery_city, delivery_parish, delivery_notes, phone)")
-      .eq("driver_name", driverName)
-      .in("status", ["packed", "out_for_delivery", "delivered", "paid"])
-      .or(`status.in.(packed,out_for_delivery),delivered_at.gte.${startISO}`)
-      .order("route_sequence", { ascending: true, nullsFirst: false });
-
-    const ids = (o ?? []).map((r: any) => r.id);
-    const counts: Record<string, { lines: number; cases: number }> = {};
-    if (ids.length) {
-      const { data: items } = await supabase.from("order_items")
-        .select("order_id, quantity").in("order_id", ids);
-      (items as any[] | null)?.forEach((it) => {
-        const s = counts[it.order_id] ?? { lines: 0, cases: 0 };
-        s.lines += 1; s.cases += Number(it.quantity) || 0;
-        counts[it.order_id] = s;
-      });
-    }
-    const list = ((o ?? []) as any[]).map((r) => ({
-      ...r,
-      items_count: counts[r.id]?.lines ?? 0,
-      cases_count: counts[r.id]?.cases ?? 0,
-    })) as RouteStop[];
-
-    setStops(list);
-    setLoading(false);
-  };
-
-  useEffect(() => { reload(); }, [driverName]);
+  const reload = () => queryClient.invalidateQueries({ queryKey: qk.route(driverName) });
 
   const loaded = useMemo(() => stops.filter((s) => s.status === "packed"), [stops]);
   const pending = useMemo(() => stops.filter((s) => s.status === "out_for_delivery"), [stops]);
@@ -115,7 +120,7 @@ export function RoutePage() {
       <section className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h1 className="text-[24px] font-extrabold leading-tight tracking-tight text-ink">
-            {greeting()}, {driverName.split(" ")[0]}
+            {greeting}, {driverName.split(" ")[0]}
           </h1>
           <p className="mt-1 text-[13px] text-muted-foreground">
             {fmtDayLabel()} · {stops.length} stops · {formatBBD(collectFromActive)} to collect
@@ -170,8 +175,8 @@ export function RoutePage() {
         </Link>
       </div>
 
-      {loading ? (
-        <div className="space-y-3">{[0,1,2].map((i) => <div key={i} className="h-[110px] animate-pulse rounded-2xl bg-white/60" />)}</div>
+      {isPending ? (
+        <div className="space-y-3">{[0,1,2].map((i) => <SkeletonStopCard key={i} />)}</div>
       ) : stops.length === 0 ? (
         <EmptyNothingLoaded />
       ) : pending.length === 0 && loaded.length === 0 ? (
