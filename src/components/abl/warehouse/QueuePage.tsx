@@ -101,10 +101,11 @@ export function QueuePage() {
         <p className="mt-1 text-[14px] text-muted-foreground">{fmtDayLabel()} · {toPickCount} to pick · {doneToday} done today</p>
       </section>
 
-      <section className="mb-6 grid grid-cols-3 gap-3">
+      <section className={`mb-6 grid gap-3 ${dispatchCount > 0 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-3"}`}>
         <StatCard label="To pick" value={String(toPickCount)} />
         <StatCard label="items in queue" value={String(itemsTotal)} prefix="cases" />
         <StatCard label="done today" value={String(doneToday)} prefix="orders" />
+        {dispatchCount > 0 && <StatCard label="in dispatch" value={String(dispatchCount)} prefix="awaiting van" />}
       </section>
 
       <div className="mb-3 flex items-center justify-between">
@@ -129,8 +130,71 @@ export function QueuePage() {
           {orders.map((o) => <QueueCard key={o.id} order={o} />)}
         </div>
       )}
+
+      {dispatchCount > 0 && (
+        <section className="mt-8">
+          <div className="mb-1 flex items-center gap-2">
+            <Warehouse className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Staged in warehouse</span>
+          </div>
+          <div className="mb-3 flex items-baseline justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[20px] font-extrabold text-ink">Ready for dispatch</h2>
+              <span className="rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-bold text-[#92400E]">{dispatchCount}</span>
+            </div>
+          </div>
+          <p className="-mt-2 mb-3 text-[12.5px] text-muted-foreground">Boxes are packed and on the dock. Drivers will load them next.</p>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {packed.map((o) => <DispatchCard key={o.id} order={o} />)}
+          </div>
+        </section>
+      )}
     </WarehouseShell>
   );
+}
+
+function DispatchCard({ order }: { order: PackedOrder }) {
+  const loaded = !!order.driver_name;
+  const addr = [order.customer?.delivery_city, order.customer?.delivery_parish].filter(Boolean).join(", ")
+    || order.customer?.delivery_address || "—";
+  return (
+    <article className="rounded-2xl border border-[#E5E9EF] bg-[#F8FAFC] p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-[12px] font-bold text-muted-foreground">
+          <span className="font-mono">{order.order_number}</span>
+          <span className="text-[#CBD5E1]">→</span>
+          <span className="font-mono">{order.invoice_number ?? "—"}</span>
+        </div>
+        {loaded ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#ECFDF5] px-2 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wider text-[#047857]">
+            <Truck className="h-3 w-3" /> Loaded on {order.vehicle_id ?? "van"}
+          </span>
+        ) : (
+          <span className="rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wider text-[#92400E]">Awaiting driver</span>
+        )}
+      </div>
+      <div className="mt-2 text-[16px] font-semibold leading-tight text-ink">{order.customer?.company_name ?? "—"}</div>
+      <div className="mt-0.5 flex items-center gap-1 text-[12.5px] text-muted-foreground">
+        <MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{addr}</span>
+      </div>
+      <div className="mt-3 flex items-center justify-between">
+        <span className="rounded-md bg-white px-2 py-1 text-[11.5px] font-semibold text-ink ring-1 ring-[#E5E9EF] tabular-nums">{order.items_count} items</span>
+        <span className="text-[14px] font-bold text-ink tabular-nums">{formatBBD(Number(order.total))}</span>
+      </div>
+      <div className="mt-2 border-t border-[#E5E9EF] pt-2 text-[11.5px] text-muted-foreground">
+        Packed {timeAgo(order.packed_at)}{order.packed_by_name ? ` by ${order.packed_by_name.split(" ")[0]}` : ""}
+      </div>
+    </article>
+  );
+}
+
+function timeAgo(iso: string | null): string {
+  if (!iso) return "—";
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
 }
 
 function StatCard({ label, value, prefix }: { label: string; value: string; prefix?: string }) {
