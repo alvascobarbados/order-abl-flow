@@ -266,7 +266,9 @@ export function OfficeDashboard() {
               {pendingOrders.length} {pendingOrders.length === 1 ? "order" : "orders"} waiting
             </span>
           </header>
-          {pendingOrders.length === 0 ? (
+          {isPending ? (
+            <ul className="space-y-2.5">{[0,1,2].map((i) => <SkeletonPendingRow key={i} />)}</ul>
+          ) : pendingOrders.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border py-12 text-center text-[13px] text-muted-foreground">
               All caught up. No orders awaiting approval.
             </div>
@@ -295,7 +297,11 @@ export function OfficeDashboard() {
             <h3 className="text-[15px] font-bold text-ink">Recent activity</h3>
             <span className="text-[11.5px] text-muted-foreground">Live feed</span>
           </header>
-          {activity.length === 0 ? (
+          {isPending ? (
+            <ul>{[0,1,2,3,4].map((i) => <SkeletonActivityRow key={i} />)}</ul>
+          ) : activity.length === 0 ? (
+            <div className="py-8 text-center text-[13px] text-muted-foreground">No activity yet.</div>
+          ) : (
             <div className="py-8 text-center text-[13px] text-muted-foreground">No activity yet.</div>
           ) : (
             <ul>
