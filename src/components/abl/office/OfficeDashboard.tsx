@@ -302,8 +302,6 @@ export function OfficeDashboard() {
           ) : activity.length === 0 ? (
             <div className="py-8 text-center text-[13px] text-muted-foreground">No activity yet.</div>
           ) : (
-            <div className="py-8 text-center text-[13px] text-muted-foreground">No activity yet.</div>
-          ) : (
             <ul>
               {activity.map((ev, i) => (
                 <li
