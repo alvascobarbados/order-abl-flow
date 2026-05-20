@@ -1,4 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useClientGreeting } from "@/hooks/use-client-greeting";
+import { qk } from "@/lib/query-keys";
+import { SkeletonKpiCard, SkeletonActivityRow, SkeletonPendingRow } from "@/components/abl/skeletons";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBBD } from "@/lib/format";
@@ -33,6 +37,21 @@ function greeting() {
   if (h < 12) return "Good morning";
   if (h < 17) return "Good afternoon";
   return "Good evening";
+}
+
+async function loadDashboard() {
+  const [{ data: o }, { data: c }, { data: a }] = await Promise.all([
+    supabase.from("orders").select("*").order("placed_at", { ascending: false }),
+    supabase.from("customers").select("*"),
+    supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(10),
+  ]);
+  const customers: Record<string, Customer> = {};
+  (c as Customer[] | null)?.forEach((x) => (customers[x.id] = x));
+  return {
+    orders: (o as OrderRow[]) ?? [],
+    customers,
+    activity: (a as Activity[]) ?? [],
+  };
 }
 
 function timeAgo(iso: string) {
