@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Truck, MapPin, CheckCircle2, ArrowRight, Sparkles, Package } from "lucide-react";
+import { Truck, MapPin, CheckCircle2, ArrowRight, Sparkles, Package, Plus, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDriver } from "@/hooks/use-driver";
 import { DeliveryShell } from "./DeliveryShell";
@@ -14,21 +14,23 @@ export function RoutePage() {
   const [stops, setStops] = useState<RouteStop[]>([]);
   const [loading, setLoading] = useState(true);
   const [vehicleOpen, setVehicleOpen] = useState(false);
+  const [starting, setStarting] = useState(false);
 
   const reload = async () => {
     setLoading(true);
     const start = new Date(); start.setHours(0, 0, 0, 0);
     const startISO = start.toISOString();
 
+    // Include `packed` (= loaded but not started). Today's deliveries: in-progress or completed today.
     const { data: o } = await supabase.from("orders")
       .select("id, order_number, status, total, delivery_notes, internal_notes, packed_at, dispatched_at, delivered_at, delivery_status_detail, signature_image_url, delivered_to_name, route_sequence, driver_name, customer:customers(id, company_name, delivery_address, delivery_city, delivery_parish, delivery_notes, phone)")
       .eq("driver_name", driverName)
-      .in("status", ["out_for_delivery", "delivered", "paid"])
-      .or(`status.eq.out_for_delivery,delivered_at.gte.${startISO}`)
+      .in("status", ["packed", "out_for_delivery", "delivered", "paid"])
+      .or(`status.in.(packed,out_for_delivery),delivered_at.gte.${startISO}`)
       .order("route_sequence", { ascending: true, nullsFirst: false });
 
     const ids = (o ?? []).map((r: any) => r.id);
-    let counts: Record<string, { lines: number; cases: number }> = {};
+    const counts: Record<string, { lines: number; cases: number }> = {};
     if (ids.length) {
       const { data: items } = await supabase.from("order_items")
         .select("order_id, quantity").in("order_id", ids);
@@ -50,18 +52,22 @@ export function RoutePage() {
 
   useEffect(() => { reload(); }, [driverName]);
 
-  const done = stops.filter((s) => s.status === "delivered" || s.status === "paid");
-  const pending = stops.filter((s) => s.status === "out_for_delivery");
+  const loaded = useMemo(() => stops.filter((s) => s.status === "packed"), [stops]);
+  const pending = useMemo(() => stops.filter((s) => s.status === "out_for_delivery"), [stops]);
+  const done = useMemo(() => stops.filter((s) => s.status === "delivered" || s.status === "paid"), [stops]);
+
+  const routeStarted = pending.length > 0 || done.length > 0;
   const activeIdx = pending.length ? 0 : -1;
-  const toCollect = pending.reduce((sum, s) => sum + Number(s.total), 0);
+  const collectFromActive = [...pending, ...loaded].reduce((sum, s) => sum + Number(s.total), 0);
   const pct = stops.length ? Math.round((done.length / stops.length) * 100) : 0;
-  const sorted: RouteStop[] = [...pending, ...done];
+  const sorted: RouteStop[] = [...pending, ...loaded, ...done];
 
   const reorder = async (id: string, dir: -1 | 1) => {
-    const idx = pending.findIndex((s) => s.id === id);
+    const movable = routeStarted ? pending : loaded;
+    const idx = movable.findIndex((s) => s.id === id);
     const swap = idx + dir;
-    if (idx < 0 || swap < 0 || swap >= pending.length) return;
-    const a = pending[idx]; const b = pending[swap];
+    if (idx < 0 || swap < 0 || swap >= movable.length) return;
+    const a = movable[idx]; const b = movable[swap];
     const aSeq = a.route_sequence ?? idx + 1;
     const bSeq = b.route_sequence ?? swap + 1;
     await Promise.all([
@@ -71,6 +77,39 @@ export function RoutePage() {
     reload();
   };
 
+  const startRoute = async () => {
+    if (loaded.length === 0 || starting) return;
+    setStarting(true);
+    const now = new Date().toISOString();
+    // Assign route_sequence to any loaded order missing one
+    const updates = loaded.map((s, i) => ({
+      id: s.id,
+      seq: s.route_sequence ?? i + 1,
+    }));
+    const { error } = await supabase.from("orders")
+      .update({ status: "out_for_delivery", dispatched_at: now })
+      .in("id", updates.map((u) => u.id))
+      .eq("driver_name", driverName)
+      .eq("status", "packed");
+    if (error) { setStarting(false); toast.error(error.message); return; }
+    await Promise.all(
+      updates.filter((u, i) => loaded[i].route_sequence == null).map((u) =>
+        supabase.from("orders").update({ route_sequence: u.seq }).eq("id", u.id),
+      ),
+    );
+    await supabase.from("delivery_events").insert(
+      updates.map((u) => ({
+        order_id: u.id, driver_name: driverName, event_type: "dispatched",
+        notes: `Route started on ${vehicleId}`, meta: { vehicle_id: vehicleId },
+      })),
+    );
+    toast.success(`Route started — ${loaded.length} stop${loaded.length > 1 ? "s" : ""}`);
+    await reload();
+    setStarting(false);
+  };
+
+  const showStartBanner = loaded.length > 0 && pending.length === 0;
+
   return (
     <DeliveryShell title="Today's route">
       <section className="mb-3 flex items-start justify-between gap-3">
@@ -79,7 +118,7 @@ export function RoutePage() {
             {greeting()}, {driverName.split(" ")[0]}
           </h1>
           <p className="mt-1 text-[13px] text-muted-foreground">
-            {fmtDayLabel()} · {stops.length} stops · {formatBBD(toCollect)} to collect
+            {fmtDayLabel()} · {stops.length} stops · {formatBBD(collectFromActive)} to collect
           </p>
         </div>
         <div className="relative">
@@ -106,12 +145,12 @@ export function RoutePage() {
       <section className="mb-5 overflow-hidden rounded-2xl p-5 text-white shadow-lg"
         style={{ background: "linear-gradient(135deg, #0F2540 0%, #1A3556 100%)" }}>
         <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-white/60">
-          <span>Today's route</span>
+          <span>{showStartBanner ? "Loaded & ready" : "Today's route"}</span>
           <span>{stops.length} stops · {done.length} done</span>
         </div>
         <div className="mt-3 text-[11px] font-bold uppercase tracking-wider text-white/60">To collect today</div>
-        <div className="mt-1 text-[36px] font-extrabold leading-none text-[#FF6A1A]">
-          {formatBBD(toCollect)}
+        <div className="mt-1 text-[36px] font-extrabold leading-none text-[#FF6A1A] tabular-nums">
+          {formatBBD(collectFromActive)}
         </div>
         <div className="mt-4">
           <div className="h-2 overflow-hidden rounded-full bg-white/10">
@@ -123,65 +162,102 @@ export function RoutePage() {
 
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[17px] font-extrabold text-ink">Your route</h2>
-        <button
-          type="button"
-          onClick={() => toast("Load via warehouse for now")}
-          className="rounded-full bg-[#0F2540] px-3 py-1.5 text-[11.5px] font-bold text-white"
+        <Link
+          to="/delivery/load"
+          className="inline-flex items-center gap-1 rounded-full border border-[#E5E9EF] bg-white px-3 py-1.5 text-[11.5px] font-bold text-ink hover:bg-[#FAFBFC]"
         >
-          Load invoice
-        </button>
+          <Plus className="h-3 w-3" /> Load more
+        </Link>
       </div>
 
       {loading ? (
         <div className="space-y-3">{[0,1,2].map((i) => <div key={i} className="h-[110px] animate-pulse rounded-2xl bg-white/60" />)}</div>
       ) : stops.length === 0 ? (
         <EmptyNothingLoaded />
-      ) : pending.length === 0 ? (
+      ) : pending.length === 0 && loaded.length === 0 ? (
         <AllDone />
       ) : (
-        <ul className="space-y-3">
-          {sorted.map((s, i) => (
-            <StopCard
-              key={s.id}
-              stop={s}
-              index={i + 1}
-              active={s.status === "out_for_delivery" && i === activeIdx}
-              done={s.status === "delivered" || s.status === "paid"}
-              onClick={() => {
-                if (s.status === "delivered" || s.status === "paid") {
-                  toast(`${s.customer?.company_name ?? "Delivered"} · ${fmtTime(s.delivered_at)}`);
-                  return;
+        <ul className={`space-y-3 ${showStartBanner ? "pb-24" : ""}`}>
+          {sorted.map((s, i) => {
+            const isDone = s.status === "delivered" || s.status === "paid";
+            const isLoaded = s.status === "packed";
+            const isActive = s.status === "out_for_delivery" && i === activeIdx;
+            return (
+              <StopCard
+                key={s.id}
+                stop={s}
+                index={i + 1}
+                active={isActive}
+                done={isDone}
+                loaded={isLoaded}
+                onClick={() => {
+                  if (isDone) {
+                    toast(`${s.customer?.company_name ?? "Delivered"} · ${fmtTime(s.delivered_at)}`);
+                    return;
+                  }
+                  if (isLoaded) {
+                    toast("Tap Start route below to begin deliveries.");
+                    return;
+                  }
+                  if (!isActive) {
+                    if (!window.confirm("This isn't your next stop — are you skipping ahead?")) return;
+                  }
+                  navigate({ to: "/delivery/stop/$orderId", params: { orderId: s.id } });
+                }}
+                onUp={i > 0 && (isLoaded || s.status === "out_for_delivery") ? () => reorder(s.id, -1) : undefined}
+                onDown={i < (pending.length + loaded.length) - 1 && (isLoaded || s.status === "out_for_delivery") ? () => reorder(s.id, 1) : undefined}
+                eta={
+                  isDone ? fmtTime(s.delivered_at)
+                  : isLoaded ? "Awaiting start"
+                  : (isActive ? "Now" : `~${estimatedArrival(i)}`)
                 }
-                if (!(s.status === "out_for_delivery" && i === activeIdx)) {
-                  if (!window.confirm("This isn't your next stop — are you skipping ahead?")) return;
-                }
-                navigate({ to: "/delivery/stop/$orderId", params: { orderId: s.id } });
-              }}
-              onUp={i > 0 && s.status === "out_for_delivery" ? () => reorder(s.id, -1) : undefined}
-              onDown={i < pending.length - 1 && s.status === "out_for_delivery" ? () => reorder(s.id, 1) : undefined}
-              eta={s.status === "out_for_delivery" ? (i === activeIdx ? "Now" : `~${estimatedArrival(i)}`) : fmtTime(s.delivered_at)}
-            />
-          ))}
+              />
+            );
+          })}
         </ul>
       )}
 
-      <div className="mt-6 flex justify-center">
-        <button type="button" onClick={() => toast("Route optimization coming soon. Use the arrows to reorder.")}
-          className="text-[12px] font-semibold text-muted-foreground hover:text-ink">
-          Optimize route →
-        </button>
-      </div>
+      {!showStartBanner && stops.length > 0 && (
+        <div className="mt-6 flex justify-center">
+          <button type="button" onClick={() => toast("Route optimization coming soon. Use the arrows to reorder.")}
+            className="text-[12px] font-semibold text-muted-foreground hover:text-ink">
+            Optimize route →
+          </button>
+        </div>
+      )}
+
+      {showStartBanner && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E5E9EF] bg-white/95 px-4 py-3 backdrop-blur">
+          <div className="mx-auto flex max-w-[640px] items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="text-[12.5px] font-bold uppercase tracking-wider text-[#047857]">Ready to roll</div>
+              <div className="truncate text-[13px] text-muted-foreground">
+                {loaded.length} stop{loaded.length > 1 ? "s" : ""} loaded on {vehicleId} · {formatBBD(collectFromActive)}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={startRoute}
+              disabled={starting}
+              className="inline-flex h-12 shrink-0 items-center gap-2 rounded-xl bg-[#10B981] px-5 text-[14.5px] font-extrabold text-white shadow-lg transition disabled:opacity-50"
+            >
+              <Play className="h-4 w-4" fill="currentColor" /> {starting ? "Starting…" : "Start route"}
+            </button>
+          </div>
+        </div>
+      )}
     </DeliveryShell>
   );
 }
 
 function StopCard({
-  stop, index, active, done, onClick, eta, onUp, onDown,
+  stop, index, active, done, loaded, onClick, eta, onUp, onDown,
 }: {
   stop: RouteStop;
   index: number;
   active: boolean;
   done: boolean;
+  loaded: boolean;
   onClick: () => void;
   eta: string;
   onUp?: () => void;
@@ -192,6 +268,7 @@ function StopCard({
     <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-[14px] font-extrabold ${
       done ? "bg-[#10B981] text-white"
       : active ? "bg-[#F59E0B] text-white"
+      : loaded ? "bg-[#0F2540] text-white"
       : "bg-[#F1F4F8] text-muted-foreground"
     }`}>
       {done ? <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} /> : index}
@@ -204,6 +281,7 @@ function StopCard({
       className={`flex cursor-pointer items-stretch gap-3 rounded-2xl border p-3 transition ${
         done ? "border-[#E5E9EF] bg-white opacity-60"
         : active ? "border-[#F59E0B] bg-gradient-to-br from-[#FFF8F2] to-[#FFEFE0] shadow-[0_0_0_4px_rgba(245,158,11,0.12)]"
+        : loaded ? "border-[#CBD5E1] bg-white"
         : "border-[#E5E9EF] bg-white"
       }`}
     >
@@ -217,6 +295,10 @@ function StopCard({
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#F59E0B] px-2 py-0.5 text-[10.5px] font-bold text-white">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> Up next
             </span>
+          ) : loaded ? (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#ECFDF5] px-2 py-0.5 text-[10.5px] font-bold text-[#047857]">
+              <Truck className="h-3 w-3" /> Loaded
+            </span>
           ) : (
             <span className="shrink-0 rounded-full bg-[#F1F4F8] px-2 py-0.5 text-[10.5px] font-bold text-muted-foreground">Queued</span>
           )}
@@ -226,7 +308,7 @@ function StopCard({
           <span className="truncate">{addr.line2 || addr.line1} · {stop.items_count ?? 0} items</span>
         </div>
         <div className="mt-1.5 flex items-center justify-between">
-          <span className="text-[13.5px] font-bold text-ink">{formatBBD(Number(stop.total))}</span>
+          <span className="text-[13.5px] font-bold text-ink tabular-nums">{formatBBD(Number(stop.total))}</span>
           <span className="text-[11.5px] text-muted-foreground">{eta}</span>
         </div>
         {(onUp || onDown) && (

@@ -1,15 +1,29 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CheckCircle2, Package, ListChecks, ArrowRight, Sparkles } from "lucide-react";
+import { CheckCircle2, Package, ListChecks, ArrowRight, Sparkles, Truck, MapPin, Warehouse } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePicker } from "@/hooks/use-picker";
 import { WarehouseShell, UrgencyChip } from "./WarehouseShell";
 import { formatBBD } from "@/lib/format";
 import { fmtDayLabel, greeting, pickDeadline, urgencyOf, formatTimeShort, type QueueOrder } from "./util";
 
+type PackedOrder = {
+  id: string;
+  order_number: string;
+  invoice_number: string | null;
+  total: number;
+  packed_at: string | null;
+  driver_name: string | null;
+  vehicle_id: string | null;
+  packed_by_name: string | null;
+  customer: { company_name: string; delivery_address: string | null; delivery_city: string | null; delivery_parish: string | null } | null;
+  items_count: number;
+};
+
 export function QueuePage() {
   const { pickerName, demoScan } = usePicker();
   const [orders, setOrders] = useState<QueueOrder[]>([]);
+  const [packed, setPacked] = useState<PackedOrder[]>([]);
   const [doneToday, setDoneToday] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -17,11 +31,15 @@ export function QueuePage() {
     setLoading(true);
     const start = new Date(); start.setHours(0, 0, 0, 0);
 
-    const [{ data: o }, { data: items }, { data: done }] = await Promise.all([
+    const [{ data: o }, { data: p }, { data: items }, { data: done }] = await Promise.all([
       supabase.from("orders")
         .select("id, order_number, status, placed_at, approved_at, picking_started_at, picked_by_profile_id, total, delivery_notes, customer:customers(id, company_name, delivery_address, pricing_tier)")
         .in("status", ["approved", "picking"])
         .order("placed_at", { ascending: true }),
+      supabase.from("orders")
+        .select("id, order_number, invoice_number, total, packed_at, driver_name, vehicle_id, packed_by_profile_id, customer:customers(company_name, delivery_address, delivery_city, delivery_parish)")
+        .eq("status", "packed")
+        .order("packed_at", { ascending: true }),
       supabase.from("order_items").select("order_id, quantity"),
       supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "packed").gte("packed_at", start.toISOString()),
     ]);
@@ -46,7 +64,22 @@ export function QueuePage() {
       return new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime();
     });
 
+    // Look up packer names
+    const packerIds = Array.from(new Set(((p ?? []) as any[]).map((r) => r.packed_by_profile_id).filter(Boolean)));
+    let nameById: Record<string, string> = {};
+    if (packerIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", packerIds);
+      (profs as any[] | null)?.forEach((pr) => { nameById[pr.id] = pr.full_name ?? ""; });
+    }
+
+    const packedList = ((p ?? []) as any[]).map((r) => ({
+      ...r,
+      packed_by_name: r.packed_by_profile_id ? (nameById[r.packed_by_profile_id] ?? null) : null,
+      items_count: sum[r.id]?.lines ?? 0,
+    })) as PackedOrder[];
+
     setOrders(list);
+    setPacked(packedList);
     setDoneToday((done as any)?.length ?? 0);
     setLoading(false);
   };
@@ -59,6 +92,7 @@ export function QueuePage() {
 
   const itemsTotal = orders.reduce((s, o) => s + (o.cases_count ?? 0), 0);
   const toPickCount = orders.length;
+  const dispatchCount = packed.length;
 
   return (
     <WarehouseShell title={`Today's picks · ${toPickCount} waiting`} subtitle="Tap an order to start picking">
@@ -67,10 +101,11 @@ export function QueuePage() {
         <p className="mt-1 text-[14px] text-muted-foreground">{fmtDayLabel()} · {toPickCount} to pick · {doneToday} done today</p>
       </section>
 
-      <section className="mb-6 grid grid-cols-3 gap-3">
+      <section className={`mb-6 grid gap-3 ${dispatchCount > 0 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-3"}`}>
         <StatCard label="To pick" value={String(toPickCount)} />
         <StatCard label="items in queue" value={String(itemsTotal)} prefix="cases" />
         <StatCard label="done today" value={String(doneToday)} prefix="orders" />
+        {dispatchCount > 0 && <StatCard label="in dispatch" value={String(dispatchCount)} prefix="awaiting van" />}
       </section>
 
       <div className="mb-3 flex items-center justify-between">
@@ -95,8 +130,71 @@ export function QueuePage() {
           {orders.map((o) => <QueueCard key={o.id} order={o} />)}
         </div>
       )}
+
+      {dispatchCount > 0 && (
+        <section className="mt-8">
+          <div className="mb-1 flex items-center gap-2">
+            <Warehouse className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Staged in warehouse</span>
+          </div>
+          <div className="mb-3 flex items-baseline justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[20px] font-extrabold text-ink">Ready for dispatch</h2>
+              <span className="rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-bold text-[#92400E]">{dispatchCount}</span>
+            </div>
+          </div>
+          <p className="-mt-2 mb-3 text-[12.5px] text-muted-foreground">Boxes are packed and on the dock. Drivers will load them next.</p>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {packed.map((o) => <DispatchCard key={o.id} order={o} />)}
+          </div>
+        </section>
+      )}
     </WarehouseShell>
   );
+}
+
+function DispatchCard({ order }: { order: PackedOrder }) {
+  const loaded = !!order.driver_name;
+  const addr = [order.customer?.delivery_city, order.customer?.delivery_parish].filter(Boolean).join(", ")
+    || order.customer?.delivery_address || "—";
+  return (
+    <article className="rounded-2xl border border-[#E5E9EF] bg-[#F8FAFC] p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-[12px] font-bold text-muted-foreground">
+          <span className="font-mono">{order.order_number}</span>
+          <span className="text-[#CBD5E1]">→</span>
+          <span className="font-mono">{order.invoice_number ?? "—"}</span>
+        </div>
+        {loaded ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#ECFDF5] px-2 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wider text-[#047857]">
+            <Truck className="h-3 w-3" /> Loaded on {order.vehicle_id ?? "van"}
+          </span>
+        ) : (
+          <span className="rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wider text-[#92400E]">Awaiting driver</span>
+        )}
+      </div>
+      <div className="mt-2 text-[16px] font-semibold leading-tight text-ink">{order.customer?.company_name ?? "—"}</div>
+      <div className="mt-0.5 flex items-center gap-1 text-[12.5px] text-muted-foreground">
+        <MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{addr}</span>
+      </div>
+      <div className="mt-3 flex items-center justify-between">
+        <span className="rounded-md bg-white px-2 py-1 text-[11.5px] font-semibold text-ink ring-1 ring-[#E5E9EF] tabular-nums">{order.items_count} items</span>
+        <span className="text-[14px] font-bold text-ink tabular-nums">{formatBBD(Number(order.total))}</span>
+      </div>
+      <div className="mt-2 border-t border-[#E5E9EF] pt-2 text-[11.5px] text-muted-foreground">
+        Packed {timeAgo(order.packed_at)}{order.packed_by_name ? ` by ${order.packed_by_name.split(" ")[0]}` : ""}
+      </div>
+    </article>
+  );
+}
+
+function timeAgo(iso: string | null): string {
+  if (!iso) return "—";
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
 }
 
 function StatCard({ label, value, prefix }: { label: string; value: string; prefix?: string }) {
