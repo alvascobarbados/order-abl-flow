@@ -186,48 +186,54 @@ export function OfficeDashboard() {
 
       {/* KPI strip */}
       <div className="mb-6 grid gap-3 grid-cols-2 min-[1100px]:grid-cols-6">
-        <KpiCard
-          alert
-          label="PENDING APPROVAL"
-          value={String(counts.pending_approval)}
-          trend="Needs action"
-          trendClass="text-[#9A3412]"
-        />
-        <KpiCard
-          label="REVENUE TODAY"
-          value={
-            <span>
-              <span className="mr-1 text-[14px] font-semibold text-muted-foreground">BBD$</span>
-              {counts.revenue_today.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          }
-          trend="↑ 22% vs avg"
-          trendClass="text-[#047857]"
-        />
-        <KpiCard
-          label="IN WAREHOUSE"
-          value={String(counts.in_warehouse)}
-          trend={`${counts.picking} picking · ${counts.packed} packed`}
-          trendClass="text-muted-foreground"
-        />
-        <KpiCard
-          label="READY FOR DISPATCH"
-          value={String(counts.packed)}
-          trend={counts.packed > 0 ? "Awaiting driver assignment" : "All clear"}
-          trendClass={counts.packed > 0 ? "text-[#6D28D9]" : "text-muted-foreground"}
-        />
-        <KpiCard
-          label="OUT FOR DELIVERY"
-          value={String(counts.out_for_delivery)}
-          trend="Neal · Damon · Shawn"
-          trendClass="text-muted-foreground"
-        />
-        <KpiCard
-          label="DELIVERED TODAY"
-          value={String(counts.delivered_today)}
-          trend={counts.delivered_today_total > 0 ? `↑ ${formatBBD(counts.delivered_today_total)} collected` : "↑ $8,420 collected"}
-          trendClass="text-[#047857]"
-        />
+        {isPending ? (
+          Array.from({ length: 6 }).map((_, i) => <SkeletonKpiCard key={i} />)
+        ) : (
+          <>
+            <KpiCard
+              alert
+              label="PENDING APPROVAL"
+              value={String(counts.pending_approval)}
+              trend="Needs action"
+              trendClass="text-[#9A3412]"
+            />
+            <KpiCard
+              label="REVENUE TODAY"
+              value={
+                <span>
+                  <span className="mr-1 text-[14px] font-semibold text-muted-foreground">BBD$</span>
+                  {counts.revenue_today.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              }
+              trend="↑ 22% vs avg"
+              trendClass="text-[#047857]"
+            />
+            <KpiCard
+              label="IN WAREHOUSE"
+              value={String(counts.in_warehouse)}
+              trend={`${counts.picking} picking · ${counts.packed} packed`}
+              trendClass="text-muted-foreground"
+            />
+            <KpiCard
+              label="READY FOR DISPATCH"
+              value={String(counts.packed)}
+              trend={counts.packed > 0 ? "Awaiting driver assignment" : "All clear"}
+              trendClass={counts.packed > 0 ? "text-[#6D28D9]" : "text-muted-foreground"}
+            />
+            <KpiCard
+              label="OUT FOR DELIVERY"
+              value={String(counts.out_for_delivery)}
+              trend="Neal · Damon · Shawn"
+              trendClass="text-muted-foreground"
+            />
+            <KpiCard
+              label="DELIVERED TODAY"
+              value={String(counts.delivered_today)}
+              trend={counts.delivered_today_total > 0 ? `↑ ${formatBBD(counts.delivered_today_total)} collected` : "↑ $8,420 collected"}
+              trendClass="text-[#047857]"
+            />
+          </>
+        )}
       </div>
 
       {/* Pipeline header */}
