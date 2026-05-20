@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useClientGreeting } from "@/hooks/use-client-greeting";
 import { qk } from "@/lib/query-keys";
