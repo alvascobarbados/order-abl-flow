@@ -71,34 +71,22 @@ function isToday(iso: string | null) {
 
 export function OfficeDashboard() {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [customers, setCustomers] = useState<Record<string, Customer>>({});
-  const [activity, setActivity] = useState<Activity[]>([]);
-  const [tick, setTick] = useState(0);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const queryClient = useQueryClient();
+  const helloText = useClientGreeting();
   const [drawerOrderId, setDrawerOrderId] = useState<string | null>(null);
   const [rejectOrderId, setRejectOrderId] = useState<string | null>(null);
   const [approveOrderId, setApproveOrderId] = useState<string | null>(null);
 
-  const reload = async () => {
-    const [{ data: o }, { data: c }, { data: a }] = await Promise.all([
-      supabase.from("orders").select("*").order("placed_at", { ascending: false }),
-      supabase.from("customers").select("*"),
-      supabase.from("activity_log").select("*").order("created_at", { ascending: false }).limit(10),
-    ]);
-    setOrders((o as OrderRow[]) ?? []);
-    const m: Record<string, Customer> = {};
-    (c as Customer[] | null)?.forEach((x) => (m[x.id] = x));
-    setCustomers(m);
-    setActivity((a as Activity[]) ?? []);
-  };
-
-  useEffect(() => { reload(); }, [tick]);
-  useEffect(() => {
-    const i = setInterval(() => setTick((t) => t + 1), 30000);
-    return () => clearInterval(i);
-  }, []);
+  const { data, isPending } = useQuery({
+    queryKey: qk.dashboard(),
+    queryFn: loadDashboard,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+  });
+  const orders = data?.orders ?? [];
+  const customers = data?.customers ?? {};
+  const activity = data?.activity ?? [];
+  const reload = () => queryClient.invalidateQueries({ queryKey: qk.dashboard() });
 
   const counts = useMemo(() => {
     const c = {
