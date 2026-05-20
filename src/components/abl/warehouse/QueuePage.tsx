@@ -23,6 +23,7 @@ type PackedOrder = {
 export function QueuePage() {
   const { pickerName, demoScan } = usePicker();
   const [orders, setOrders] = useState<QueueOrder[]>([]);
+  const [packed, setPacked] = useState<PackedOrder[]>([]);
   const [doneToday, setDoneToday] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -30,11 +31,15 @@ export function QueuePage() {
     setLoading(true);
     const start = new Date(); start.setHours(0, 0, 0, 0);
 
-    const [{ data: o }, { data: items }, { data: done }] = await Promise.all([
+    const [{ data: o }, { data: p }, { data: items }, { data: done }] = await Promise.all([
       supabase.from("orders")
         .select("id, order_number, status, placed_at, approved_at, picking_started_at, picked_by_profile_id, total, delivery_notes, customer:customers(id, company_name, delivery_address, pricing_tier)")
         .in("status", ["approved", "picking"])
         .order("placed_at", { ascending: true }),
+      supabase.from("orders")
+        .select("id, order_number, invoice_number, total, packed_at, driver_name, vehicle_id, packed_by_profile_id, customer:customers(company_name, delivery_address, delivery_city, delivery_parish)")
+        .eq("status", "packed")
+        .order("packed_at", { ascending: true }),
       supabase.from("order_items").select("order_id, quantity"),
       supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "packed").gte("packed_at", start.toISOString()),
     ]);
@@ -59,7 +64,22 @@ export function QueuePage() {
       return new Date(a.placed_at).getTime() - new Date(b.placed_at).getTime();
     });
 
+    // Look up packer names
+    const packerIds = Array.from(new Set(((p ?? []) as any[]).map((r) => r.packed_by_profile_id).filter(Boolean)));
+    let nameById: Record<string, string> = {};
+    if (packerIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", packerIds);
+      (profs as any[] | null)?.forEach((pr) => { nameById[pr.id] = pr.full_name ?? ""; });
+    }
+
+    const packedList = ((p ?? []) as any[]).map((r) => ({
+      ...r,
+      packed_by_name: r.packed_by_profile_id ? (nameById[r.packed_by_profile_id] ?? null) : null,
+      items_count: sum[r.id]?.lines ?? 0,
+    })) as PackedOrder[];
+
     setOrders(list);
+    setPacked(packedList);
     setDoneToday((done as any)?.length ?? 0);
     setLoading(false);
   };
@@ -72,6 +92,7 @@ export function QueuePage() {
 
   const itemsTotal = orders.reduce((s, o) => s + (o.cases_count ?? 0), 0);
   const toPickCount = orders.length;
+  const dispatchCount = packed.length;
 
   return (
     <WarehouseShell title={`Today's picks · ${toPickCount} waiting`} subtitle="Tap an order to start picking">
