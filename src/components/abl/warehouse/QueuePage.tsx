@@ -205,8 +205,17 @@ function DispatchCard({ order, onViewInvoice }: { order: PackedOrder; onViewInvo
         <span className="rounded-md bg-white px-2 py-1 text-[11.5px] font-semibold text-ink ring-1 ring-[#E5E9EF] tabular-nums">{order.items_count} items</span>
         <span className="text-[14px] font-bold text-ink tabular-nums">{formatBBD(Number(order.total))}</span>
       </div>
-      <div className="mt-2 border-t border-[#E5E9EF] pt-2 text-[11.5px] text-muted-foreground">
-        Packed {timeAgo(order.packed_at)}{order.packed_by_name ? ` by ${order.packed_by_name.split(" ")[0]}` : ""}
+      <div className="mt-2 flex items-center justify-between border-t border-[#E5E9EF] pt-2 text-[11.5px] text-muted-foreground">
+        <span>Packed {timeAgo(order.packed_at)}{order.packed_by_name ? ` by ${order.packed_by_name.split(" ")[0]}` : ""}</span>
+        {order.invoice_number && (
+          <button
+            type="button"
+            onClick={onViewInvoice}
+            className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-[11.5px] font-bold text-[#0F2540] ring-1 ring-[#E5E9EF] hover:bg-[#F8FAFC]"
+          >
+            <FileText className="h-3.5 w-3.5" /> View invoice
+          </button>
+        )}
       </div>
     </article>
   );
