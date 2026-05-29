@@ -163,15 +163,21 @@ export function QueuePage() {
           </div>
           <p className="-mt-2 mb-3 text-[12.5px] text-muted-foreground">Boxes are packed and on the dock. Drivers will load them next.</p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {packed.map((o) => <DispatchCard key={o.id} order={o} />)}
+            {packed.map((o) => <DispatchCard key={o.id} order={o} onViewInvoice={() => setPreviewOrderId(o.id)} />)}
           </div>
         </section>
       )}
+
+      <InvoicePreviewDrawer
+        orderId={previewOrderId}
+        open={!!previewOrderId}
+        onOpenChange={(o) => { if (!o) setPreviewOrderId(null); }}
+      />
     </WarehouseShell>
   );
 }
 
-function DispatchCard({ order }: { order: PackedOrder }) {
+function DispatchCard({ order, onViewInvoice }: { order: PackedOrder; onViewInvoice: () => void }) {
   const loaded = !!order.driver_name;
   const addr = [order.customer?.delivery_city, order.customer?.delivery_parish].filter(Boolean).join(", ")
     || order.customer?.delivery_address || "—";
