@@ -89,6 +89,7 @@ export function OrderDrawer({
     if (notes === (order.internal_notes ?? "")) return;
     saveNotesMutation.mutate(notes);
   };
+  const paidSum = allocations
     .filter((a) => a.payment?.status === "cleared")
     .reduce((s, a) => s + Number(a.amount), 0);
   const balance = Math.max(0, Number(order.total) - paidSum);
