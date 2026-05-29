@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { qk } from "@/lib/query-keys";
 import { formatBBD } from "@/lib/format";
 import { toast } from "sonner";
 import { Search, Download, Plus, X as XIcon, Printer, RefreshCw } from "lucide-react";
