@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Package, ListChecks, ArrowRight, Sparkles, Truck, MapPin, Warehouse } from "lucide-react";
+import { CheckCircle2, Package, ListChecks, ArrowRight, Sparkles, Truck, MapPin, Warehouse, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePicker } from "@/hooks/use-picker";
 import { useClientGreeting } from "@/hooks/use-client-greeting";
@@ -8,6 +9,7 @@ import { WarehouseShell, UrgencyChip } from "./WarehouseShell";
 import { formatBBD } from "@/lib/format";
 import { fmtDayLabel, pickDeadline, urgencyOf, formatTimeShort, type QueueOrder } from "./util";
 import { qk } from "@/lib/query-keys";
+import { InvoicePreviewDrawer } from "./InvoicePreviewDrawer";
 import { SkeletonKpiCard, SkeletonOrderCard } from "@/components/abl/skeletons";
 
 type PackedOrder = {
@@ -88,6 +90,7 @@ async function loadQueue(): Promise<QueueData> {
 export function QueuePage() {
   const { pickerName, demoScan } = usePicker();
   const greeting = useClientGreeting();
+  const [previewOrderId, setPreviewOrderId] = useState<string | null>(null);
   const { data, isPending } = useQuery({
     queryKey: qk.warehouseQueue(),
     queryFn: loadQueue,
@@ -160,15 +163,21 @@ export function QueuePage() {
           </div>
           <p className="-mt-2 mb-3 text-[12.5px] text-muted-foreground">Boxes are packed and on the dock. Drivers will load them next.</p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {packed.map((o) => <DispatchCard key={o.id} order={o} />)}
+            {packed.map((o) => <DispatchCard key={o.id} order={o} onViewInvoice={() => setPreviewOrderId(o.id)} />)}
           </div>
         </section>
       )}
+
+      <InvoicePreviewDrawer
+        orderId={previewOrderId}
+        open={!!previewOrderId}
+        onOpenChange={(o) => { if (!o) setPreviewOrderId(null); }}
+      />
     </WarehouseShell>
   );
 }
 
-function DispatchCard({ order }: { order: PackedOrder }) {
+function DispatchCard({ order, onViewInvoice }: { order: PackedOrder; onViewInvoice: () => void }) {
   const loaded = !!order.driver_name;
   const addr = [order.customer?.delivery_city, order.customer?.delivery_parish].filter(Boolean).join(", ")
     || order.customer?.delivery_address || "—";
@@ -196,8 +205,17 @@ function DispatchCard({ order }: { order: PackedOrder }) {
         <span className="rounded-md bg-white px-2 py-1 text-[11.5px] font-semibold text-ink ring-1 ring-[#E5E9EF] tabular-nums">{order.items_count} items</span>
         <span className="text-[14px] font-bold text-ink tabular-nums">{formatBBD(Number(order.total))}</span>
       </div>
-      <div className="mt-2 border-t border-[#E5E9EF] pt-2 text-[11.5px] text-muted-foreground">
-        Packed {timeAgo(order.packed_at)}{order.packed_by_name ? ` by ${order.packed_by_name.split(" ")[0]}` : ""}
+      <div className="mt-2 flex items-center justify-between border-t border-[#E5E9EF] pt-2 text-[11.5px] text-muted-foreground">
+        <span>Packed {timeAgo(order.packed_at)}{order.packed_by_name ? ` by ${order.packed_by_name.split(" ")[0]}` : ""}</span>
+        {order.invoice_number && (
+          <button
+            type="button"
+            onClick={onViewInvoice}
+            className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-[11.5px] font-bold text-[#0F2540] ring-1 ring-[#E5E9EF] hover:bg-[#F8FAFC]"
+          >
+            <FileText className="h-3.5 w-3.5" /> View invoice
+          </button>
+        )}
       </div>
     </article>
   );
