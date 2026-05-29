@@ -17,7 +17,7 @@ async function loadRoute(driverName: string): Promise<RouteStop[]> {
   const startISO = start.toISOString();
 
   const { data: o } = await supabase.from("orders")
-    .select("id, order_number, status, total, delivery_notes, internal_notes, packed_at, dispatched_at, delivered_at, delivery_status_detail, signature_image_url, delivered_to_name, route_sequence, driver_name, customer:customers(id, company_name, delivery_address, delivery_city, delivery_parish, delivery_notes, phone)")
+    .select("id, order_number, status, total, delivery_notes, internal_notes, packed_at, dispatched_at, delivered_at, delivery_status_detail, signature_image_url, delivered_to_name, route_sequence, driver_name, customer:customer_delivery_info!customer_id(id, company_name, delivery_address, delivery_city, delivery_parish, delivery_notes, phone)")
     .eq("driver_name", driverName)
     .in("status", ["packed", "out_for_delivery", "delivered", "paid"])
     .or(`status.in.(packed,out_for_delivery),delivered_at.gte.${startISO}`)
