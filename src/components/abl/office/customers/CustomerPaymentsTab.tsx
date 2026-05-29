@@ -143,6 +143,7 @@ export function CustomerPaymentsTab({ customerId, paymentTermsDays, onDataChange
     queryClient.invalidateQueries({ queryKey: ["customer-outstanding-invoices", customerId] });
   };
 
+  const balance = Number(summary?.balance_owed ?? 0);
   const balColor = balance <= 0 ? "#047857"
     : (summary?.count_overdue_invoices ?? 0) > 0 ? "#B91C1C" : "#B45309";
 
