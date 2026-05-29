@@ -90,6 +90,7 @@ async function loadQueue(): Promise<QueueData> {
 export function QueuePage() {
   const { pickerName, demoScan } = usePicker();
   const greeting = useClientGreeting();
+  const [previewOrderId, setPreviewOrderId] = useState<string | null>(null);
   const { data, isPending } = useQuery({
     queryKey: qk.warehouseQueue(),
     queryFn: loadQueue,
