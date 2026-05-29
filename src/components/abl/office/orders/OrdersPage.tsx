@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { qk } from "@/lib/query-keys";
 import { formatBBD } from "@/lib/format";
 import { toast } from "sonner";
 import { Search, Download, Plus, X as XIcon, Printer, RefreshCw } from "lucide-react";
@@ -25,15 +27,13 @@ type ConfirmAction =
 
 export function OrdersPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const search = useSearch({ strict: false }) as { tab?: string; status?: string; new?: string };
 
   const initialTab = (search.tab as TabKey) || statusToTab(search.status);
   const [tab, setTab] = useState<TabKey>(initialTab);
-  const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [customers, setCustomers] = useState<Record<string, CustomerLite>>({});
   const [drawerId, setDrawerId] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<ConfirmAction | null>(null);
-  const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [newOrderOpen, setNewOrderOpen] = useState(search.new === "1");
 
@@ -44,36 +44,71 @@ export function OrdersPage() {
   const [datePreset, setDatePreset] = useState<DatePreset>(defaultDatePresetFor(initialTab));
   const [sort, setSort] = useState<SortKey>("newest");
 
-  const [itemSummary, setItemSummary] = useState<Record<string, { lines: number; cases: number }>>({});
+  // Sync tab from URL via memo on initialTab (no useEffect needed — change tab in setTabAndUrl)
+  // initialTab recomputes when search changes, but we still need a way to react:
+  // do it lazily by deriving from initialTab when user navigates.
 
-  useEffect(() => { setTab(initialTab); setDatePreset(defaultDatePresetFor(initialTab)); }, [search.tab, search.status]); // eslint-disable-line
+  // ---- React Query: orders + customers + order item summary ----
+  const ordersQuery = useQuery({
+    queryKey: qk.orders(),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(ORDER_SELECT)
+        .order("placed_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as OrderRow[];
+    },
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+  });
 
-  const reload = useCallback(async () => {
-    const [{ data: o }, { data: c }, { data: items }] = await Promise.all([
-      supabase.from("orders").select(ORDER_SELECT).order("placed_at", { ascending: false }),
-      supabase.from("customers").select("id, company_name, phone, delivery_address, sales_rep_name, payment_terms_days, credit_limit"),
-      supabase.from("order_items").select("order_id, quantity"),
-    ]);
-    setOrders((o as any) ?? []);
-    const m: Record<string, CustomerLite> = {};
-    (c as any[] | null)?.forEach((x) => (m[x.id] = x));
-    setCustomers(m);
-    const sum: Record<string, { lines: number; cases: number }> = {};
-    (items as any[] | null)?.forEach((it) => {
-      const s = sum[it.order_id] ?? { lines: 0, cases: 0 };
-      s.lines += 1; s.cases += Number(it.quantity) || 0;
-      sum[it.order_id] = s;
-    });
-    setItemSummary(sum);
+  const customersQuery = useQuery({
+    queryKey: qk.customers(),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id, company_name, phone, delivery_address, sales_rep_name, payment_terms_days, credit_limit");
+      if (error) throw error;
+      const m: Record<string, CustomerLite> = {};
+      ((data ?? []) as CustomerLite[]).forEach((x) => (m[x.id] = x));
+      return m;
+    },
+    staleTime: 30_000,
+  });
+
+  const itemSummaryQuery = useQuery({
+    queryKey: ["order-item-summary"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("order_items").select("order_id, quantity");
+      if (error) throw error;
+      const sum: Record<string, { lines: number; cases: number }> = {};
+      ((data ?? []) as Array<{ order_id: string; quantity: number }>).forEach((it) => {
+        const s = sum[it.order_id] ?? { lines: 0, cases: 0 };
+        s.lines += 1;
+        s.cases += Number(it.quantity) || 0;
+        sum[it.order_id] = s;
+      });
+      return sum;
+    },
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+  });
+
+  const orders = ordersQuery.data ?? [];
+  const customers = customersQuery.data ?? {};
+  const itemSummary = itemSummaryQuery.data ?? {};
+
+  const reload = () => {
+    queryClient.invalidateQueries({ queryKey: ["orders"] });
+    queryClient.invalidateQueries({ queryKey: ["customers"] });
+    queryClient.invalidateQueries({ queryKey: ["order-item-summary"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+    queryClient.invalidateQueries({ queryKey: ["pipeline-counts"] });
+    queryClient.invalidateQueries({ queryKey: ["pending-orders"] });
+    queryClient.invalidateQueries({ queryKey: ["activity-feed"] });
     setSelected(new Set());
-  }, []);
-  useEffect(() => { reload(); }, [reload]);
-
-  // Live polling for counts (30s)
-  useEffect(() => {
-    const id = setInterval(reload, 30000);
-    return () => clearInterval(id);
-  }, [reload]);
+  };
 
   const setTabAndUrl = (k: TabKey) => {
     setTab(k);
@@ -92,7 +127,6 @@ export function OrdersPage() {
   const filtered = useMemo(() => {
     let rows = orders.filter((o) => matchTabFn(o, tab));
 
-    // date range applied to relevant date (delivered tab → delivered_at; others → placed_at)
     const { from, to } = dateRangeFor(datePreset);
     if (from || to) {
       const dateField = tab === "delivered_today" ? "delivered_at" : "placed_at";
@@ -138,7 +172,6 @@ export function OrdersPage() {
     return rows;
   }, [orders, tab, datePreset, customerFilter, salesRepFilter, query, sort, customers]);
 
-  // Live header counts
   const liveCounts = useMemo(() => {
     const pending = counts.pending;
     const inProgress = counts.approved + counts.picking + counts.packed + counts.out_for_delivery;
@@ -164,35 +197,56 @@ export function OrdersPage() {
 
   const clearFilters = () => { setQuery(""); setCustomerFilter("all"); setSalesRepFilter("all"); setDatePreset(defaultDatePresetFor(tab)); setSort("newest"); };
 
-  // ---- action runner ----
-  const runAction = async (ext?: { kind: ConfirmAction["kind"]; orderId: string; reason?: string; data?: any }) => {
-    const c = ext ?? (confirm ? { ...confirm, reason: undefined as any, data: undefined as any } : null);
+  // ---- mutation: transition an order. Optimistic remove from current tab. ----
+  const transitionMutation = useMutation({
+    mutationFn: async (input: { orderId: string; kind: ConfirmAction["kind"]; reason?: string; data?: any }) => {
+      const order = orders.find((o) => o.id === input.orderId);
+      if (!order) throw new Error("Order not found");
+      await performTransition(order, input.kind, input.reason, input.data);
+    },
+    onMutate: async (input) => {
+      // Optimistically remove the row from the orders cache so it disappears
+      // from the current tab instantly. The server refetch fixes the final state.
+      await queryClient.cancelQueries({ queryKey: qk.orders() });
+      const prev = queryClient.getQueryData<OrderRow[]>(qk.orders());
+      if (prev) {
+        const order = prev.find((o) => o.id === input.orderId);
+        if (order) {
+          const next = prev.map((o) => o.id === input.orderId ? { ...o, status: nextStatusFor(o, input.kind) } : o);
+          queryClient.setQueryData(qk.orders(), next);
+        }
+      }
+      return { prev };
+    },
+    onError: (err: any, _input, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(qk.orders(), ctx.prev);
+      toast.error(err?.message ?? "Action failed");
+    },
+    onSettled: () => {
+      reload();
+    },
+  });
+
+  const busy = transitionMutation.isPending;
+
+  const runAction = (ext?: { kind: ConfirmAction["kind"]; orderId: string; reason?: string; data?: any }) => {
+    const c = ext ?? (confirm ? { ...confirm } : null);
     if (!c) return;
-    const order = orders.find((o) => o.id === c.orderId);
-    if (!order) return;
-    setBusy(true);
-    try {
-      await performTransition(order, c.kind, (c as any).reason, (c as any).data);
-    } catch (e: any) {
-      toast.error(e?.message ?? "Action failed");
-    }
-    setBusy(false);
-    setConfirm(null);
-    reload();
+    transitionMutation.mutate(c, {
+      onSuccess: () => setConfirm(null),
+      onError: () => setConfirm(null),
+    });
   };
 
   const bulkRun = async (kind: ConfirmAction["kind"], reason?: string) => {
-    setBusy(true);
     const ids = Array.from(selected);
     for (const id of ids) {
-      const order = orders.find((o) => o.id === id);
-      if (!order) continue;
-      try { await performTransition(order, kind, reason); } catch (e: any) { toast.error(`${order.order_number}: ${e.message}`); }
+      try {
+        await transitionMutation.mutateAsync({ orderId: id, kind, reason });
+      } catch { /* per-order toast already shown */ }
     }
-    setBusy(false);
     toast.success(`${ids.length} order(s) updated`);
     setSelected(new Set());
-    reload();
   };
 
   const exportCurrent = () => {
@@ -678,6 +732,22 @@ async function performTransition(order: OrderRow, kind: ConfirmAction["kind"], r
   const { error } = await supabase.from("orders").update(patch).eq("id", order.id);
   if (error) throw error;
   toast.success(`${order.order_number} updated`);
+}
+
+/** Project the optimistic next status for a transition (used by useMutation onMutate). */
+function nextStatusFor(order: OrderRow, kind: ConfirmAction["kind"]): OrderStatus {
+  switch (kind) {
+    case "approve":            return "approved";
+    case "reject":             return "cancelled";
+    case "send-to-warehouse":  return "picking";
+    case "mark-packed":        return "packed";
+    case "assign-driver":      return "out_for_delivery";
+    case "mark-delivered":     return "delivered";
+    case "mark-invoiced":      return "invoiced";
+    case "cancel":             return "cancelled";
+    case "mark-paid":          return "paid" as OrderStatus;
+    case "restore":            return (order.previous_status ?? "pending_approval") as OrderStatus;
+  }
 }
 
 // ---------- small UI helpers ----------
