@@ -6,6 +6,8 @@ const DEFAULT_VEHICLE = "VAN-04";
 
 interface Ctx {
   driverName: string;
+  /** Stable auth/profile id of the signed-in driver. Null until auth resolves. */
+  driverProfileId: string | null;
   setDriverName: (n: string) => void;
   initials: string;
   vehicleId: string;
@@ -26,6 +28,7 @@ export function DriverProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const driverName = override ?? profile?.full_name ?? "Driver";
+  const driverProfileId = profile?.id ?? null;
   const setDriverName = (n: string) => setOverride(n);
   const setVehicleId = (v: string) => {
     setVehicleState(v);
@@ -35,7 +38,7 @@ export function DriverProvider({ children }: { children: ReactNode }) {
     driverName.split(/\s+/).map((p) => p[0] ?? "").slice(0, 2).join("").toUpperCase() || "?";
 
   return (
-    <DriverCtx.Provider value={{ driverName, setDriverName, initials, vehicleId, setVehicleId }}>
+    <DriverCtx.Provider value={{ driverName, driverProfileId, setDriverName, initials, vehicleId, setVehicleId }}>
       {children}
     </DriverCtx.Provider>
   );
