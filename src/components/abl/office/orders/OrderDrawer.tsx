@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { qk } from "@/lib/query-keys";
 import { Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBBD, formatDate } from "@/lib/format";
