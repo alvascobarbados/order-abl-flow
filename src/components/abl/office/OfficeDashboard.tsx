@@ -202,11 +202,15 @@ export function OfficeDashboard() {
 
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("orders")
         .update({ status: "approved", approved_at: new Date().toISOString() })
-        .eq("id", id);
+        .eq("id", id)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Update affected 0 rows — likely blocked by RLS");
+      }
       return id;
     },
     onMutate: async (id) => {
