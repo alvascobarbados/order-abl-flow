@@ -43,7 +43,7 @@ export function DeliveryShell({
 
 function TopBar({ title, subtitle, back, right }: { title?: string; subtitle?: string; back?: { to: string }; right?: ReactNode }) {
   const { driverName, initials, setDriverName, vehicleId } = useDriver();
-  const { setRole } = useRole();
+  const { signOut } = useRole();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -55,7 +55,7 @@ function TopBar({ title, subtitle, back, right }: { title?: string; subtitle?: s
     return () => document.removeEventListener("mousedown", onClick);
   }, [open]);
 
-  const switchRole = () => { setOpen(false); setRole(null); navigate({ to: "/" }); };
+  const switchRole = async () => { setOpen(false); await signOut(); navigate({ to: "/" }); };
   const editName = () => {
     const next = window.prompt("Your name (for this shift)", driverName);
     if (next && next.trim()) setDriverName(next.trim());

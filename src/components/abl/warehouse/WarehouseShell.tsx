@@ -43,7 +43,7 @@ export function WarehouseShell({
 
 function TopBar({ title, subtitle, back }: { title: string; subtitle?: string; back?: { to: string; label?: string } }) {
   const { pickerName, initials, setPickerName, demoScan, setDemoScan } = usePicker();
-  const { setRole } = useRole();
+  const { signOut } = useRole();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [todayCount, setTodayCount] = useState(0);
@@ -66,8 +66,8 @@ function TopBar({ title, subtitle, back }: { title: string; subtitle?: string; b
     return () => document.removeEventListener("mousedown", onClick);
   }, [open]);
 
-  const endShift = () => { setOpen(false); setRole(null); navigate({ to: "/" }); };
-  const switchRole = () => { setOpen(false); setRole(null); navigate({ to: "/" }); };
+  const endShift = async () => { setOpen(false); await signOut(); navigate({ to: "/" }); };
+  const switchRole = async () => { setOpen(false); await signOut(); navigate({ to: "/" }); };
   const editName = () => {
     const next = window.prompt("Your name (for this shift)", pickerName);
     if (next && next.trim()) setPickerName(next.trim());

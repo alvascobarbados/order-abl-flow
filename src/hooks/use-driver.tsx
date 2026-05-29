@@ -1,8 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
-const KEY_NAME = "abl_driver_name";
 const KEY_VEHICLE = "abl_driver_vehicle";
-const DEFAULT_NAME = "Neal Springer";
 const DEFAULT_VEHICLE = "VAN-04";
 
 interface Ctx {
@@ -16,26 +15,22 @@ interface Ctx {
 const DriverCtx = createContext<Ctx | undefined>(undefined);
 
 export function DriverProvider({ children }: { children: ReactNode }) {
-  const [driverName, setNameState] = useState<string>(DEFAULT_NAME);
+  const { profile } = useAuth();
+  const [override, setOverride] = useState<string | null>(null);
   const [vehicleId, setVehicleState] = useState<string>(DEFAULT_VEHICLE);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const n = window.localStorage.getItem(KEY_NAME);
-    if (n) setNameState(n);
     const v = window.localStorage.getItem(KEY_VEHICLE);
     if (v) setVehicleState(v);
   }, []);
 
-  const setDriverName = (n: string) => {
-    setNameState(n);
-    if (typeof window !== "undefined") window.localStorage.setItem(KEY_NAME, n);
-  };
+  const driverName = override ?? profile?.full_name ?? "Driver";
+  const setDriverName = (n: string) => setOverride(n);
   const setVehicleId = (v: string) => {
     setVehicleState(v);
     if (typeof window !== "undefined") window.localStorage.setItem(KEY_VEHICLE, v);
   };
-
   const initials =
     driverName.split(/\s+/).map((p) => p[0] ?? "").slice(0, 2).join("").toUpperCase() || "?";
 
