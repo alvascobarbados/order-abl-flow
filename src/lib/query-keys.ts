@@ -30,10 +30,35 @@ export const qk = {
   // Warehouse
   warehouseQueue: () => ["warehouse-queue"] as const,
   warehouseDispatch: () => ["warehouse-dispatch"] as const,
+  warehousePick: (orderId: string) => ["warehouse-pick", orderId] as const,
+  warehousePack: (orderId: string) => ["warehouse-pack", orderId] as const,
+  warehouseMeStats: (pickerName: string) => ["warehouse-me-stats", pickerName] as const,
 
   // Delivery
   route: (driverName: string) => ["route", driverName] as const,
   availableLoads: () => ["available-loads"] as const,
+  deliveryStop: (orderId: string) => ["delivery-stop", orderId] as const,
+  deliveryLoadVan: (driverName: string) => ["delivery-load-van", driverName] as const,
+  deliveryDone: (driverName: string) => ["delivery-done", driverName] as const,
+  deliveryMeStats: (driverName: string) => ["delivery-me-stats", driverName] as const,
+
+  // Shop / storefront
+  shopCart: (customerId: string) => ["shop-cart", customerId] as const,
+  shopOrders: (customerId: string) => ["shop-orders", customerId] as const,
+  shopOrder: (orderNumber: string) => ["shop-order", orderNumber] as const,
+  shopCategories: () => ["shop-categories"] as const,
+  shopAccount: (customerId: string) => ["shop-account", customerId] as const,
+
+  // Office details / extras
+  orderItems: (orderId: string) => ["order-items", orderId] as const,
+  customerPayments: (customerId: string) => ["customer-payments", customerId] as const,
+  customerOrders: (customerId: string) => ["customer-orders", customerId] as const,
+  paymentById: (id: string) => ["payment", id] as const,
+  productById: (id: string) => ["product", id] as const,
+  invoices: (filters?: unknown) => filters === undefined ? ["invoices"] as const : ["invoices", filters] as const,
+  archivedProducts: () => ["archived-products"] as const,
+  purchasing: () => ["purchasing"] as const,
+  salesReps: () => ["sales-reps"] as const,
 
   // Settings / misc
   systemSettings: () => ["system-settings"] as const,
