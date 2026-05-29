@@ -239,15 +239,19 @@ export function OfficeDashboard() {
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
       const o = pendingOrders.find((x) => x.id === id);
       const note = `REJECTED: ${reason}`;
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("orders")
         .update({
           status: "cancelled",
           rejection_reason: reason,
           internal_notes: o?.internal_notes ? `${o.internal_notes}\n${note}` : note,
         })
-        .eq("id", id);
+        .eq("id", id)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Update affected 0 rows — likely blocked by RLS");
+      }
       return id;
     },
     onMutate: async ({ id }) => {
