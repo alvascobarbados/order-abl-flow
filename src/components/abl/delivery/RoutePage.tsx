@@ -1,61 +1,75 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Truck, MapPin, CheckCircle2, ArrowRight, Sparkles, Package, Plus, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDriver } from "@/hooks/use-driver";
 import { useClientGreeting } from "@/hooks/use-client-greeting";
 import { DeliveryShell } from "./DeliveryShell";
+import { DeliveryErrorCard } from "./DeliveryErrorCard";
 import { formatBBD } from "@/lib/format";
 import { fmtDayLabel, fmtTime, estimatedArrival, fmtFullAddress, type RouteStop } from "./util";
 import { qk } from "@/lib/query-keys";
 import { SkeletonStopCard } from "@/components/abl/skeletons";
+import { fetchCustomerInfoMap } from "./customer-info";
 import { toast } from "sonner";
 
-async function loadRoute(driverName: string): Promise<RouteStop[]> {
+async function loadRoute(driverProfileId: string): Promise<RouteStop[]> {
   const start = new Date(); start.setHours(0, 0, 0, 0);
   const startISO = start.toISOString();
 
-  const { data: o } = await supabase.from("orders")
-    .select("id, order_number, status, total, delivery_notes, internal_notes, packed_at, dispatched_at, delivered_at, delivery_status_detail, signature_image_url, delivered_to_name, route_sequence, driver_name, customer:customer_delivery_info!customer_id(id, company_name, delivery_address, delivery_city, delivery_parish, delivery_notes, phone)")
-    .eq("driver_name", driverName)
+  // 1) Orders for this driver only — keyed by stable driver_profile_id, no view embed.
+  const { data: orders, error: ordersErr } = await supabase.from("orders")
+    .select("id, customer_id, order_number, status, total, delivery_notes, internal_notes, packed_at, dispatched_at, delivered_at, delivery_status_detail, signature_image_url, delivered_to_name, route_sequence, driver_name, driver_profile_id")
+    .eq("driver_profile_id", driverProfileId)
     .in("status", ["packed", "out_for_delivery", "delivered", "paid"])
     .or(`status.in.(packed,out_for_delivery),delivered_at.gte.${startISO}`)
     .order("route_sequence", { ascending: true, nullsFirst: false });
+  if (ordersErr) throw new Error(ordersErr.message);
+  const rows = orders ?? [];
+  if (rows.length === 0) return [];
 
-  const ids = (o ?? []).map((r: any) => r.id);
+  // 2) Customer info + item counts in parallel.
+  const customerIds = rows.map((r) => r.customer_id);
+  const orderIds = rows.map((r) => r.id);
+  const [custMap, itemsRes] = await Promise.all([
+    fetchCustomerInfoMap(customerIds),
+    supabase.from("order_items").select("order_id, quantity").in("order_id", orderIds),
+  ]);
+  if (itemsRes.error) throw new Error(itemsRes.error.message);
+
   const counts: Record<string, { lines: number; cases: number }> = {};
-  if (ids.length) {
-    const { data: items } = await supabase.from("order_items")
-      .select("order_id, quantity").in("order_id", ids);
-    (items as any[] | null)?.forEach((it) => {
-      const s = counts[it.order_id] ?? { lines: 0, cases: 0 };
-      s.lines += 1; s.cases += Number(it.quantity) || 0;
-      counts[it.order_id] = s;
-    });
+  for (const it of itemsRes.data ?? []) {
+    const s = counts[it.order_id] ?? { lines: 0, cases: 0 };
+    s.lines += 1; s.cases += Number(it.quantity) || 0;
+    counts[it.order_id] = s;
   }
-  return ((o ?? []) as any[]).map((r) => ({
+
+  return rows.map((r) => ({
     ...r,
+    customer: custMap.get(r.customer_id) ?? null,
     items_count: counts[r.id]?.lines ?? 0,
     cases_count: counts[r.id]?.cases ?? 0,
   })) as RouteStop[];
 }
 
 export function RoutePage() {
-  const { driverName, vehicleId, setVehicleId } = useDriver();
+  const { driverName, driverProfileId, vehicleId, setVehicleId } = useDriver();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const greeting = useClientGreeting();
   const [vehicleOpen, setVehicleOpen] = useState(false);
-  const [starting, setStarting] = useState(false);
 
-  const { data: stops = [], isPending } = useQuery({
-    queryKey: qk.route(driverName),
-    queryFn: () => loadRoute(driverName),
+  const routeKey = qk.route(driverProfileId ?? "_anon");
+
+  const { data: stops = [], isPending, isError, error, refetch } = useQuery({
+    queryKey: routeKey,
+    queryFn: () => loadRoute(driverProfileId!),
+    enabled: !!driverProfileId,
     staleTime: 15_000,
   });
 
-  const reload = () => queryClient.invalidateQueries({ queryKey: qk.route(driverName) });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: routeKey });
 
   const loaded = useMemo(() => stops.filter((s) => s.status === "packed"), [stops]);
   const pending = useMemo(() => stops.filter((s) => s.status === "out_for_delivery"), [stops]);
@@ -67,51 +81,70 @@ export function RoutePage() {
   const pct = stops.length ? Math.round((done.length / stops.length) * 100) : 0;
   const sorted: RouteStop[] = [...pending, ...loaded, ...done];
 
-  const reorder = async (id: string, dir: -1 | 1) => {
-    const movable = routeStarted ? pending : loaded;
-    const idx = movable.findIndex((s) => s.id === id);
-    const swap = idx + dir;
-    if (idx < 0 || swap < 0 || swap >= movable.length) return;
-    const a = movable[idx]; const b = movable[swap];
-    const aSeq = a.route_sequence ?? idx + 1;
-    const bSeq = b.route_sequence ?? swap + 1;
-    await Promise.all([
-      supabase.from("orders").update({ route_sequence: bSeq }).eq("id", a.id),
-      supabase.from("orders").update({ route_sequence: aSeq }).eq("id", b.id),
-    ]);
-    reload();
-  };
+  // Reorder via mutation with .select("id") guard.
+  const reorderMut = useMutation({
+    mutationFn: async ({ id, dir }: { id: string; dir: -1 | 1 }) => {
+      const movable = routeStarted ? pending : loaded;
+      const idx = movable.findIndex((s) => s.id === id);
+      const swap = idx + dir;
+      if (idx < 0 || swap < 0 || swap >= movable.length) return;
+      const a = movable[idx]; const b = movable[swap];
+      const aSeq = a.route_sequence ?? idx + 1;
+      const bSeq = b.route_sequence ?? swap + 1;
+      const [r1, r2] = await Promise.all([
+        supabase.from("orders").update({ route_sequence: bSeq }).eq("id", a.id).select("id"),
+        supabase.from("orders").update({ route_sequence: aSeq }).eq("id", b.id).select("id"),
+      ]);
+      if (r1.error) throw new Error(r1.error.message);
+      if (r2.error) throw new Error(r2.error.message);
+      if ((r1.data ?? []).length === 0 || (r2.data ?? []).length === 0) {
+        throw new Error("Reorder blocked — affected 0 rows (likely RLS).");
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSettled: () => invalidate(),
+  });
 
-  const startRoute = async () => {
-    if (loaded.length === 0 || starting) return;
-    setStarting(true);
-    const now = new Date().toISOString();
-    // Assign route_sequence to any loaded order missing one
-    const updates = loaded.map((s, i) => ({
-      id: s.id,
-      seq: s.route_sequence ?? i + 1,
-    }));
-    const { error } = await supabase.from("orders")
-      .update({ status: "out_for_delivery", dispatched_at: now })
-      .in("id", updates.map((u) => u.id))
-      .eq("driver_name", driverName)
-      .eq("status", "packed");
-    if (error) { setStarting(false); toast.error(error.message); return; }
-    await Promise.all(
-      updates.filter((u, i) => loaded[i].route_sequence == null).map((u) =>
-        supabase.from("orders").update({ route_sequence: u.seq }).eq("id", u.id),
-      ),
-    );
-    await supabase.from("delivery_events").insert(
-      updates.map((u) => ({
-        order_id: u.id, driver_name: driverName, event_type: "dispatched",
-        notes: `Route started on ${vehicleId}`, meta: { vehicle_id: vehicleId },
-      })),
-    );
-    toast.success(`Route started — ${loaded.length} stop${loaded.length > 1 ? "s" : ""}`);
-    await reload();
-    setStarting(false);
-  };
+  const startMut = useMutation({
+    mutationFn: async () => {
+      if (!driverProfileId) throw new Error("Not signed in as a driver.");
+      if (loaded.length === 0) throw new Error("Nothing loaded.");
+      const now = new Date().toISOString();
+      const updates = loaded.map((s, i) => ({ id: s.id, seq: s.route_sequence ?? i + 1 }));
+
+      // Assign route_sequence for any loaded order missing one (driver-scoped + guarded).
+      const seqResults = await Promise.all(
+        updates.filter((u, i) => loaded[i].route_sequence == null).map((u) =>
+          supabase.from("orders").update({ route_sequence: u.seq })
+            .eq("id", u.id).eq("driver_profile_id", driverProfileId).select("id"),
+        ),
+      );
+      for (const r of seqResults) {
+        if (r.error) throw new Error(r.error.message);
+      }
+
+      const { data, error } = await supabase.from("orders")
+        .update({ status: "out_for_delivery", dispatched_at: now })
+        .in("id", updates.map((u) => u.id))
+        .eq("driver_profile_id", driverProfileId)
+        .eq("status", "packed")
+        .select("id");
+      if (error) throw new Error(error.message);
+      const affected = (data ?? []).length;
+      if (affected === 0) throw new Error("Start route blocked — affected 0 rows (likely RLS).");
+
+      await supabase.from("delivery_events").insert(
+        updates.slice(0, affected).map((u) => ({
+          order_id: u.id, driver_name: driverName, driver_profile_id: driverProfileId,
+          event_type: "dispatched", notes: `Route started on ${vehicleId}`, meta: { vehicle_id: vehicleId },
+        })),
+      );
+      return affected;
+    },
+    onSuccess: (n) => toast.success(`Route started — ${n} stop${n > 1 ? "s" : ""}`),
+    onError: (e: Error) => toast.error(e.message),
+    onSettled: () => invalidate(),
+  });
 
   const showStartBanner = loaded.length > 0 && pending.length === 0;
 
@@ -175,7 +208,13 @@ export function RoutePage() {
         </Link>
       </div>
 
-      {isPending ? (
+      {isError ? (
+        <DeliveryErrorCard
+          title="Couldn't load your route"
+          message={(error as Error)?.message}
+          onRetry={() => refetch()}
+        />
+      ) : isPending || !driverProfileId ? (
         <div className="space-y-3">{[0,1,2].map((i) => <SkeletonStopCard key={i} />)}</div>
       ) : stops.length === 0 ? (
         <EmptyNothingLoaded />
@@ -209,8 +248,8 @@ export function RoutePage() {
                   }
                   navigate({ to: "/delivery/stop/$orderId", params: { orderId: s.id } });
                 }}
-                onUp={i > 0 && (isLoaded || s.status === "out_for_delivery") ? () => reorder(s.id, -1) : undefined}
-                onDown={i < (pending.length + loaded.length) - 1 && (isLoaded || s.status === "out_for_delivery") ? () => reorder(s.id, 1) : undefined}
+                onUp={i > 0 && (isLoaded || s.status === "out_for_delivery") ? () => reorderMut.mutate({ id: s.id, dir: -1 }) : undefined}
+                onDown={i < (pending.length + loaded.length) - 1 && (isLoaded || s.status === "out_for_delivery") ? () => reorderMut.mutate({ id: s.id, dir: 1 }) : undefined}
                 eta={
                   isDone ? fmtTime(s.delivered_at)
                   : isLoaded ? "Awaiting start"
@@ -222,7 +261,7 @@ export function RoutePage() {
         </ul>
       )}
 
-      {!showStartBanner && stops.length > 0 && (
+      {!showStartBanner && stops.length > 0 && !isError && (
         <div className="mt-6 flex justify-center">
           <button type="button" onClick={() => toast("Route optimization coming soon. Use the arrows to reorder.")}
             className="text-[12px] font-semibold text-muted-foreground hover:text-ink">
@@ -242,11 +281,11 @@ export function RoutePage() {
             </div>
             <button
               type="button"
-              onClick={startRoute}
-              disabled={starting}
+              onClick={() => startMut.mutate()}
+              disabled={startMut.isPending}
               className="inline-flex h-12 shrink-0 items-center gap-2 rounded-xl bg-[#10B981] px-5 text-[14.5px] font-extrabold text-white shadow-lg transition disabled:opacity-50"
             >
-              <Play className="h-4 w-4" fill="currentColor" /> {starting ? "Starting…" : "Start route"}
+              <Play className="h-4 w-4" fill="currentColor" /> {startMut.isPending ? "Starting…" : "Start route"}
             </button>
           </div>
         </div>
