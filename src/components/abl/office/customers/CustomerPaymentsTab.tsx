@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBBD, formatDate } from "@/lib/format";
@@ -7,6 +8,7 @@ import { PaymentMethodChip } from "@/components/abl/payments/PaymentMethodChip";
 import { RecordPaymentModal } from "@/components/abl/payments/RecordPaymentModal";
 import { PaymentDetailDrawer } from "@/components/abl/payments/PaymentDetailDrawer";
 import type { PaymentMethod, PaymentStatus } from "@/lib/payments";
+import { qk } from "@/lib/query-keys";
 
 type Payment = {
   id: string; payment_number: string | null;
@@ -42,79 +44,105 @@ interface Props {
 }
 
 export function CustomerPaymentsTab({ customerId, paymentTermsDays, onDataChanged }: Props) {
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [allocSummary, setAllocSummary] = useState<AllocSummary>({});
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const queryClient = useQueryClient();
   const [recordOpen, setRecordOpen] = useState<{ open: boolean; orderId?: string }>({ open: false });
   const [detailId, setDetailId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 20;
 
-  const load = async () => {
-    const [{ data: s }, { data: p }, { data: o }] = await Promise.all([
-      supabase.from("customer_account_summary").select("*").eq("customer_id", customerId).maybeSingle(),
-      supabase.from("payments").select("id, payment_number, amount, payment_date, payment_method, reference, status")
-        .eq("customer_id", customerId).order("payment_date", { ascending: false }).order("created_at", { ascending: false }),
-      supabase.from("orders").select("id, order_number, invoice_number, total, invoiced_at, status")
-        .eq("customer_id", customerId).eq("status", "invoiced"),
-    ]);
-    setSummary(s as Summary | null);
-    const paymentRows = (p ?? []).map((r: any) => ({ ...r, amount: Number(r.amount) })) as Payment[];
-    setPayments(paymentRows);
+  const summaryQuery = useQuery({
+    queryKey: ["customer-account-summary", customerId] as const,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("customer_account_summary").select("*").eq("customer_id", customerId).maybeSingle();
+      if (error) throw error;
+      return data as Summary | null;
+    },
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+  });
+  const summary = summaryQuery.data ?? null;
 
-    // Fetch allocations for these payments
-    if (paymentRows.length) {
-      const { data: a } = await supabase
-        .from("payment_allocations")
-        .select("payment_id, amount, order:orders(order_number, invoice_number)")
-        .in("payment_id", paymentRows.map((x) => x.id));
-      const map: AllocSummary = {};
-      (a ?? []).forEach((r: any) => {
-        const k = r.payment_id;
-        if (!map[k]) map[k] = { orderNumbers: [], onAccount: false };
-        if (r.order) {
-          map[k].orderNumbers.push(r.order.invoice_number ?? r.order.order_number);
-        } else {
-          map[k].onAccount = true;
-        }
-      });
-      setAllocSummary(map);
-    } else {
-      setAllocSummary({});
-    }
+  const paymentsQuery = useQuery({
+    queryKey: qk.customerPayments(customerId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("payments")
+        .select("id, payment_number, amount, payment_date, payment_method, reference, status")
+        .eq("customer_id", customerId)
+        .order("payment_date", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const paymentRows = (data ?? []).map((r: any) => ({ ...r, amount: Number(r.amount) })) as Payment[];
+      let allocMap: AllocSummary = {};
+      if (paymentRows.length) {
+        const { data: a } = await supabase
+          .from("payment_allocations")
+          .select("payment_id, amount, order:orders(order_number, invoice_number)")
+          .in("payment_id", paymentRows.map((x) => x.id));
+        (a ?? []).forEach((r: any) => {
+          const k = r.payment_id;
+          if (!allocMap[k]) allocMap[k] = { orderNumbers: [], onAccount: false };
+          if (r.order) {
+            allocMap[k].orderNumbers.push(r.order.invoice_number ?? r.order.order_number);
+          } else {
+            allocMap[k].onAccount = true;
+          }
+        });
+      }
+      return { payments: paymentRows, allocSummary: allocMap };
+    },
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+  });
+  const payments = paymentsQuery.data?.payments ?? [];
+  const allocSummary = paymentsQuery.data?.allocSummary ?? {};
 
-    // Build invoice list with outstanding amounts
-    const ids = (o ?? []).map((x: any) => x.id);
-    let paidMap: Record<string, number> = {};
-    if (ids.length) {
-      const { data: allocs } = await supabase
-        .from("payment_allocations")
-        .select("order_id, amount, payment:payments!inner(status)")
-        .in("order_id", ids);
-      (allocs ?? []).forEach((r: any) => {
-        if (r.payment?.status === "cleared") {
-          paidMap[r.order_id] = (paidMap[r.order_id] ?? 0) + Number(r.amount);
-        }
-      });
-    }
-    const list: Invoice[] = (o ?? []).map((r: any) => {
-      const paid = paidMap[r.id] ?? 0;
-      const invAt = r.invoiced_at ? new Date(r.invoiced_at) : null;
-      const due = invAt ? new Date(invAt.getTime() + paymentTermsDays * 86400_000) : null;
-      return {
-        id: r.id, order_number: r.order_number, invoice_number: r.invoice_number,
-        total: Number(r.total), invoiced_at: r.invoiced_at, due_date: due,
-        paid_so_far: paid, outstanding: Math.max(0, Number(r.total) - paid),
-      };
-    }).filter((x) => x.outstanding > 0.001)
-      .sort((a, b) => (a.invoiced_at ?? "").localeCompare(b.invoiced_at ?? ""));
-    setInvoices(list);
+  const invoicesQuery = useQuery({
+    queryKey: ["customer-outstanding-invoices", customerId, paymentTermsDays] as const,
+    queryFn: async () => {
+      const { data: o, error } = await supabase
+        .from("orders")
+        .select("id, order_number, invoice_number, total, invoiced_at, status")
+        .eq("customer_id", customerId).eq("status", "invoiced");
+      if (error) throw error;
+      const ids = (o ?? []).map((x: any) => x.id);
+      let paidMap: Record<string, number> = {};
+      if (ids.length) {
+        const { data: allocs } = await supabase
+          .from("payment_allocations")
+          .select("order_id, amount, payment:payments!inner(status)")
+          .in("order_id", ids);
+        (allocs ?? []).forEach((r: any) => {
+          if (r.payment?.status === "cleared") {
+            paidMap[r.order_id] = (paidMap[r.order_id] ?? 0) + Number(r.amount);
+          }
+        });
+      }
+      const list: Invoice[] = (o ?? []).map((r: any) => {
+        const paid = paidMap[r.id] ?? 0;
+        const invAt = r.invoiced_at ? new Date(r.invoiced_at) : null;
+        const due = invAt ? new Date(invAt.getTime() + paymentTermsDays * 86400_000) : null;
+        return {
+          id: r.id, order_number: r.order_number, invoice_number: r.invoice_number,
+          total: Number(r.total), invoiced_at: r.invoiced_at, due_date: due,
+          paid_so_far: paid, outstanding: Math.max(0, Number(r.total) - paid),
+        };
+      }).filter((x) => x.outstanding > 0.001)
+        .sort((a, b) => (a.invoiced_at ?? "").localeCompare(b.invoiced_at ?? ""));
+      return list;
+    },
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+  });
+  const invoices = invoicesQuery.data ?? [];
+
+  const load = () => {
+    queryClient.invalidateQueries({ queryKey: ["customer-account-summary", customerId] });
+    queryClient.invalidateQueries({ queryKey: qk.customerPayments(customerId) });
+    queryClient.invalidateQueries({ queryKey: ["customer-outstanding-invoices", customerId] });
   };
 
-  useEffect(() => { load(); }, [customerId]);
-
-  const balance = Number(summary?.balance_owed ?? 0);
   const balColor = balance <= 0 ? "#047857"
     : (summary?.count_overdue_invoices ?? 0) > 0 ? "#B91C1C" : "#B45309";
 
