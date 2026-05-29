@@ -57,10 +57,13 @@ function CheckoutPage() {
     if (!customer || !canPlace) return;
     setPlacing(true);
     try {
+      const { data: authData, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !authData.user) throw authErr ?? new Error("Not signed in");
       const { data: order, error } = await supabase
         .from("orders")
         .insert({
           customer_id: customer.id,
+          placed_by_profile_id: authData.user.id,
           status: "pending_approval",
           subtotal,
           vat_amount: vat,
