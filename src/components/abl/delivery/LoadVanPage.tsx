@@ -16,7 +16,7 @@ import { toast } from "sonner";
 type AvailableOrder = {
   id: string;
   customer_id: string;
-  order_number: string;
+  order_number: string | null;
   invoice_number: string | null;
   total: number;
   packed_at: string | null;
