@@ -49,7 +49,7 @@ export function StopPage({ orderId }: { orderId: string }) {
     (async () => {
       setLoading(true);
       const { data: o } = await supabase.from("orders")
-        .select("id, order_number, invoice_number, status, total, delivery_notes, customer:customers(id, company_name, delivery_address, delivery_city, delivery_parish, delivery_notes, phone), items:order_items(id, quantity, product:products(name, pack_size, pack_unit))")
+        .select("id, order_number, invoice_number, status, total, delivery_notes, customer:customer_delivery_info!customer_id(id, company_name, delivery_address, delivery_city, delivery_parish, delivery_notes, phone), items:order_items(id, quantity, product:products(name, pack_size, pack_unit))")
         .eq("id", orderId).maybeSingle();
 
       const { data: route } = await supabase.from("orders")
