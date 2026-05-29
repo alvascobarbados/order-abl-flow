@@ -144,11 +144,11 @@ async function fetchActivityFeed(): Promise<Activity[]> {
 async function fetchPrintableOrderIds(): Promise<string[]> {
   const { data, error } = await supabase
     .from("orders")
-    .select("id, status, invoice_number, assigned_driver_id")
+    .select("id, status, invoice_number, driver_profile_id")
     .eq("status", "packed")
     .not("invoice_number", "is", null)
-    .is("assigned_driver_id", null)
-    .returns<Pick<OrderRow, "id" | "status" | "invoice_number" | "assigned_driver_id">[]>();
+    .is("driver_profile_id", null)
+    .returns<Pick<OrderRow, "id" | "status" | "invoice_number" | "driver_profile_id">[]>();
   if (error) throw error;
   return (data ?? []).map((r) => r.id);
 }
