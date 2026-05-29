@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-router";
 import { AuthProvider } from "@/hooks/use-auth";
 import { CartProvider } from "@/hooks/use-cart";
-import { RoleProvider } from "@/hooks/use-role";
+
 import { PickerProvider } from "@/hooks/use-picker";
 import { DriverProvider } from "@/hooks/use-driver";
 import { ActiveCustomerProvider } from "@/hooks/use-active-customer";
@@ -85,19 +85,17 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <RoleProvider>
-          <PickerProvider>
-            <DriverProvider>
-              <ActiveCustomerProvider>
-                <CartProvider>
-                  <RealtimeInvalidationBridge />
-                  <Outlet />
-                  <Toaster richColors position="top-right" />
-                </CartProvider>
-              </ActiveCustomerProvider>
-            </DriverProvider>
-          </PickerProvider>
-        </RoleProvider>
+        <PickerProvider>
+          <DriverProvider>
+            <ActiveCustomerProvider>
+              <CartProvider>
+                <RealtimeInvalidationBridge />
+                <Outlet />
+                <Toaster richColors position="top-right" />
+              </CartProvider>
+            </ActiveCustomerProvider>
+          </DriverProvider>
+        </PickerProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

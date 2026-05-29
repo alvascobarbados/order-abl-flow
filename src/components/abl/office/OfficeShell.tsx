@@ -65,7 +65,7 @@ const BADGE_COLORS: Record<BadgeKind, { bg: string; text: string }> = {
 };
 
 export function OfficeShell({ children }: { children: ReactNode }) {
-  const { setRole } = useRole();
+  const { signOut } = useRole();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [counts, setCounts] = useState({ pending_orders: 0, pending_payments: 0, overdue_invoices: 0, ready_to_dispatch: 0 });
@@ -230,13 +230,13 @@ export function OfficeShell({ children }: { children: ReactNode }) {
             <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "#10B981" }} />
             All systems operational
           </div>
-          <Link
-            to="/"
-            onClick={() => setRole(null)}
+          <button
+            type="button"
+            onClick={async () => { await signOut(); navigate({ to: "/" }); }}
             className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-white/70 hover:text-white"
           >
             <Repeat className="h-3 w-3" /> Switch role
-          </Link>
+          </button>
         </div>
       </aside>
 
