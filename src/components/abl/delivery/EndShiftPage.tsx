@@ -27,7 +27,7 @@ export function EndShiftPage() {
     (async () => {
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const { data: ords } = await supabase.from("orders")
-        .select("id, total, allocations:payment_allocations(amount, payment:payments(id, payment_method, reference, status), order:orders(id, order_number, customer:customers(company_name)))")
+        .select("id, total, allocations:payment_allocations(amount, payment:payments(id, payment_method, reference, status), order:orders(id, order_number, customer:customer_delivery_info!customer_id(company_name)))")
         .eq("driver_name", driverName).in("status", ["delivered", "paid"])
         .gte("delivered_at", start.toISOString());
 

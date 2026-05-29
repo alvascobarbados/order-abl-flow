@@ -64,6 +64,13 @@ export type Database = {
             foreignKeyName: "activity_log_related_customer_id_fkey"
             columns: ["related_customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_delivery_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_related_customer_id_fkey"
+            columns: ["related_customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -122,6 +129,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customer_account_summary"
             referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "cart_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_delivery_info"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "cart_customer_id_fkey"
@@ -719,6 +733,13 @@ export type Database = {
             foreignKeyName: "orders_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_delivery_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -823,6 +844,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customer_account_summary"
             referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_delivery_info"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "payments_customer_id_fkey"
@@ -1078,6 +1106,13 @@ export type Database = {
             foreignKeyName: "stock_notification_requests_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
+            referencedRelation: "customer_delivery_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_notification_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
@@ -1152,6 +1187,36 @@ export type Database = {
           oldest_unpaid_invoice_age_days: number | null
           total_invoiced: number | null
           total_paid: number | null
+        }
+        Relationships: []
+      }
+      customer_delivery_info: {
+        Row: {
+          company_name: string | null
+          delivery_address: string | null
+          delivery_city: string | null
+          delivery_notes: string | null
+          delivery_parish: string | null
+          id: string | null
+          phone: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          delivery_address?: string | null
+          delivery_city?: string | null
+          delivery_notes?: string | null
+          delivery_parish?: string | null
+          id?: string | null
+          phone?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          delivery_address?: string | null
+          delivery_city?: string | null
+          delivery_notes?: string | null
+          delivery_parish?: string | null
+          id?: string | null
+          phone?: string | null
         }
         Relationships: []
       }
