@@ -71,7 +71,7 @@ export function LoadVanPage() {
     const code = raw.trim().toUpperCase();
     if (!/^INV-/.test(code)) return { ok: false, msg: `Not an invoice QR (${code.slice(0, 24)})` };
     const { data: ord, error } = await supabase.from("orders")
-      .select("id, status, invoice_number, driver_name, total, customer:customers(company_name)")
+      .select("id, status, invoice_number, driver_name, total, customer:customer_delivery_info!customer_id(company_name)")
       .eq("invoice_number", code).maybeSingle();
     if (error) return { ok: false, msg: error.message };
     if (!ord) return { ok: false, msg: `${code} not found` };
