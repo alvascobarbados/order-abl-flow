@@ -296,7 +296,17 @@ export function CustomersTable() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {isLoading && rows.length === 0 ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={`sk-${i}`} className="border-t border-[#E5E9EF]">
+                    {Array.from({ length: 9 }).map((_, j) => (
+                      <td key={j} className="px-3 py-3">
+                        <div className="h-3 w-full animate-pulse rounded bg-[#F1F4F8]" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-16 text-center">
                     <Building2 className="mx-auto h-10 w-10 text-[#CBD5E1]" strokeWidth={1.25} />
