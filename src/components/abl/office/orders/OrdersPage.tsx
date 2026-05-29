@@ -734,6 +734,22 @@ async function performTransition(order: OrderRow, kind: ConfirmAction["kind"], r
   toast.success(`${order.order_number} updated`);
 }
 
+/** Project the optimistic next status for a transition (used by useMutation onMutate). */
+function nextStatusFor(order: OrderRow, kind: ConfirmAction["kind"]): OrderStatus {
+  switch (kind) {
+    case "approve":            return "approved";
+    case "reject":             return "cancelled";
+    case "send-to-warehouse":  return "picking";
+    case "mark-packed":        return "packed";
+    case "assign-driver":      return "out_for_delivery";
+    case "mark-delivered":     return "delivered";
+    case "mark-invoiced":      return "invoiced";
+    case "cancel":             return "cancelled";
+    case "mark-paid":          return "paid" as OrderStatus;
+    case "restore":            return (order.previous_status ?? "pending_approval") as OrderStatus;
+  }
+}
+
 // ---------- small UI helpers ----------
 
 function Sel({ value, onChange, children }: { value: string; onChange: (v: string) => void; children: React.ReactNode }) {
