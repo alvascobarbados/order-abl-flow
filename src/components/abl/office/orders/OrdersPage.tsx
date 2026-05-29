@@ -729,8 +729,15 @@ async function performTransition(order: OrderRow, kind: ConfirmAction["kind"], r
       return;
     }
   }
-  const { error } = await supabase.from("orders").update(patch).eq("id", order.id);
+  const { data: updated, error } = await supabase
+    .from("orders")
+    .update(patch)
+    .eq("id", order.id)
+    .select("id");
   if (error) throw error;
+  if (!updated || updated.length === 0) {
+    throw new Error("Update affected 0 rows — likely blocked by RLS");
+  }
   toast.success(`${order.order_number} updated`);
 }
 
