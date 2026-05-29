@@ -26,7 +26,7 @@ export function LoadVanPage() {
   const reload = async () => {
     const [{ data: avail }, { data: mine }] = await Promise.all([
       supabase.from("orders")
-        .select("id, order_number, invoice_number, total, packed_at, driver_name, customer:customers(id, company_name, delivery_address, delivery_city, delivery_parish, phone)")
+        .select("id, order_number, invoice_number, total, packed_at, driver_name, customer:customer_delivery_info!customer_id(id, company_name, delivery_address, delivery_city, delivery_parish, phone)")
         .eq("status", "packed")
         .is("driver_name", null)
         .not("invoice_number", "is", null)
