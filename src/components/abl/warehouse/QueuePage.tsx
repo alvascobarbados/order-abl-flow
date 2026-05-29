@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Package, ListChecks, ArrowRight, Sparkles, Truck, MapPin, Warehouse } from "lucide-react";
+import { CheckCircle2, Package, ListChecks, ArrowRight, Sparkles, Truck, MapPin, Warehouse, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePicker } from "@/hooks/use-picker";
 import { useClientGreeting } from "@/hooks/use-client-greeting";
@@ -8,6 +9,7 @@ import { WarehouseShell, UrgencyChip } from "./WarehouseShell";
 import { formatBBD } from "@/lib/format";
 import { fmtDayLabel, pickDeadline, urgencyOf, formatTimeShort, type QueueOrder } from "./util";
 import { qk } from "@/lib/query-keys";
+import { InvoicePreviewDrawer } from "./InvoicePreviewDrawer";
 import { SkeletonKpiCard, SkeletonOrderCard } from "@/components/abl/skeletons";
 
 type PackedOrder = {
