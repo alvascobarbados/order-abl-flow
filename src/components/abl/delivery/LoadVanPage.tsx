@@ -1,89 +1,142 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Camera, CheckCircle2, X, MapPin, Package, Sparkles } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { useDriver } from "@/hooks/use-driver";
 import { DeliveryShell } from "./DeliveryShell";
+import { DeliveryErrorCard } from "./DeliveryErrorCard";
+import { fetchCustomerInfoMap, type DeliveryCustomer } from "./customer-info";
 import { formatBBD } from "@/lib/format";
 import { fmtTime } from "./util";
+import { qk } from "@/lib/query-keys";
 import { toast } from "sonner";
 
 type AvailableOrder = {
-  id: string; order_number: string; invoice_number: string | null; total: number;
-  packed_at: string | null; driver_name: string | null;
-  customer: { id: string; company_name: string; delivery_address: string | null; delivery_city: string | null; delivery_parish: string | null; phone: string | null } | null;
+  id: string;
+  customer_id: string;
+  order_number: string;
+  invoice_number: string | null;
+  total: number;
+  packed_at: string | null;
+  driver_profile_id: string | null;
+  customer: DeliveryCustomer | null;
 };
 
+type LoadData = { available: AvailableOrder[]; loadedCount: number };
+
+async function fetchLoadData(driverProfileId: string): Promise<LoadData> {
+  // Available = packed, not yet assigned to any driver, invoiced.
+  const { data: avail, error: aErr } = await supabase.from("orders")
+    .select("id, customer_id, order_number, invoice_number, total, packed_at, driver_profile_id")
+    .eq("status", "packed")
+    .is("driver_profile_id", null)
+    .not("invoice_number", "is", null)
+    .order("packed_at", { ascending: true });
+  if (aErr) throw new Error(aErr.message);
+
+  const { count, error: cErr } = await supabase.from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "packed")
+    .eq("driver_profile_id", driverProfileId);
+  if (cErr) throw new Error(cErr.message);
+
+  const rows = avail ?? [];
+  const custMap = await fetchCustomerInfoMap(rows.map((r) => r.customer_id));
+  const merged: AvailableOrder[] = rows.map((r) => ({
+    ...r,
+    customer: custMap.get(r.customer_id) ?? null,
+  }));
+  return { available: merged, loadedCount: count ?? 0 };
+}
+
 export function LoadVanPage() {
-  const { driverName, vehicleId } = useDriver();
+  const { driverName, driverProfileId, vehicleId } = useDriver();
   const navigate = useNavigate();
-  const [available, setAvailable] = useState<AvailableOrder[]>([]);
-  const [loadedCount, setLoadedCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [exitingIds, setExitingIds] = useState<Set<string>>(new Set());
 
-  const reload = async () => {
-    const [{ data: avail }, { data: mine }] = await Promise.all([
-      supabase.from("orders")
-        .select("id, order_number, invoice_number, total, packed_at, driver_name, customer:customer_delivery_info!customer_id(id, company_name, delivery_address, delivery_city, delivery_parish, phone)")
+  const key = qk.deliveryLoadVan(driverProfileId ?? "_anon");
+
+  const { data, isPending, isError, error, refetch } = useQuery({
+    queryKey: key,
+    queryFn: () => fetchLoadData(driverProfileId!),
+    enabled: !!driverProfileId,
+    staleTime: 10_000,
+  });
+
+  const available = data?.available ?? [];
+  const loadedCount = data?.loadedCount ?? 0;
+
+  const assignMut = useMutation({
+    mutationFn: async ({ id, method }: { id: string; method: "scan" | "manual" }) => {
+      if (!driverProfileId) throw new Error("Not signed in as a driver.");
+      const current = data?.available ?? [];
+      const nextSeq = (data?.loadedCount ?? 0) + 1;
+      const { data: updated, error } = await supabase.from("orders").update({
+        driver_profile_id: driverProfileId,
+        driver_name: driverName,
+        vehicle_id: vehicleId,
+        route_sequence: nextSeq,
+      })
+        .eq("id", id)
         .eq("status", "packed")
-        .is("driver_name", null)
-        .not("invoice_number", "is", null)
-        .order("packed_at", { ascending: true }),
-      supabase.from("orders").select("id", { count: "exact", head: true })
-        .eq("status", "packed").eq("driver_name", driverName),
-    ]);
-    setAvailable((avail ?? []) as any);
-    setLoadedCount((mine as any)?.length ?? 0);
-    setLoading(false);
-  };
-
-  useEffect(() => { reload(); }, [driverName]);
-
-  const assign = async (id: string, method: "scan" | "manual"): Promise<AvailableOrder | null> => {
-    const row = available.find((o) => o.id === id);
-    setExitingIds((s) => new Set(s).add(id));
-    const nextSeq = loadedCount + 1;
-    const { error } = await supabase.from("orders").update({
-      driver_name: driverName, vehicle_id: vehicleId, route_sequence: nextSeq,
-    }).eq("id", id).eq("status", "packed").is("driver_name", null);
-    if (error) {
+        .is("driver_profile_id", null)
+        .select("id");
+      if (error) throw new Error(error.message);
+      if ((updated ?? []).length === 0) {
+        throw new Error("Already loaded by another driver or no longer available.");
+      }
+      await supabase.from("delivery_events").insert({
+        order_id: id, driver_name: driverName, driver_profile_id: driverProfileId,
+        event_type: "loaded",
+        notes: `Loaded onto ${vehicleId} via ${method}`,
+        meta: { method, vehicle_id: vehicleId },
+      });
+      return { id, customer: current.find((o) => o.id === id)?.customer ?? null };
+    },
+    onMutate: ({ id }) => {
+      setExitingIds((s) => new Set(s).add(id));
+    },
+    onError: (e: Error, { id }) => {
       setExitingIds((s) => { const n = new Set(s); n.delete(id); return n; });
-      toast.error(error.message);
-      return null;
-    }
-    await supabase.from("delivery_events").insert({
-      order_id: id, driver_name: driverName, event_type: "loaded",
-      notes: `Loaded onto ${vehicleId} via ${method}`,
-      meta: { method, vehicle_id: vehicleId },
-    });
-    setTimeout(() => {
-      setAvailable((arr) => arr.filter((o) => o.id !== id));
-      setExitingIds((s) => { const n = new Set(s); n.delete(id); return n; });
-      setLoadedCount((c) => c + 1);
-    }, 220);
-    return row ?? null;
-  };
+      toast.error(e.message);
+    },
+    onSettled: () => {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: key });
+        // Also bust the route page's cache so loaded count updates next time it mounts.
+        queryClient.invalidateQueries({ queryKey: qk.route(driverProfileId ?? "_anon") });
+      }, 220);
+    },
+  });
 
-  /** Scan handler — validates by invoice_number, returns toast-friendly outcome. */
-  const handleScan = async (raw: string): Promise<{ ok: boolean; msg: string; row?: AvailableOrder | null }> => {
+  /** Scan handler — validates by invoice_number against the in-flight available list. */
+  const handleScan = async (raw: string): Promise<{ ok: boolean; msg: string }> => {
     const code = raw.trim().toUpperCase();
     if (!/^INV-/.test(code)) return { ok: false, msg: `Not an invoice QR (${code.slice(0, 24)})` };
     const { data: ord, error } = await supabase.from("orders")
-      .select("id, status, invoice_number, driver_name, total, customer:customer_delivery_info!customer_id(company_name)")
+      .select("id, customer_id, status, invoice_number, driver_profile_id, total")
       .eq("invoice_number", code).maybeSingle();
     if (error) return { ok: false, msg: error.message };
     if (!ord) return { ok: false, msg: `${code} not found` };
     if (ord.status !== "packed") return { ok: false, msg: `${code} already ${String(ord.status).replace(/_/g, " ")}` };
-    if (ord.driver_name && ord.driver_name !== driverName) return { ok: false, msg: `${code} on ${ord.driver_name}'s van` };
-    if (ord.driver_name === driverName) return { ok: false, msg: `${code} already on your van` };
-    const row = await assign(ord.id, "scan");
-    return {
-      ok: true,
-      msg: `${code} loaded — ${(ord.customer as any)?.company_name ?? "customer"}`,
-      row,
-    };
+    if (ord.driver_profile_id && ord.driver_profile_id !== driverProfileId) {
+      return { ok: false, msg: `${code} already on another driver's van` };
+    }
+    if (ord.driver_profile_id === driverProfileId) {
+      return { ok: false, msg: `${code} already on your van` };
+    }
+    try {
+      await assignMut.mutateAsync({ id: ord.id, method: "scan" });
+      // Look up customer name for the toast.
+      const map = await fetchCustomerInfoMap([ord.customer_id]);
+      const name = map.get(ord.customer_id)?.company_name ?? "customer";
+      return { ok: true, msg: `${code} loaded — ${name}` };
+    } catch (e) {
+      return { ok: false, msg: (e as Error).message };
+    }
   };
 
   const demoScan = async () => {
@@ -95,7 +148,19 @@ export function LoadVanPage() {
     if (res.ok) toast.success(res.msg); else toast.error(res.msg);
   };
 
-  const isEmpty = !loading && available.length === 0 && loadedCount === 0;
+  if (isError) {
+    return (
+      <DeliveryShell title="Load van" subtitle={`Tap or scan to load orders onto ${vehicleId}`} back={{ to: "/delivery" }}>
+        <DeliveryErrorCard
+          title="Couldn't load available orders"
+          message={(error as Error)?.message}
+          onRetry={() => refetch()}
+        />
+      </DeliveryShell>
+    );
+  }
+
+  const isEmpty = !isPending && available.length === 0 && loadedCount === 0;
 
   return (
     <DeliveryShell title="Load van" subtitle={`Tap or scan to load orders onto ${vehicleId}`} back={{ to: "/delivery" }}>
@@ -111,7 +176,7 @@ export function LoadVanPage() {
             <div className="h-px flex-1 bg-[#E5E9EF]" />
           </div>
 
-          {loading ? (
+          {isPending ? (
             <div className="space-y-2">{[0,1].map((i) => <div key={i} className="h-[78px] animate-pulse rounded-xl bg-white/60" />)}</div>
           ) : available.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#E5E9EF] bg-white px-4 py-8 text-center text-[13px] text-muted-foreground">
@@ -127,8 +192,9 @@ export function LoadVanPage() {
                 >
                   <button
                     type="button"
-                    onClick={() => assign(o.id, "manual")}
-                    className="flex w-full items-center gap-3 rounded-xl border border-[#E5E9EF] bg-white p-3 text-left transition hover:border-[#10B981]/40 hover:shadow-sm"
+                    onClick={() => assignMut.mutate({ id: o.id, method: "manual" })}
+                    disabled={assignMut.isPending}
+                    className="flex w-full items-center gap-3 rounded-xl border border-[#E5E9EF] bg-white p-3 text-left transition hover:border-[#10B981]/40 hover:shadow-sm disabled:opacity-60"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
@@ -186,7 +252,8 @@ function ScanPanel({ onScan, onDemo }: {
 
   const beep = (ok: boolean) => {
     try {
-      const Ctor: any = (window as any).AudioContext || (window as any).webkitAudioContext;
+      const Ctor: typeof AudioContext | undefined =
+        (window as any).AudioContext || (window as any).webkitAudioContext;
       if (!Ctor) return;
       const ctx = new Ctor();
       const o = ctx.createOscillator(); const g = ctx.createGain();
@@ -196,12 +263,13 @@ function ScanPanel({ onScan, onDemo }: {
       g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.01);
       g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
       o.start(); o.stop(ctx.currentTime + 0.2);
-    } catch {}
+    } catch { /* ignore */ }
   };
-  const vibrate = (ok: boolean) => { try { (navigator as any).vibrate?.(ok ? 60 : [40, 40, 40]); } catch {} };
+  const vibrate = (ok: boolean) => { try { navigator.vibrate?.(ok ? 60 : [40, 40, 40]); } catch { /* ignore */ } };
 
   useEffect(() => {
     let cancelled = false;
+    let started = false;
     const start = async () => {
       try {
         const s = new Html5Qrcode(containerId, { verbose: false });
@@ -212,29 +280,33 @@ function ScanPanel({ onScan, onDemo }: {
           async (decoded) => {
             if (lockRef.current) return;
             lockRef.current = true;
-            try { await s.pause(true); } catch {}
+            try { await s.pause(true); } catch { /* ignore */ }
             const res = await onScan(decoded);
             setStatus({ type: res.ok ? "ok" : "err", msg: res.msg });
             if (res.ok) toast.success(res.msg); else toast.error(res.msg);
             beep(res.ok); vibrate(res.ok);
             setTimeout(async () => {
               setStatus({ type: "idle", msg: "" });
-              try { await s.resume(); } catch {}
+              try { await s.resume(); } catch { /* ignore */ }
               lockRef.current = false;
             }, 1500);
           },
           () => {},
         );
-        if (cancelled) { try { await s.stop(); await s.clear(); } catch {} }
-      } catch (e: any) {
-        setCameraError(e?.message ?? "Could not access camera");
+        started = true;
+        if (cancelled) { try { await s.stop(); await s.clear(); } catch { /* ignore */ } }
+      } catch (e) {
+        setCameraError((e as Error)?.message ?? "Could not access camera");
       }
     };
     start();
     return () => {
       cancelled = true;
       const s = scannerRef.current;
-      if (s) s.stop().catch(() => {}).finally(() => { try { s.clear(); } catch {} });
+      // Only stop if we actually started — calling stop() on an unstarted scanner throws.
+      if (s && started) {
+        s.stop().catch(() => {}).finally(() => { try { s.clear(); } catch { /* ignore */ } });
+      }
     };
   }, [onScan]);
 
