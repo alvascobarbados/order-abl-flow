@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, Mail, Phone, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBBD, formatDate } from "@/lib/format";
@@ -8,6 +9,7 @@ import { TierChip } from "./TierChip";
 import { toast } from "sonner";
 import type { CustomerRow } from "./CustomersTable";
 import { CustomerPaymentsTab } from "./CustomerPaymentsTab";
+import { qk } from "@/lib/query-keys";
 
 type Order = {
   id: string;
@@ -24,61 +26,92 @@ export function CustomerDetailDrawer({
   customerId, onClose, onChanged,
 }: { customerId: string; onClose: () => void; onChanged: () => void }) {
   const navigate = useNavigate();
-  const [customer, setCustomer] = useState<CustomerRow | null>(null);
-  const [contact, setContact] = useState<Profile | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [activity, setActivity] = useState<Activity[]>([]);
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<"overview" | "orders" | "payments" | "activity">("overview");
   const [orderFilter, setOrderFilter] = useState<"all" | "active" | "completed" | "cancelled">("all");
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState<string | null>(null);
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      const { data: c } = await supabase.from("customers").select("*").eq("id", customerId).maybeSingle();
-      if (!alive || !c) return;
-      setCustomer(c as unknown as CustomerRow);
-      setNotes((c as any).notes ?? "");
+  const customerQuery = useQuery({
+    queryKey: qk.customerById(customerId),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("customers").select("*").eq("id", customerId).maybeSingle();
+      if (error) throw error;
+      return data as unknown as CustomerRow | null;
+    },
+    staleTime: 10_000,
+  });
+  const customer = customerQuery.data ?? null;
 
-      if ((c as any).contact_profile_id) {
-        const { data: p } = await supabase
-          .from("profiles").select("id, email, full_name").eq("id", (c as any).contact_profile_id).maybeSingle();
-        if (alive) setContact(p as Profile | null);
-      } else {
-        setContact(null);
-      }
+  const contactId = customer?.contact_profile_id ?? null;
+  const contactQuery = useQuery({
+    queryKey: ["customer-contact", contactId] as const,
+    enabled: !!contactId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles").select("id, email, full_name").eq("id", contactId!).maybeSingle();
+      if (error) throw error;
+      return data as Profile | null;
+    },
+    staleTime: 60_000,
+  });
+  const contact = contactQuery.data ?? null;
 
-      const { data: o } = await supabase
+  const ordersQuery = useQuery({
+    queryKey: qk.customerOrders(customerId),
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("orders")
         .select("id, order_number, status, total, placed_at, items:order_items(quantity)")
         .eq("customer_id", customerId)
         .order("placed_at", { ascending: false });
-      if (alive) {
-        setOrders((o ?? []).map((r: any) => ({
-          id: r.id, order_number: r.order_number, status: r.status,
-          total: Number(r.total), placed_at: r.placed_at,
-          item_count: (r.items ?? []).reduce((s: number, it: any) => s + it.quantity, 0),
-        })));
-      }
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({
+        id: r.id, order_number: r.order_number, status: r.status as OrderStatus,
+        total: Number(r.total), placed_at: r.placed_at,
+        item_count: (r.items ?? []).reduce((s: number, it: any) => s + it.quantity, 0),
+      })) as Order[];
+    },
+    staleTime: 15_000,
+  });
+  const orders = ordersQuery.data ?? [];
 
-      const { data: a } = await supabase
+  const activityQuery = useQuery({
+    queryKey: ["customer-activity", customerId] as const,
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("activity_log")
         .select("id, description, created_at, event_type")
         .eq("related_customer_id", customerId)
         .order("created_at", { ascending: false })
         .limit(50);
-      if (alive) setActivity((a ?? []) as Activity[]);
-    })();
-    return () => { alive = false; };
-  }, [customerId]);
+      if (error) throw error;
+      return (data ?? []) as Activity[];
+    },
+    staleTime: 15_000,
+  });
+  const activity = activityQuery.data ?? [];
 
-  const saveNotes = async () => {
-    if (!customer) return;
-    if ((notes ?? "") === (customer.notes ?? "")) return;
-    const { error } = await supabase.from("customers").update({ notes }).eq("id", customer.id);
-    if (error) toast.error(error.message);
-    else { toast.success("Notes saved"); onChanged(); }
-  };
+  // initialize notes once customer loaded
+  if (customer && notes === null) {
+    setNotes(customer.notes ?? "");
+  }
+
+  const saveNotesMutation = useMutation({
+    mutationFn: async (next: string) => {
+      if (!customer) return;
+      if ((next ?? "") === (customer.notes ?? "")) return;
+      const { error } = await supabase.from("customers").update({ notes: next }).eq("id", customer.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Notes saved");
+      queryClient.invalidateQueries({ queryKey: qk.customerById(customerId) });
+      queryClient.invalidateQueries({ queryKey: qk.customers() });
+      onChanged();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+  const saveNotes = () => saveNotesMutation.mutate(notes ?? "");
 
   const COMPLETED: OrderStatus[] = ["delivered", "invoiced", "paid"];
   const filteredOrders = useMemo(() => orders.filter((o) => {
@@ -87,6 +120,7 @@ export function CustomerDetailDrawer({
     if (orderFilter === "completed") return COMPLETED.includes(o.status);
     return !COMPLETED.includes(o.status) && o.status !== "cancelled";
   }), [orders, orderFilter]);
+
 
   if (!customer) {
     return (
