@@ -381,7 +381,7 @@ export function CustomerDetailDrawer({
               <div>
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">Internal notes</div>
                 <textarea
-                  value={notes}
+                  value={notes ?? ""}
                   onChange={(e) => setNotes(e.target.value)}
                   onBlur={saveNotes}
                   placeholder="Visible only to office/admin staff. Auto-saves on blur."
