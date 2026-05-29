@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { qk } from "@/lib/query-keys";
 import { Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatBBD, formatDate } from "@/lib/format";
@@ -25,36 +27,68 @@ export function OrderDrawer({
   onOrderUpdated: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("details");
-  const [items, setItems] = useState<Item[]>([]);
-  const [activity, setActivity] = useState<Activity[]>([]);
-  const [allocations, setAllocations] = useState<Allocation[]>([]);
   const [notes, setNotes] = useState(order.internal_notes ?? "");
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    setNotes(order.internal_notes ?? "");
-    supabase.from("order_items")
-      .select("id, quantity, unit_price_at_order, line_total, product:products(name, sku, pack_size, primary_image_url, image_url)")
-      .eq("order_id", order.id)
-      .then(({ data }) => setItems((data as any) ?? []));
-    supabase.from("activity_log")
-      .select("id, event_type, description, created_at, actor_profile_id")
-      .eq("related_order_id", order.id)
-      .order("created_at", { ascending: true })
-      .then(({ data }) => setActivity((data as any) ?? []));
-    supabase.from("payment_allocations")
-      .select("id, amount, payment:payments(payment_number, payment_date, payment_method, status)")
-      .eq("order_id", order.id)
-      .then(({ data }) => setAllocations((data as any) ?? []));
-  }, [order.id, order.internal_notes]);
+  const itemsQuery = useQuery({
+    queryKey: qk.orderItems(order.id),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("order_items")
+        .select("id, quantity, unit_price_at_order, line_total, product:products(name, sku, pack_size, primary_image_url, image_url)")
+        .eq("order_id", order.id);
+      if (error) throw error;
+      return (data ?? []) as unknown as Item[];
+    },
+    staleTime: 30_000,
+  });
 
-  const saveNotes = async () => {
+  const activityQuery = useQuery({
+    queryKey: ["order-activity", order.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("activity_log")
+        .select("id, event_type, description, created_at, actor_profile_id")
+        .eq("related_order_id", order.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as Activity[];
+    },
+    staleTime: 10_000,
+  });
+
+  const allocationsQuery = useQuery({
+    queryKey: ["order-allocations", order.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("payment_allocations")
+        .select("id, amount, payment:payments(payment_number, payment_date, payment_method, status)")
+        .eq("order_id", order.id);
+      if (error) throw error;
+      return (data ?? []) as unknown as Allocation[];
+    },
+    staleTime: 10_000,
+  });
+
+  const items = itemsQuery.data ?? [];
+  const activity = activityQuery.data ?? [];
+  const allocations = allocationsQuery.data ?? [];
+
+  const saveNotesMutation = useMutation({
+    mutationFn: async (newNotes: string) => {
+      const { error } = await supabase.from("orders").update({ internal_notes: newNotes }).eq("id", order.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Notes saved");
+      queryClient.invalidateQueries({ queryKey: qk.orders() });
+      onOrderUpdated();
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Save failed"),
+  });
+
+  const saveNotes = () => {
     if (notes === (order.internal_notes ?? "")) return;
-    await supabase.from("orders").update({ internal_notes: notes }).eq("id", order.id);
-    toast.success("Notes saved");
-    onOrderUpdated();
+    saveNotesMutation.mutate(notes);
   };
-
   const paidSum = allocations
     .filter((a) => a.payment?.status === "cleared")
     .reduce((s, a) => s + Number(a.amount), 0);

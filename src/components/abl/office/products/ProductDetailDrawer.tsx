@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { qk } from "@/lib/query-keys";
 import { useNavigate } from "@tanstack/react-router";
 import { X, Pencil, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,23 +20,76 @@ export function ProductDetailDrawer({ productId, onClose, onAdjustStock, onChang
   onChanged: () => void;
 }) {
   const navigate = useNavigate();
-  const [product, setProduct] = useState<ProductFull | null>(null);
-  const [movements, setMovements] = useState<StockMovement[]>([]);
-  const [activity, setActivity] = useState<Array<{ id: string; description: string; created_at: string }>>([]);
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("overview");
 
-  const reload = async () => {
-    const [{ data: p }, { data: m }, { data: a }] = await Promise.all([
-      supabase.from("products").select("*").eq("id", productId).maybeSingle(),
-      supabase.from("stock_movements").select("*").eq("product_id", productId).order("created_at", { ascending: false }).limit(100),
-      supabase.from("activity_log").select("id, description, created_at").eq("related_product_id", productId).order("created_at", { ascending: false }).limit(50),
-    ]);
-    setProduct(p as unknown as ProductFull);
-    setMovements((m ?? []) as unknown as StockMovement[]);
-    setActivity((a ?? []) as any);
+  const productQuery = useQuery({
+    queryKey: qk.productById(productId),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products").select("*").eq("id", productId).maybeSingle();
+      if (error) throw error;
+      return data as unknown as ProductFull | null;
+    },
+    staleTime: 10_000,
+  });
+
+  const movementsQuery = useQuery({
+    queryKey: qk.stockMovements(productId),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("stock_movements")
+        .select("*").eq("product_id", productId)
+        .order("created_at", { ascending: false }).limit(100);
+      if (error) throw error;
+      return (data ?? []) as unknown as StockMovement[];
+    },
+    staleTime: 10_000,
+  });
+
+  const activityQuery = useQuery({
+    queryKey: ["product-activity", productId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("activity_log")
+        .select("id, description, created_at").eq("related_product_id", productId)
+        .order("created_at", { ascending: false }).limit(50);
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; description: string; created_at: string }>;
+    },
+    staleTime: 10_000,
+  });
+
+  const product = productQuery.data ?? null;
+  const movements = movementsQuery.data ?? [];
+  const activity = activityQuery.data ?? [];
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: qk.productById(productId) });
+    queryClient.invalidateQueries({ queryKey: qk.stockMovements(productId) });
+    queryClient.invalidateQueries({ queryKey: ["product-activity", productId] });
+    queryClient.invalidateQueries({ queryKey: qk.products() });
   };
 
-  useEffect(() => { reload(); }, [productId]);
+  const toggleMutation = useMutation({
+    mutationFn: async () => {
+      if (!product) throw new Error("No product");
+      const { error } = await supabase.from("products").update({ is_active: !product.is_active }).eq("id", product.id);
+      if (error) throw error;
+      return product.is_active ? "Deactivated" : "Activated";
+    },
+    onSuccess: (msg) => { toast.success(msg); invalidate(); onChanged(); },
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+
+  const imagesMutation = useMutation({
+    mutationFn: async (input: { primary: string | null; secondary: string[] }) => {
+      if (!product) throw new Error("No product");
+      const { error } = await supabase.from("products")
+        .update({ primary_image_url: input.primary, image_url: input.primary, secondary_image_urls: input.secondary })
+        .eq("id", product.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Images saved"); invalidate(); onChanged(); },
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
 
   if (!product) {
     return (
@@ -47,15 +102,8 @@ export function ProductDetailDrawer({ productId, onClose, onAdjustStock, onChang
     );
   }
 
-  const toggleActive = async () => {
-    const { error } = await supabase.from("products").update({ is_active: !product.is_active }).eq("id", product.id);
-    if (error) toast.error(error.message); else { toast.success(product.is_active ? "Deactivated" : "Activated"); reload(); onChanged(); }
-  };
-
-  const saveImages = async (primary: string | null, secondary: string[]) => {
-    const { error } = await supabase.from("products").update({ primary_image_url: primary, image_url: primary, secondary_image_urls: secondary }).eq("id", product.id);
-    if (error) toast.error(error.message); else { toast.success("Images saved"); reload(); onChanged(); }
-  };
+  const toggleActive = () => toggleMutation.mutate();
+  const saveImages = (primary: string | null, secondary: string[]) => imagesMutation.mutate({ primary, secondary });
 
   const img = resolveImageUrl(product);
 

@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { qk } from "@/lib/query-keys";
 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,24 +20,41 @@ type TabKey = "catalog" | "stock" | "categories" | "low_stock" | "archived";
 
 export function ProductsPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const search = useSearch({ strict: false }) as { tab?: TabKey; open?: string };
   const [tab, setTab] = useState<TabKey>(search.tab ?? "catalog");
-  const [products, setProducts] = useState<ProductFull[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [drawerId, setDrawerId] = useState<string | null>(search.open ?? null);
   const [adjustTarget, setAdjustTarget] = useState<ProductFull | null>(null);
   const [importOpen, setImportOpen] = useState(false);
 
-  const reload = async () => {
-    const [{ data: p }, { data: c }] = await Promise.all([
-      supabase.from("products").select("*").order("created_at", { ascending: false }),
-      supabase.from("categories").select("*").order("sort_order", { ascending: true }),
-    ]);
-    setProducts((p ?? []) as unknown as ProductFull[]);
-    setCategories((c ?? []) as Category[]);
-  };
+  const productsQuery = useQuery({
+    queryKey: qk.products(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as ProductFull[];
+    },
+    staleTime: 10_000,
+    refetchInterval: 30_000,
+  });
 
-  useEffect(() => { reload(); }, []);
+  const categoriesQuery = useQuery({
+    queryKey: qk.categories(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categories").select("*").order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Category[];
+    },
+    staleTime: 60_000,
+  });
+
+  const products = productsQuery.data ?? [];
+  const categories = categoriesQuery.data ?? [];
+
+  const reload = () => {
+    queryClient.invalidateQueries({ queryKey: qk.products() });
+    queryClient.invalidateQueries({ queryKey: qk.categories() });
+  };
 
   const counts = useMemo(() => {
     const active = products.filter((p) => !p.archived_at && p.is_active).length;
@@ -46,20 +65,47 @@ export function ProductsPage() {
     return { active, inactive, low, oos, archived, alerts: low + oos };
   }, [products]);
 
-  const handleAction = async (action: "edit" | "duplicate" | "adjust" | "toggle" | "archive", p: ProductFull) => {
-    if (action === "edit") navigate({ to: "/office/products/$id/edit", params: { id: p.id } });
-    else if (action === "adjust") setAdjustTarget(p);
-    else if (action === "toggle") {
-      const { error } = await supabase.from("products").update({ is_active: !p.is_active }).eq("id", p.id);
-      if (error) toast.error(error.message); else { toast.success(p.is_active ? "Deactivated" : "Activated"); reload(); }
-    } else if (action === "archive") {
-      const { error } = await supabase.from("products").update({ archived_at: new Date().toISOString(), is_active: false }).eq("id", p.id);
-      if (error) toast.error(error.message); else { toast.success("Archived"); reload(); }
-    } else if (action === "duplicate") {
+  const actionMutation = useMutation({
+    mutationFn: async (input: { action: "toggle" | "archive" | "duplicate"; product: ProductFull }) => {
+      const { action, product: p } = input;
+      if (action === "toggle") {
+        const { error } = await supabase.from("products").update({ is_active: !p.is_active }).eq("id", p.id);
+        if (error) throw error;
+        return p.is_active ? "Deactivated" : "Activated";
+      }
+      if (action === "archive") {
+        const { error } = await supabase.from("products").update({ archived_at: new Date().toISOString(), is_active: false }).eq("id", p.id);
+        if (error) throw error;
+        return "Archived";
+      }
+      // duplicate
       const { id, sku, created_at, updated_at, ...rest } = p as any;
       const { error } = await supabase.from("products").insert({ ...rest, sku: `${sku}-COPY`, name: `${p.name} (copy)` });
-      if (error) toast.error(error.message); else { toast.success("Duplicated"); reload(); }
-    }
+      if (error) throw error;
+      return "Duplicated";
+    },
+    onMutate: async (input) => {
+      if (input.action !== "toggle") return;
+      await queryClient.cancelQueries({ queryKey: qk.products() });
+      const prev = queryClient.getQueryData<ProductFull[]>(qk.products());
+      if (prev) {
+        queryClient.setQueryData<ProductFull[]>(qk.products(),
+          prev.map((p) => p.id === input.product.id ? { ...p, is_active: !p.is_active } : p));
+      }
+      return { prev };
+    },
+    onError: (e: any, _input, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(qk.products(), ctx.prev);
+      toast.error(e?.message ?? "Action failed");
+    },
+    onSuccess: (msg) => toast.success(msg),
+    onSettled: () => reload(),
+  });
+
+  const handleAction = (action: "edit" | "duplicate" | "adjust" | "toggle" | "archive", p: ProductFull) => {
+    if (action === "edit") navigate({ to: "/office/products/$id/edit", params: { id: p.id } });
+    else if (action === "adjust") setAdjustTarget(p);
+    else actionMutation.mutate({ action, product: p });
   };
 
   return (
