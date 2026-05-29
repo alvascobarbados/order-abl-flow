@@ -172,6 +172,52 @@ export function CustomersTable() {
     },
   });
 
+  const filtered = useMemo(() => {
+    let out = rows;
+    const q = search.trim().toLowerCase();
+    if (q) {
+      out = out.filter((r) =>
+        r.company_name.toLowerCase().includes(q) ||
+        (r.trading_name ?? "").toLowerCase().includes(q) ||
+        (r.phone ?? "").toLowerCase().includes(q) ||
+        (r.customer_number ?? "").toLowerCase().includes(q),
+      );
+    }
+    if (tier !== "all") out = out.filter((r) => r.pricing_tier === tier);
+    if (status !== "all") out = out.filter((r) => (status === "active" ? r.is_active : !r.is_active));
+    const sorted = [...out];
+    sorted.sort((a, b) => {
+      switch (sort) {
+        case "az": return a.company_name.localeCompare(b.company_name);
+        case "balance_desc": return Number(b.current_balance) - Number(a.current_balance);
+        case "available_desc":
+          return (Number(b.credit_limit) - Number(b.current_balance)) - (Number(a.credit_limit) - Number(a.current_balance));
+        case "available_asc":
+          return (Number(a.credit_limit) - Number(a.current_balance)) - (Number(b.credit_limit) - Number(b.current_balance));
+        default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+    return sorted;
+  }, [rows, search, tier, status, sort]);
+
+  const counts = useMemo(() => {
+    const a = rows.filter((r) => r.is_active).length;
+    return { active: a, inactive: rows.length - a, total: rows.length };
+  }, [rows]);
+
+  const anyFilter = !!search || tier !== "all" || status !== "all" || sort !== "recent";
+
+  const clearFilters = () => {
+    setSearch(""); setTier("all"); setStatus("all"); setSort("recent");
+  };
+
+  const handleToggleActive = (row: CustomerRow) => toggleActiveMutation.mutate(row);
+  const handleDelete = (row: CustomerRow) => deleteMutation.mutate(row);
+  const reload = () => {
+    queryClient.invalidateQueries({ queryKey: qk.customers() });
+    queryClient.invalidateQueries({ queryKey: ["customers-last-orders"] });
+  };
+
   return (
     <>
       {/* Top bar */}
