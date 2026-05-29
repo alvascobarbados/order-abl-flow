@@ -1,68 +1,76 @@
-# Get rid of the "waking up" feel
+# Security Lockdown Plan
 
-This is a systemic refactor that touches ~40 data-fetching components. I want to land it in deliberate stages instead of one mega-commit so each stage is reviewable and ships value on its own.
+This is a large, destructive change set (dropping 22 open policies). I want to confirm a few decisions before executing, because if any step in Parts 2/3 fails, Part 4 makes the whole app unusable.
 
-## Stage 1 — Infrastructure (one commit, no visible UI change yet)
+## Constraints I need to flag upfront
 
-Wire the foundation everything else builds on.
+1. **I cannot run `git` commands.** The sandbox blocks stateful git (`add`, `rm --cached`, `commit`, etc.) — git state is managed by the Lovable harness. So:
+   - I can **edit `.gitignore`** to add `.env`, `.env.local`, `.env.production`, `.env.development`.
+   - I can **create `.env.example`** with empty values.
+   - I **cannot** run `git rm --cached .env` myself. Once `.gitignore` is updated and committed by the harness, you'll need to run `git rm --cached .env` once locally (or I can give you the exact command). The file stays on disk; only the tracked copy is removed.
 
-1. **QueryClient + Provider**
-   - `bun add @tanstack/react-query` is already in the template (used by the router context). Confirm version, then export a shared client from `src/lib/query-client.ts` with the config in the brief (`staleTime: 30_000`, `gcTime: 5min`, `refetchOnWindowFocus: true`, `refetchOnMount: 'always'`, `retry: 1`).
-   - `src/routes/__root.tsx` already wraps `<Outlet />` in `QueryClientProvider`, but the client comes from the router context (created per-request). Swap it to import the shared instance so the cache survives navigations in dev/preview. Keep router context wiring intact.
+2. **Seeding `auth.users` from a SQL migration is fragile.** `supabase.auth.admin.createUser` is a JS/Node API — it can't be called from a `.sql` migration. Two real options:
+   - **A. Direct SQL insert into `auth.users`** with `crypt(password, gen_salt('bf'))` for `encrypted_password`, plus matching `auth.identities` rows. Idempotent via `ON CONFLICT (email) DO NOTHING`. The existing `handle_new_user` trigger then populates `public.profiles`. This is what I'd do — it's standard for seed migrations and works end-to-end.
+   - **B. A one-shot server function** that calls `auth.admin.createUser`. Cleaner API, but not a migration.
+   I'll go with **A** unless you prefer B.
 
-2. **Realtime invalidation hook**
-   - New `src/hooks/use-realtime-invalidation.tsx`. Subscribes once at the root to the six tables called out: `orders`, `payments`, `delivery_events`, `picking_events`, `activity_log`, `stock_movements`.
-   - Maps each table → list of query-key prefixes to invalidate (e.g. `orders` → `['orders']`, `['dashboard-kpis']`, `['pipeline-counts']`, `['activity-feed']`, `['warehouse-queue']`, `['route']`).
-   - Mounted in `__root.tsx` next to the existing providers. Tables already exist; no migration needed. Realtime publication needs `ALTER PUBLICATION supabase_realtime ADD TABLE …` for each — handled in one migration.
+3. **Verification I can run vs. can't run:**
+   - ✅ I can query `pg_policies` to confirm all `dev_anon_*` are gone.
+   - ✅ I can curl the REST endpoint with the anon key (no incognito needed — same effect) and show the empty array.
+   - ✅ I can query `profiles` to list seeded accounts.
+   - ✅ I can take preview screenshots after signing in as Sarah / Neal / Buzo.
+   - ❌ I cannot run `git ls-files`.
 
-3. **Skeleton primitives**
-   - `src/components/ui/skeleton.tsx` already exists. Add a thin wrapper file `src/components/abl/skeletons.tsx` exporting reusable shapes used across pages: `<SkeletonKpiCard />`, `<SkeletonTableRow cols={…} />`, `<SkeletonOrderCard />`, `<SkeletonProductCard />`, `<SkeletonStopCard />`, `<SkeletonPill />`.
-   - All use `bg-muted animate-pulse` per the brief — no new tokens, no font changes.
+## Plan
 
-4. **Prefetch helper**
-   - `src/hooks/use-prefetch.tsx` exposes a `usePrefetchOnHover(queryKey, queryFn)` returning an `onMouseEnter` handler. Used by sidebar links in `OfficeShell`.
+### Part 1 — .env hygiene
+- Edit `.gitignore`: add `.env`, `.env.local`, `.env.production`, `.env.development`.
+- Create `.env.example` with the 5 variable names, no values.
+- Tell you the one git command to run locally to untrack `.env`.
 
-5. **Optimistic mutation helper**
-   - `src/lib/mutations.ts` with a tiny `createOptimisticOrderMutation()` factory that cancels in-flight `['orders']` queries, snapshots, applies the patch, rolls back on error, and invalidates `onSettled`. Reused by approve / reject / mark-packed / assign-driver / record-payment.
+### Part 2 — Seed test accounts (migration `seed_test_accounts.sql`)
+- Insert 7 users into `auth.users` with bcrypt'd passwords + matching `auth.identities` rows, all `email_confirmed_at = now()`, `user_metadata = {full_name, role}`.
+- Trigger `handle_new_user` populates `public.profiles` with the right role.
+- Link Buzo profile: `UPDATE customers SET contact_profile_id = <buzo_profile_id> WHERE company_name ILIKE 'Buzo%'`.
+- Idempotent via `ON CONFLICT (email) DO NOTHING` on the auth insert.
 
-## Stage 2 — Highest-traffic pages refactored (this is where users feel it)
+### Part 3 — Rewire role picker to real auth
+- `src/routes/index.tsx`: each role card calls `supabase.auth.signInWithPassword({email, password})` with the mapped seeded credentials, then navigates to the role's home.
+- `src/hooks/use-role.tsx`: remove localStorage role storage. `role` is derived from `useAuth().profile.role`. Keep a thin `Role` type + `ROLE_META`.
+- `SwitchRoleButton`: `signOut()` then navigate to `/`.
+- `PickerProvider`, `DriverProvider`: derive `name` from `profile.full_name`; drop localStorage seed (keep `demoScan` toggle since it's a real UI preference, not identity).
+- `ActiveCustomerProvider`: for `customer` role, the active customer comes from `customers.contact_profile_id = auth.uid()`. For staff, keep the manual switcher.
+- Add `beforeLoad` guards to `/office`, `/warehouse`, `/delivery`, `/shop` route layouts that redirect to `/` if the session role doesn't match. (Currently auth is bypassed app-wide.)
 
-Refactor these from `useEffect`+`useState` → `useQuery`. Each gets proper skeletons and removes the "0/empty for a beat" flash. Tab badge counts switch from `0` to a tiny `<SkeletonPill />` until the query resolves.
+### Part 4 — Drop `dev_anon_*` policies
+- Single migration with all 22 `DROP POLICY IF EXISTS` statements (exactly as you specified).
 
-- **Office Dashboard** (`OfficeDashboard.tsx`) — KPI strip (6 cards), pipeline row (6 circles), pending approval rows, activity feed. Query keys: `['dashboard-kpis']`, `['pipeline-counts']`, `['pending-orders']`, `['activity-feed']`. `staleTime: 10_000` for activity, default for the rest.
-- **Office Orders** (`OrdersPage.tsx`) — table rows + tab counts. Query key `['orders', { tab, filters }]`. 8 skeleton rows during load.
-- **Office Customers** (`CustomersTable.tsx`) — `['customers', filters]`, 8 skeleton rows.
-- **Office Products** (`ProductsPage.tsx`) — `['products']` + `['categories']`, 6 skeleton cards. `staleTime: 5min`.
-- **Warehouse Queue** (`QueuePage.tsx`) — `['warehouse-queue']` + `['warehouse-dispatch']`. KPI strip skeleton, 3 queue card skeletons, 2 dispatch skeletons.
-- **Delivery Route** (`RoutePage.tsx`) — `['route', driverName]`. Hero card shows `—` until resolved (never `BBD$ 0.00`). 3 skeleton stop cards.
-- **Driver Load** (`LoadVanPage.tsx`) — `['available-loads']`.
-- **Customer Storefront** (`shop/index.tsx`) — `['products', { category }]`, 12 skeleton product cards.
+### Part 5 — Real policy audit
+Most real policies already exist (I read the schema). Gaps I can see right now:
+- `profiles`: no INSERT policy for self (handled by trigger, OK). The self-update WITH CHECK already prevents role change. Need explicit admin policy for role changes. ✅ will add.
+- `system_settings`: current `settings_staff_write` is `is_staff()` not admin-only. You asked for admin-only on UPDATE. ✅ will tighten.
+- `delivery_events`: has driver-self insert/select but no staff INSERT. ✅ will add `is_staff()` insert.
+- `picking_events`, `activity_log`, `stock_movements`, `payments`, `payment_allocations`, `driver_shifts`, `cart`, `carts`, `cart_items`, `categories`, `customers`, `orders`, `order_items`, `products` — already have real policies covering the required matrix. Will spot-check each after Part 4.
 
-## Stage 3 — Realtime + prefetch + optimistic (polish)
+Note: there are **two** cart tables (`cart` and `carts`/`cart_items`). I'll leave both intact and only drop the dev_anon ones; consolidation is out of scope.
 
-- Mount the realtime hook (Stage 1) at the root. Verify two-tab test (Andre marks packed → Sarah sees pipeline update in ≤2s).
-- Add `onMouseEnter` prefetch to every sidebar link in `OfficeShell`, `WarehouseShell`, `DeliveryShell`.
-- Convert these mutations to optimistic: approve, reject, mark packed, record payment, mark delivered, assign driver/vehicle. UI flips on tap; rollback + toast on error.
+### Part 6 — Storage buckets
+- `product-images`: keep public read (catalog browsing pre-auth is fine; if you want auth-only later, easy switch).
+- `invoices`: tighten to authenticated-read only via storage RLS policy. Signed-URL migration flagged as follow-up, not done now.
+- `delivery-signatures`: already private — confirm staff+driver-self read policy exists; add if missing.
 
-## Stage 4 — Sweep the long tail
+### Verification I'll run and paste back
+1. `.gitignore` diff + `.env.example` contents.
+2. `SELECT email, role FROM auth.users JOIN profiles ON ... WHERE email LIKE '%@abl.test' OR email LIKE '%test.customer'` — show all 7.
+3. `SELECT policyname FROM pg_policies WHERE policyname LIKE 'dev_anon_%'` — should be empty.
+4. `curl https://xufhyckqyersrgtkueuq.supabase.co/rest/v1/customers?select=* -H 'apikey: <anon>'` — show `[]`.
+5. Browser screenshots after signing in as Sarah (office dashboard), Neal (delivery), Buzo (shop with only own orders).
 
-Apply the same pattern to remaining pages without UI change: `InvoicesPage`, `PurchasingPage`, `SettingsPage`, customer detail drawer tabs, payment drawer, order drawer tabs, warehouse `PackPage`/`PickPage`/`DonePage`, delivery `StopPage`/`DonePage`/`EndShiftPage`/`MeStatsPage`. Each is mechanical: extract query, swap defaults for skeleton, use shared keys.
+## Questions before I execute
 
-## Out of scope (not doing in this pass)
+1. **OK with SQL-direct `auth.users` seed** (option A above) vs. a server-fn approach (B)?
+2. **OK that I can't run `git rm --cached .env` myself** — you'll do it after the .gitignore commit lands?
+3. **Role-picker UX after rewire**: currently it's instant. Real sign-in adds ~300ms and shows a spinner per card click. OK?
+4. **Customer sign-in mapping**: you specified one customer (Buzo). If a tester wants to test as a different customer, the only path will be the existing `ViewingAsSwitcher` (staff impersonation) — confirm that's fine, or do you want more seeded customer accounts?
 
-- Loom recording (I can't record video — I'll instead verify by reproducing the three tests in the preview and reporting back with screenshots).
-- Suspense / `useSuspenseQuery` migration — sticking to `useQuery` so the skeleton story stays simple.
-- Loader-based prefetching via TanStack Router. Keeping data fetching component-local keeps the diff smaller and the realtime invalidation simpler. Can revisit later.
-
-## Technical details
-
-- **Query key conventions** centralized in `src/lib/query-keys.ts` so realtime invalidation and prefetch use the exact same strings (cheap to typo otherwise).
-- **`refetchOnMount: 'always'`** is what gives the "cached first, then silently refresh" behavior the brief calls for — paired with `staleTime: 30_000` it shows cached data instantly on re-navigation and refetches in the background.
-- **Skeleton vs empty state**: skeletons render only while `isPending` (first load, no cache). Once resolved with `data.length === 0`, render the existing styled empty state. Background refetches (`isFetching && !isPending`) keep showing real data — no flicker.
-- **Realtime publication**: one migration `ALTER PUBLICATION supabase_realtime ADD TABLE …` for the six tables. RLS already permissive in dev (`dev_anon_*` policies).
-- **Mono/sans font rule**: untouched. Skeletons are pure shapes.
-- **Cart**: already context-managed with optimistic updates — leaving as-is.
-
-## Stage sizing
-
-Stage 1 + Stage 2 in this turn is realistic if you're OK with Stage 3 (realtime + prefetch + optimistic) and Stage 4 (long tail) landing in follow-up turns. Doing all four stages in one turn would mean ~40 file edits and would be hard to review. Tell me if you'd rather I attempt the whole thing in one go anyway, or land Stages 1+2 now and queue 3+4 next.
+Once you confirm (or just say "go"), I'll execute all six parts in order with the migrations queued for your approval.
