@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Search, MoreHorizontal, Building2, ChevronDown, X,
 } from "lucide-react";
@@ -8,6 +9,7 @@ import { formatBBD } from "@/lib/format";
 import { TierChip } from "./TierChip";
 import { CustomerDetailDrawer } from "./CustomerDetailDrawer";
 import { toast } from "sonner";
+import { qk } from "@/lib/query-keys";
 
 export type CustomerRow = {
   id: string;
@@ -60,8 +62,7 @@ function timeAgo(iso: string | null): string {
 
 export function CustomersTable() {
   const navigate = useNavigate();
-  const [rows, setRows] = useState<CustomerRow[]>([]);
-  const [lastOrders, setLastOrders] = useState<Record<string, string | null>>({});
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [tier, setTier] = useState<"all" | "standard" | "volume" | "key_account">("all");
   const [status, setStatus] = useState<"all" | "active" | "inactive">("all");
@@ -71,26 +72,105 @@ export function CustomersTable() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deactivateBlockedId, setDeactivateBlockedId] = useState<string | null>(null);
 
-  const reload = async () => {
-    const { data: c } = await supabase
-      .from("customers")
-      .select("*")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
-    setRows((c ?? []) as unknown as CustomerRow[]);
+  const customersQuery = useQuery({
+    queryKey: qk.customers(),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("*")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as CustomerRow[];
+    },
+    staleTime: 15_000,
+    refetchInterval: 60_000,
+  });
 
-    const { data: o } = await supabase
-      .from("orders")
-      .select("customer_id, placed_at")
-      .order("placed_at", { ascending: false });
-    const lo: Record<string, string | null> = {};
-    (o ?? []).forEach((r: any) => {
-      if (!(r.customer_id in lo)) lo[r.customer_id] = r.placed_at;
-    });
-    setLastOrders(lo);
-  };
+  const lastOrdersQuery = useQuery({
+    queryKey: ["customers-last-orders"] as const,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("customer_id, placed_at")
+        .order("placed_at", { ascending: false });
+      if (error) throw error;
+      const lo: Record<string, string | null> = {};
+      (data ?? []).forEach((r) => {
+        if (r.customer_id && !(r.customer_id in lo)) lo[r.customer_id] = r.placed_at;
+      });
+      return lo;
+    },
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
 
-  useEffect(() => { reload(); }, []);
+  const rows = customersQuery.data ?? [];
+  const lastOrders = lastOrdersQuery.data ?? {};
+  const isLoading = customersQuery.isLoading;
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: async (row: CustomerRow) => {
+      if (row.is_active) {
+        const { data } = await supabase
+          .from("orders")
+          .select("id")
+          .eq("customer_id", row.id)
+          .not("status", "in", "(delivered,cancelled,paid)")
+          .limit(1);
+        if ((data ?? []).length > 0) {
+          throw new Error("__BLOCKED__");
+        }
+      }
+      const { error } = await supabase
+        .from("customers")
+        .update({ is_active: !row.is_active })
+        .eq("id", row.id);
+      if (error) throw error;
+      return row;
+    },
+    onMutate: async (row) => {
+      await queryClient.cancelQueries({ queryKey: qk.customers() });
+      const prev = queryClient.getQueryData<CustomerRow[]>(qk.customers());
+      queryClient.setQueryData<CustomerRow[]>(qk.customers(), (old) =>
+        (old ?? []).map((r) => (r.id === row.id ? { ...r, is_active: !r.is_active } : r))
+      );
+      return { prev };
+    },
+    onSuccess: (row) => {
+      toast.success(row.is_active ? "Customer deactivated" : "Customer reactivated");
+      queryClient.invalidateQueries({ queryKey: qk.customers() });
+      queryClient.invalidateQueries({ queryKey: qk.customerById(row.id) });
+    },
+    onError: (err: Error, row, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(qk.customers(), ctx.prev);
+      if (err.message === "__BLOCKED__") setDeactivateBlockedId(row.id);
+      else toast.error(err.message);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (row: CustomerRow) => {
+      const { data: ord } = await supabase.from("orders").select("id").eq("customer_id", row.id).limit(1);
+      if ((ord ?? []).length > 0) {
+        throw new Error("Cannot delete a customer with order history. Deactivate instead.");
+      }
+      const { error } = await supabase
+        .from("customers")
+        .update({ deleted_at: new Date().toISOString(), is_active: false })
+        .eq("id", row.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Customer archived");
+      setDeleteId(null);
+      queryClient.invalidateQueries({ queryKey: qk.customers() });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+      setDeleteId(null);
+    },
+  });
 
   const filtered = useMemo(() => {
     let out = rows;
@@ -125,50 +205,17 @@ export function CustomersTable() {
     return { active: a, inactive: rows.length - a, total: rows.length };
   }, [rows]);
 
-  const anyFilter = search || tier !== "all" || status !== "all" || sort !== "recent";
+  const anyFilter = !!search || tier !== "all" || status !== "all" || sort !== "recent";
 
   const clearFilters = () => {
     setSearch(""); setTier("all"); setStatus("all"); setSort("recent");
   };
 
-  const handleToggleActive = async (row: CustomerRow) => {
-    if (row.is_active) {
-      // Check for open orders
-      const { data } = await supabase
-        .from("orders")
-        .select("id")
-        .eq("customer_id", row.id)
-        .not("status", "in", "(delivered,cancelled,paid)")
-        .limit(1);
-      if ((data ?? []).length > 0) {
-        setDeactivateBlockedId(row.id);
-        return;
-      }
-    }
-    const { error } = await supabase
-      .from("customers")
-      .update({ is_active: !row.is_active })
-      .eq("id", row.id);
-    if (error) return toast.error(error.message);
-    toast.success(row.is_active ? "Customer deactivated" : "Customer reactivated");
-    reload();
-  };
-
-  const handleDelete = async (row: CustomerRow) => {
-    const { data: ord } = await supabase.from("orders").select("id").eq("customer_id", row.id).limit(1);
-    if ((ord ?? []).length > 0) {
-      toast.error("Cannot delete a customer with order history. Deactivate instead.");
-      setDeleteId(null);
-      return;
-    }
-    const { error } = await supabase
-      .from("customers")
-      .update({ deleted_at: new Date().toISOString(), is_active: false })
-      .eq("id", row.id);
-    if (error) return toast.error(error.message);
-    toast.success("Customer archived");
-    setDeleteId(null);
-    reload();
+  const handleToggleActive = (row: CustomerRow) => toggleActiveMutation.mutate(row);
+  const handleDelete = (row: CustomerRow) => deleteMutation.mutate(row);
+  const reload = () => {
+    queryClient.invalidateQueries({ queryKey: qk.customers() });
+    queryClient.invalidateQueries({ queryKey: ["customers-last-orders"] });
   };
 
   return (
@@ -249,7 +296,17 @@ export function CustomersTable() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {isLoading && rows.length === 0 ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={`sk-${i}`} className="border-t border-[#E5E9EF]">
+                    {Array.from({ length: 9 }).map((_, j) => (
+                      <td key={j} className="px-3 py-3">
+                        <div className="h-3 w-full animate-pulse rounded bg-[#F1F4F8]" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-16 text-center">
                     <Building2 className="mx-auto h-10 w-10 text-[#CBD5E1]" strokeWidth={1.25} />
