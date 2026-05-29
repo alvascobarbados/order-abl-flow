@@ -30,7 +30,7 @@ export function DonePage() {
       else since = new Date(0);
 
       const { data } = await supabase.from("orders")
-        .select("id, order_number, total, delivered_at, delivered_to_name, customer:customers(company_name), allocations:payment_allocations(amount, payment:payments(payment_method))")
+        .select("id, order_number, total, delivered_at, delivered_to_name, customer:customer_delivery_info!customer_id(company_name), allocations:payment_allocations(amount, payment:payments(payment_method))")
         .eq("driver_name", driverName)
         .in("status", ["delivered", "paid"])
         .gte("delivered_at", since.toISOString())
