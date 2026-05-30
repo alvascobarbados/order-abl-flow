@@ -57,7 +57,7 @@ function TopBar({ title, subtitle, back, right }: { title?: string; subtitle?: s
 
   const switchRole = async () => { setOpen(false); await signOut(); navigate({ to: "/" }); };
   const editName = () => {
-    const next = window.prompt("Your name (for this shift)", driverName);
+    const next = window.prompt("Your name (for today)", driverName);
     if (next && next.trim()) setDriverName(next.trim());
   };
 
@@ -102,7 +102,7 @@ function TopBar({ title, subtitle, back, right }: { title?: string; subtitle?: s
               <MenuItem icon={<UserIcon className="h-4 w-4" />} onClick={() => { setOpen(false); editName(); }}>Edit my name</MenuItem>
               <MenuItem icon={<Truck className="h-4 w-4" />} onClick={() => { setOpen(false); navigate({ to: "/delivery/load" }); }}>Load van</MenuItem>
               <MenuItem icon={<BarChart3 className="h-4 w-4" />} onClick={() => { setOpen(false); navigate({ to: "/delivery/me" }); }}>View my stats</MenuItem>
-              <MenuItem icon={<ClipboardCheck className="h-4 w-4" />} onClick={() => { setOpen(false); navigate({ to: "/delivery/end-shift" }); }}>End shift</MenuItem>
+              <MenuItem icon={<ClipboardCheck className="h-4 w-4" />} onClick={() => { setOpen(false); navigate({ to: "/delivery/end-shift" }); }}>Done for the day</MenuItem>
               <div className="border-t border-[#F1F4F8]" />
               <MenuItem icon={<LogOut className="h-4 w-4" />} onClick={switchRole}>Switch role</MenuItem>
               <MenuItem icon={<Repeat className="h-4 w-4" />} onClick={switchRole}>Sign out</MenuItem>
