@@ -57,7 +57,7 @@ function TopBar({ title, subtitle, back, right }: { title?: string; subtitle?: s
 
   const switchRole = async () => { setOpen(false); await signOut(); navigate({ to: "/" }); };
   const editName = () => {
-    const next = window.prompt("Your name (for this shift)", driverName);
+    const next = window.prompt("Your name (for today)", driverName);
     if (next && next.trim()) setDriverName(next.trim());
   };
 

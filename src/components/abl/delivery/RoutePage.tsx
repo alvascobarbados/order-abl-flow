@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Truck, MapPin, CheckCircle2, ArrowRight, Sparkles, Package, Play, PartyPopper } from "lucide-react";
+import { Truck, MapPin, ArrowRight, Play, PartyPopper } from "lucide-react";
 import {
   DndContext,
   PointerSensor,
@@ -501,14 +501,3 @@ function StopCard({
   );
 }
 
-// Kept as fallback; no longer used in the main flow since AllDone is replaced by VanEmptyHome.
-export function _UnusedAllDone() {
-  return (
-    <div className="rounded-2xl border border-[#D1FAE5] bg-[#ECFDF5] px-5 py-10 text-center">
-      <CheckCircle2 className="mx-auto h-8 w-8 text-[#10B981]" />
-      <div className="mt-3 text-[18px] font-extrabold text-ink">All deliveries done</div>
-      <Sparkles className="mx-auto mt-2 h-3 w-3 text-muted-foreground" />
-      <Package className="hidden" />
-    </div>
-  );
-}
